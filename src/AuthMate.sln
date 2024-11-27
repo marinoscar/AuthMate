@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate", "Luval.AuthMate\Luval.AuthMate.csproj", "{E036B382-8FFC-468F-B536-816C9138751B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Postgres", "Luval.AuthMate.Postgres\Luval.AuthMate.Postgres.csproj", "{4B549048-51B7-4F24-B558-1840FBB6F11F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E036B382-8FFC-468F-B536-816C9138751B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E036B382-8FFC-468F-B536-816C9138751B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E036B382-8FFC-468F-B536-816C9138751B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E036B382-8FFC-468F-B536-816C9138751B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B549048-51B7-4F24-B558-1840FBB6F11F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B549048-51B7-4F24-B558-1840FBB6F11F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B549048-51B7-4F24-B558-1840FBB6F11F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B549048-51B7-4F24-B558-1840FBB6F11F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CC1652F7-C884-4BCA-AB78-2EC7A4AE16E2}
+	EndGlobalSection
+EndGlobal
