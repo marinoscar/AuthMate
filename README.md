@@ -1,6 +1,6 @@
 # AuthMate: Simplify Authentication and Authorization for Your Apps
+
 AuthMate is a powerful yet easy-to-use NuGet package designed to streamline user authentication and authorization for web and mobile applications. Whether you're building an app from scratch or integrating advanced user management features, AuthMate has you covered.
--
 
 ## Key Features
 * Social Login Integration: Quickly enable login via Google, Microsoft, and Facebook with minimal setup.
