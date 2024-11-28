@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Luval.AuthMate.Entities
 {
-    public class BaseEntity : BaseEntity
+    public class BaseEntity
     {
         public override string ToString()
         {
