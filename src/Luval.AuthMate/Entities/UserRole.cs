@@ -13,7 +13,7 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents the relationship between a user and a role in the system.
     /// </summary>
-    public class UserRole
+    public class UserRole : BaseEntity
     {
         /// <summary>
         /// The unique identifier for the UserRole relationship.

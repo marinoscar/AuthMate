@@ -14,7 +14,7 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents a role in the system, such as Admin, User, or Manager.
     /// </summary>
-    public class Role
+    public class Role : BaseEntity
     {
         /// <summary>
         /// The unique identifier for the Role.

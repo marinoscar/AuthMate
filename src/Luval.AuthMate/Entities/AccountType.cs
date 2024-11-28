@@ -12,7 +12,7 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents the type of an account in the system, such as Free, Tier1, or Tier2.
     /// </summary>
-    public class AccountType
+    public class AccountType : BaseEntity
     {
         /// <summary>
         /// The unique identifier for the Account Type.

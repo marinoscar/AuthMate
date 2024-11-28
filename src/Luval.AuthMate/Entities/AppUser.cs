@@ -13,7 +13,7 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents a user in the system, storing authentication and profile information.
     /// </summary>
-    public class AppUser
+    public class AppUser : BaseEntity
     {
         /// <summary>
         /// The unique identifier for the User.

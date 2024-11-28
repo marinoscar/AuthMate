@@ -14,7 +14,7 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents an account in the system, with a reference to its type and owner information.
     /// </summary>
-    public class Account
+    public class Account : BaseEntity
     {
         /// <summary>
         /// The unique identifier for the Account.
