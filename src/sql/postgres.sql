@@ -2,7 +2,7 @@
 DROP TABLE IF EXISTS AccountType CASCADE;
 CREATE TABLE AccountType (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
-    Name VARCHAR(100) NOT NULL, -- Name of the account type
+    Name VARCHAR(100) NOT NULL UNIQUE, -- Name of the account type
     UtcCreatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record creation timestamp
     CreatedBy VARCHAR(255), -- User who created the record
     UtcUpdatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record update timestamp
@@ -29,7 +29,7 @@ DROP TABLE IF EXISTS Account CASCADE;
 CREATE TABLE Account (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
     AccountTypeId BIGINT NOT NULL REFERENCES AccountType(Id) ON DELETE CASCADE, -- Foreign key referencing AccountType
-    Owner VARCHAR(255) NOT NULL, -- Owner of the account
+    Owner VARCHAR(255) NOT NULL  UNIQUE, -- Owner of the account
     UtcCreatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record creation timestamp
     CreatedBy VARCHAR(255), -- User who created the record
     UtcUpdatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record update timestamp
@@ -48,15 +48,15 @@ COMMENT ON COLUMN Account.UtcUpdatedOn IS 'The UTC timestamp when the record was
 COMMENT ON COLUMN Account.UpdatedBy IS 'The user who last updated the record.';
 COMMENT ON COLUMN Account.Version IS 'The version of the record, incremented on updates.';
 
--- Ensure the User table exists and recreate it if necessary
-DROP TABLE IF EXISTS "User" CASCADE;
-CREATE TABLE "User" (
+-- Ensure the AppUser table exists and recreate it if necessary
+DROP TABLE IF EXISTS AppUser CASCADE;
+CREATE TABLE AppUser (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
     Email VARCHAR(255) NOT NULL UNIQUE, -- Email address of the user
     ProviderKey VARCHAR(255) NOT NULL, -- Key from the authentication provider
     ProviderType VARCHAR(50) NOT NULL, -- Type of the authentication provider
     ProfilePictureUrl VARCHAR(500), -- URL to the user's profile picture
-	UtcActiveUntil TIMESTAMP, -- Indicates the UTC data in which the user is active in the system
+    UtcActiveUntil TIMESTAMP, -- Indicates the UTC data in which the user is active in the system
     Metadata TEXT, -- Metadata in JSON format
     UtcCreatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record creation timestamp
     CreatedBy VARCHAR(255), -- User who created the record
@@ -65,20 +65,20 @@ CREATE TABLE "User" (
     Version INT NOT NULL DEFAULT 1 -- Record version
 );
 
--- Add descriptions for User table
-COMMENT ON TABLE "User" IS 'Represents a user in the system, storing authentication and profile information.';
-COMMENT ON COLUMN "User".Id IS 'The unique identifier for the User.';
-COMMENT ON COLUMN "User".Email IS 'The email address of the user.';
-COMMENT ON COLUMN "User".ProviderKey IS 'The unique key provided by the authentication provider (e.g., Google, Microsoft).';
-COMMENT ON COLUMN "User".ProviderType IS 'The type of the authentication provider (e.g., Google, Microsoft, Facebook).';
-COMMENT ON COLUMN "User".ProfilePictureUrl IS 'The URL of the user''s profile picture.';
-COMMENT ON COLUMN "User".UtcActiveUntil IS 'Indicates the UTC data in which the user is active in the system';
-COMMENT ON COLUMN "User".Metadata IS 'Metadata for the user, stored as a JSON object in string format.';
-COMMENT ON COLUMN "User".UtcCreatedOn IS 'The UTC timestamp when the record was created.';
-COMMENT ON COLUMN "User".CreatedBy IS 'The user who created the record.';
-COMMENT ON COLUMN "User".UtcUpdatedOn IS 'The UTC timestamp when the record was last updated.';
-COMMENT ON COLUMN "User".UpdatedBy IS 'The user who last updated the record.';
-COMMENT ON COLUMN "User".Version IS 'The version of the record, incremented on updates.';
+-- Add descriptions for AppUser table
+COMMENT ON TABLE AppUser IS 'Represents a user in the system, storing authentication and profile information.';
+COMMENT ON COLUMN AppUser.Id IS 'The unique identifier for the User.';
+COMMENT ON COLUMN AppUser.Email IS 'The email address of the user.';
+COMMENT ON COLUMN AppUser.ProviderKey IS 'The unique key provided by the authentication provider (e.g., Google, Microsoft).';
+COMMENT ON COLUMN AppUser.ProviderType IS 'The type of the authentication provider (e.g., Google, Microsoft, Facebook).';
+COMMENT ON COLUMN AppUser.ProfilePictureUrl IS 'The URL of the user''s profile picture.';
+COMMENT ON COLUMN AppUser.UtcActiveUntil IS 'Indicates the UTC data in which the user is active in the system';
+COMMENT ON COLUMN AppUser.Metadata IS 'Metadata for the user, stored as a JSON object in string format.';
+COMMENT ON COLUMN AppUser.UtcCreatedOn IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN AppUser.CreatedBy IS 'The user who created the record.';
+COMMENT ON COLUMN AppUser.UtcUpdatedOn IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN AppUser.UpdatedBy IS 'The user who last updated the record.';
+COMMENT ON COLUMN AppUser.Version IS 'The version of the record, incremented on updates.';
 
 -- Ensure the Role table exists and recreate it if necessary
 DROP TABLE IF EXISTS Role CASCADE;
@@ -115,7 +115,7 @@ INSERT INTO Role (Name, Description) VALUES
 DROP TABLE IF EXISTS UserRole CASCADE;
 CREATE TABLE UserRole (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
-    UserId BIGINT NOT NULL REFERENCES "User"(Id) ON DELETE CASCADE, -- Foreign key referencing User
+    UserId BIGINT NOT NULL REFERENCES AppUser(Id) ON DELETE CASCADE, -- Foreign key referencing AppUser
     RoleId BIGINT NOT NULL REFERENCES Role(Id) ON DELETE CASCADE, -- Foreign key referencing Role
     UtcCreatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record creation timestamp
     CreatedBy VARCHAR(255), -- User who created the record
@@ -127,7 +127,7 @@ CREATE TABLE UserRole (
 -- Add descriptions for UserRole table
 COMMENT ON TABLE UserRole IS 'Represents the relationship between a user and a role in the system.';
 COMMENT ON COLUMN UserRole.Id IS 'The unique identifier for the UserRole relationship.';
-COMMENT ON COLUMN UserRole.UserId IS 'The foreign key referencing the User table.';
+COMMENT ON COLUMN UserRole.UserId IS 'The foreign key referencing the AppUser table.';
 COMMENT ON COLUMN UserRole.RoleId IS 'The foreign key referencing the Role table.';
 COMMENT ON COLUMN UserRole.UtcCreatedOn IS 'The UTC timestamp when the record was created.';
 COMMENT ON COLUMN UserRole.CreatedBy IS 'The user who created the record.';
@@ -139,7 +139,7 @@ COMMENT ON COLUMN UserRole.Version IS 'The version of the record, incremented on
 DROP TABLE IF EXISTS UserInAccount CASCADE;
 CREATE TABLE UserInAccount (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
-    UserId BIGINT NOT NULL REFERENCES "User"(Id) ON DELETE CASCADE, -- Foreign key referencing User
+    UserId BIGINT NOT NULL REFERENCES AppUser(Id) ON DELETE CASCADE, -- Foreign key referencing AppUser
     AccountId BIGINT NOT NULL REFERENCES Account(Id) ON DELETE CASCADE, -- Foreign key referencing Account
     UtcCreatedOn TIMESTAMP NOT NULL DEFAULT NOW(), -- Record creation timestamp
     CreatedBy VARCHAR(255), -- User who created the record
@@ -151,11 +151,10 @@ CREATE TABLE UserInAccount (
 -- Add descriptions for UserInAccount table
 COMMENT ON TABLE UserInAccount IS 'Represents the relationship between a user and an account in the system.';
 COMMENT ON COLUMN UserInAccount.Id IS 'The unique identifier for the UserInAccount relationship.';
-COMMENT ON COLUMN UserInAccount.UserId IS 'The foreign key referencing the User table.';
+COMMENT ON COLUMN UserInAccount.UserId IS 'The foreign key referencing the AppUser table.';
 COMMENT ON COLUMN UserInAccount.AccountId IS 'The foreign key referencing the Account table.';
 COMMENT ON COLUMN UserInAccount.UtcCreatedOn IS 'The UTC timestamp when the record was created.';
 COMMENT ON COLUMN UserInAccount.CreatedBy IS 'The user who created the record.';
 COMMENT ON COLUMN UserInAccount.UtcUpdatedOn IS 'The UTC timestamp when the record was last updated.';
 COMMENT ON COLUMN UserInAccount.UpdatedBy IS 'The user who last updated the record.';
 COMMENT ON COLUMN UserInAccount.Version IS 'The version of the record, incremented on updates.';
-

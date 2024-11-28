@@ -102,6 +102,15 @@ namespace Luval.AuthMate.Entities
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// Indicates if the user has a role assigned
+        /// </summary>
+        /// <param name="roleName">The name of the role</param>
+        public bool HasRole(string roleName)
+        {
+            return UserRoles != null && UserRoles.Any(i => i.Role != null && i.Role.Name.ToLowerInvariant() == roleName.ToLowerInvariant());
+        }
     }
 
 }

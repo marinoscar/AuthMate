@@ -66,13 +66,20 @@ namespace Luval.AuthMate
             modelBuilder.Entity<AccountType>()
                 .HasKey(a => a.Id);
             modelBuilder.Entity<AccountType>()
+                .HasIndex(a => a.Name)
+                .IsUnique();
+            modelBuilder.Entity<AccountType>()
                 .Property(a => a.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+            
 
             // Account Configuration
             modelBuilder.Entity<Account>()
                 .HasKey(a => a.Id);
+            modelBuilder.Entity<Account>()
+                .HasIndex(i => i.Owner)
+                .IsUnique();
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.AccountType)
                 .WithMany()
@@ -86,6 +93,9 @@ namespace Luval.AuthMate
             // User Configuration
             modelBuilder.Entity<AppUser>()
                 .HasKey(u => u.Id);
+            modelBuilder.Entity<AppUser>()
+               .HasIndex(i => i.Email)
+               .IsUnique();
             modelBuilder.Entity<AppUser>()
                 .Property(u => u.Email)
                 .IsRequired()
@@ -109,6 +119,9 @@ namespace Luval.AuthMate
             // Role Configuration
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
+            modelBuilder.Entity<Role>()
+                .HasIndex(r => r.Name)
+                .IsUnique();
             modelBuilder.Entity<Role>()
                 .Property(r => r.Name)
                 .IsRequired()

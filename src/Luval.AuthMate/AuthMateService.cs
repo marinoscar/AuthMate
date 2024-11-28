@@ -211,7 +211,10 @@ namespace Luval.AuthMate
         /// <returns>The user if found; otherwise, null.</returns>
         public async Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _authMateContext.Users.SingleAsync(i => i.Email == email, cancellationToken);
+            return await _authMateContext.Users
+                .Include(i => i.UserRoles).ThenInclude(i => i.Role)
+                .Include(i => i.UserInAccounts).ThenInclude(i => i.Account)
+                .SingleAsync(i => i.Email == email, cancellationToken);
         }
 
         /// <summary>
