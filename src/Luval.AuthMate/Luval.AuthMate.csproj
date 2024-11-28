@@ -4,7 +4,37 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>authmate_icon.ico</ApplicationIcon>
+    <Title>AuthMate</Title>
+    <Authors>Oscar Marin</Authors>
+    <Description>AuthMate is a powerful yet easy-to-use NuGet package designed to streamline user authentication and authorization for web and mobile applications</Description>
+    <Copyright>Oscar Marin</Copyright>
+    <PackageProjectUrl>https://github.com/marinoscar/AuthMate</PackageProjectUrl>
+    <PackageIcon>AuthMate.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/marinoscar/AuthMate</RepositoryUrl>
+    <PackAsTool>False</PackAsTool>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="authmate_icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\media\AuthMate.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
