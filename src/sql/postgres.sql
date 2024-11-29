@@ -52,6 +52,7 @@ COMMENT ON COLUMN Account.Version IS 'The version of the record, incremented on 
 DROP TABLE IF EXISTS AppUser CASCADE;
 CREATE TABLE AppUser (
     Id BIGSERIAL PRIMARY KEY, -- Primary Key
+	DisplayName VARCHAR(255), -- The name of the application user
     Email VARCHAR(255) NOT NULL UNIQUE, -- Email address of the user
     ProviderKey VARCHAR(255) NOT NULL, -- Key from the authentication provider
     ProviderType VARCHAR(50) NOT NULL, -- Type of the authentication provider
@@ -68,6 +69,7 @@ CREATE TABLE AppUser (
 -- Add descriptions for AppUser table
 COMMENT ON TABLE AppUser IS 'Represents a user in the system, storing authentication and profile information.';
 COMMENT ON COLUMN AppUser.Id IS 'The unique identifier for the User.';
+COMMENT ON COLUMN AppUser.DisplayName IS 'The name of the application user';
 COMMENT ON COLUMN AppUser.Email IS 'The email address of the user.';
 COMMENT ON COLUMN AppUser.ProviderKey IS 'The unique key provided by the authentication provider (e.g., Google, Microsoft).';
 COMMENT ON COLUMN AppUser.ProviderType IS 'The type of the authentication provider (e.g., Google, Microsoft, Facebook).';

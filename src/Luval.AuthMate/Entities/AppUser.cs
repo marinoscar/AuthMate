@@ -23,6 +23,11 @@ namespace Luval.AuthMate.Entities
         public ulong Id { get; set; }
 
         /// <summary>
+        /// The name of the application user
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
         /// The email address of the user.
         /// </summary>
         [Required]
