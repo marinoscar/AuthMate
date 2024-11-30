@@ -11,5 +11,28 @@ AuthMate is a powerful yet easy-to-use NuGet package designed to streamline user
 ** Role-Based Access Control (RBAC): Define roles and permissions for users at the account level.
 ** Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
 
-## Why Choose AuthMate?
-AuthMate helps developers focus on building features rather than reinventing the wheel. Whether you’re developing a SaaS platform, internal enterprise app, or a public-facing mobile app, AuthMate simplifies authentication and authorization while remaining highly customizable to your needs.
+## Configuring the Sql Database
+The project uses EntityFramework, if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
+
+``` csharp
+public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
+{
+    private string _connString;
+
+    /// <summary>
+    /// Creates a new instance of the context
+    /// </summary>
+    /// <param name="connectionString">A valid postgres connection string</param>
+    public PostgresAuthMateContext(string connectionString)
+    {
+            _connString = connectionString;
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(_connString);
+        if(Debugger.IsAttached)
+            optionsBuilder.LogTo(Console.WriteLine);
+    }
+}
+```
