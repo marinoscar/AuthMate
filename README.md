@@ -96,3 +96,43 @@ public static void Main(string[] args)
     app.Run();
 }
 ```
+## Create a Controller in your Web Application
+In order to handle the authentication request you will need to create a controller. here is a simple working code
+
+``` csharp
+[Route("/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
+{
+    [AllowAnonymous]
+    [HttpGet("google-login")] //This mathches the configuration of the Google Auth
+    public IActionResult GoogleLogin()
+    {
+
+        // Adds the properties ad redirect information
+        // this could be change to include a redirect as part
+        // of a query string if required
+        var prop = new AuthenticationProperties()
+        {
+            RedirectUri = "/"
+        };
+
+        // Creates tthe challange
+        var challange = Challenge(prop, GoogleDefaults.AuthenticationScheme);
+
+        return challange;
+    }
+
+    [AllowAnonymous]
+    [HttpGet("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        // Signout the user from the OAuth flow
+        await HttpContext.SignOutAsync();
+
+        // Redirect to root so that when logging back in, it takes to home page
+        return Redirect("/");
+    }
+
+}
+```
