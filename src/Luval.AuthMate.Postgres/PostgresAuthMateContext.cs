@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace Luval.AuthMate.Postgres
 {
@@ -18,6 +19,8 @@ namespace Luval.AuthMate.Postgres
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseNpgsql(_connString);
+            if(Debugger.IsAttached)
+                optionsBuilder.LogTo(Console.WriteLine);
         }
     }
 }

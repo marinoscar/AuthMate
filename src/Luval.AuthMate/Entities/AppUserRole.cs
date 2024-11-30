@@ -11,12 +11,13 @@ namespace Luval.AuthMate.Entities
 {
 
     /// <summary>
-    /// Represents the relationship between a user and an account in the system.
+    /// Represents the relationship between a user and a role in the system.
     /// </summary>
-    public class UserInAccount : BaseEntity
+    [Table("AppUserRole")]
+    public class AppUserRole : BaseEntity
     {
         /// <summary>
-        /// The unique identifier for the UserInAccount relationship.
+        /// The unique identifier for the UserRole relationship.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -26,25 +27,25 @@ namespace Luval.AuthMate.Entities
         /// The foreign key referencing the User table.
         /// </summary>
         [Required]
-        public ulong UserId { get; set; }
+        public ulong AppUserId { get; set; }
 
         /// <summary>
         /// Navigation property for the User.
         /// </summary>
-        [ForeignKey(nameof(UserId))]
+        //[ForeignKey(nameof(AppUserId))]
         public AppUser User { get; set; }
 
         /// <summary>
-        /// The foreign key referencing the Account table.
+        /// The foreign key referencing the Role table.
         /// </summary>
         [Required]
-        public ulong AccountId { get; set; }
+        public ulong RoleId { get; set; }
 
         /// <summary>
-        /// Navigation property for the Account.
+        /// Navigation property for the Role.
         /// </summary>
-        [ForeignKey(nameof(AccountId))]
-        public Account Account { get; set; }
+        [ForeignKey(nameof(RoleId))]
+        public Role Role { get; set; }
 
         #region Control Fields
 
@@ -79,7 +80,7 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public UserInAccount()
+        public AppUserRole()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;

@@ -8,8 +8,8 @@ namespace Luval.AuthMate
         DbSet<Account> Accounts { get; set; }
         DbSet<AccountType> AccountTypes { get; set; }
         DbSet<Role> Roles { get; set; }
-        DbSet<UserInAccount> UserInAccounts { get; set; }
-        DbSet<UserRole> UserRoles { get; set; }
+        DbSet<AppUserInAccount> UserInAccounts { get; set; }
+        DbSet<AppUserRole> UserRoles { get; set; }
         DbSet<AppUser> Users { get; set; }
 
         int SaveChanges();

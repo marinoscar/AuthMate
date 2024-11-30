@@ -13,8 +13,8 @@ namespace Luval.AuthMate
         /// <param name="user">The user to add to the account.</param>
         /// <param name="ownerEmail">The email of the account owner.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="UserInAccount"/> entity.</returns>
-        Task<UserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default);
+        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUserInAccount"/> entity.</returns>
+        Task<AppUserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Adds a user to a specific role if they are not already assigned to it.
@@ -23,8 +23,8 @@ namespace Luval.AuthMate
         /// <param name="roleName">The name of the role to assign.</param>
         /// <param name="ownerEmail">The email of the account owner performing the action.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="UserRole"/> entity.</returns>
-        Task<UserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default);
+        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUserRole"/> entity.</returns>
+        Task<AppUserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates a new account for the specified user if it does not exist.

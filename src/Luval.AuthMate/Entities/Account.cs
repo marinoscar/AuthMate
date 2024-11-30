@@ -9,11 +9,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Luval.AuthMate.Entities
 {
-   
+
 
     /// <summary>
     /// Represents an account in the system, with a reference to its type and owner information.
     /// </summary>
+    [Table("Account")]
     public class Account : BaseEntity
     {
         /// <summary>

@@ -11,12 +11,13 @@ namespace Luval.AuthMate.Entities
 {
 
     /// <summary>
-    /// Represents the relationship between a user and a role in the system.
+    /// Represents the relationship between a user and an account in the system.
     /// </summary>
-    public class UserRole : BaseEntity
+    [Table("AppUserInAccount")]
+    public class AppUserInAccount : BaseEntity
     {
         /// <summary>
-        /// The unique identifier for the UserRole relationship.
+        /// The unique identifier for the UserInAccount relationship.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -26,25 +27,25 @@ namespace Luval.AuthMate.Entities
         /// The foreign key referencing the User table.
         /// </summary>
         [Required]
-        public ulong UserId { get; set; }
+        public ulong AppUserId { get; set; }
 
         /// <summary>
         /// Navigation property for the User.
         /// </summary>
-        [ForeignKey(nameof(UserId))]
+        [ForeignKey(nameof(AppUserId))]
         public AppUser User { get; set; }
 
         /// <summary>
-        /// The foreign key referencing the Role table.
+        /// The foreign key referencing the Account table.
         /// </summary>
         [Required]
-        public ulong RoleId { get; set; }
+        public ulong AccountId { get; set; }
 
         /// <summary>
-        /// Navigation property for the Role.
+        /// Navigation property for the Account.
         /// </summary>
-        [ForeignKey(nameof(RoleId))]
-        public Role Role { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account Account { get; set; }
 
         #region Control Fields
 
@@ -79,7 +80,7 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public UserRole()
+        public AppUserInAccount()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;

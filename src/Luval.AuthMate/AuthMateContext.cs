@@ -47,12 +47,12 @@ namespace Luval.AuthMate
         /// <summary>
         /// DbSet for UserRole entities.
         /// </summary>
-        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<AppUserRole> UserRoles { get; set; }
 
         /// <summary>
         /// DbSet for UserInAccount entities.
         /// </summary>
-        public DbSet<UserInAccount> UserInAccounts { get; set; }
+        public DbSet<AppUserInAccount> UserInAccounts { get; set; }
 
         /// <summary>
         /// Configures the database model and relationships.
@@ -111,10 +111,11 @@ namespace Luval.AuthMate
             modelBuilder.Entity<AppUser>()
                 .Property(u => u.ProfilePictureUrl)
                 .HasMaxLength(500);
-            modelBuilder.Entity<AppUser>()
-                .HasMany<UserRole>(i => i.UserRoles);
-            modelBuilder.Entity<AppUser>()
-                .HasMany<UserInAccount>(i => i.UserInAccounts);
+
+            //modelBuilder.Entity<AppUser>()
+            //    .HasMany<AppUserRole>(i => i.UserRoles);
+            //modelBuilder.Entity<AppUser>()
+            //    .HasMany<AppUserInAccount>(i => i.UserInAccounts);
 
             // Role Configuration
             modelBuilder.Entity<Role>()
@@ -131,28 +132,28 @@ namespace Luval.AuthMate
                 .HasMaxLength(500);
 
             // UserRole Configuration
-            modelBuilder.Entity<UserRole>()
+            modelBuilder.Entity<AppUserRole>()
                 .HasKey(ur => ur.Id);
-            modelBuilder.Entity<UserRole>()
+            modelBuilder.Entity<AppUserRole>()
                 .HasOne(ur => ur.User)
                 .WithMany()
-                .HasForeignKey(ur => ur.UserId)
+                .HasForeignKey(ur => ur.AppUserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<UserRole>()
+            modelBuilder.Entity<AppUserRole>()
                 .HasOne(ur => ur.Role)
                 .WithMany()
                 .HasForeignKey(ur => ur.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // UserInAccount Configuration
-            modelBuilder.Entity<UserInAccount>()
+            modelBuilder.Entity<AppUserInAccount>()
                 .HasKey(ua => ua.Id);
-            modelBuilder.Entity<UserInAccount>()
+            modelBuilder.Entity<AppUserInAccount>()
                 .HasOne(ua => ua.User)
                 .WithMany()
-                .HasForeignKey(ua => ua.UserId)
+                .HasForeignKey(ua => ua.AppUserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<UserInAccount>()
+            modelBuilder.Entity<AppUserInAccount>()
                 .HasOne(ua => ua.Account)
                 .WithMany()
                 .HasForeignKey(ua => ua.AccountId)

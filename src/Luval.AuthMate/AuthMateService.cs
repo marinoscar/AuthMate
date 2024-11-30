@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Luval.AuthMate
@@ -97,22 +99,22 @@ namespace Luval.AuthMate
         /// <param name="user">The user to add to the account.</param>
         /// <param name="ownerEmail">The email of the account owner.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The <see cref="UserInAccount"/> entity representing the user's association with the account.</returns>
+        /// <returns>The <see cref="AppUserInAccount"/> entity representing the user's association with the account.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the account associated with the ownerEmail is not found.</exception>
-        public async Task<UserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default)
+        public async Task<AppUserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default)
         {
             var account = await _authMateContext.Accounts.SingleAsync(x => x.Owner == ownerEmail, cancellationToken);
-            var userInAccount = await _authMateContext.UserInAccounts.SingleOrDefaultAsync(x => x.UserId == user.Id && x.AccountId == account.Id, cancellationToken);
+            var userInAccount = await _authMateContext.UserInAccounts.SingleOrDefaultAsync(x => x.AppUserId == user.Id && x.AccountId == account.Id, cancellationToken);
 
             if (userInAccount == null)
             {
-                _authMateContext.UserInAccounts.Add(new UserInAccount()
+                userInAccount = _authMateContext.UserInAccounts.Add(new AppUserInAccount()
                 {
                     CreatedBy = ownerEmail,
                     UpdatedBy = ownerEmail,
-                    UserId = user.Id,
+                    AppUserId = user.Id,
                     AccountId = account.Id
-                });
+                }).Entity;
                 await _authMateContext.SaveChangesAsync(cancellationToken);
             }
             return userInAccount;
@@ -177,22 +179,23 @@ namespace Luval.AuthMate
         /// <param name="roleName">The name of the role to assign.</param>
         /// <param name="ownerEmail">The email of the account owner performing the action.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The <see cref="UserRole"/> entity representing the user's role assignment.</returns>
-        public async Task<UserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default)
+        /// <returns>The <see cref="AppUserRole"/> entity representing the user's role assignment.</returns>
+        public async Task<AppUserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default)
         {
             var user = await GetUserByEmailAsync(userEmail, cancellationToken);
             var role = await GetRoleByNameAsync(roleName, cancellationToken);
 
-            var userRole = await _authMateContext.UserRoles.SingleOrDefaultAsync(i => i.UserId == user.Id && i.RoleId == role.Id, cancellationToken);
+            var userRole = await _authMateContext.UserRoles.SingleOrDefaultAsync(i => i.AppUserId == user.Id && i.RoleId == role.Id, cancellationToken);
             if (userRole == null)
             {
-                _authMateContext.UserRoles.Add(new UserRole()
+                userRole = _authMateContext.UserRoles.Add(new AppUserRole()
                 {
-                    UserId = user.Id,
+                    AppUserId = user.Id,
                     RoleId = role.Id,
                     CreatedBy = ownerEmail,
                     UpdatedBy = ownerEmail
-                });
+                }).Entity;
+
                 await _authMateContext.SaveChangesAsync(cancellationToken);
             }
             return userRole;
@@ -211,10 +214,12 @@ namespace Luval.AuthMate
         /// <returns>The user if found; otherwise, null.</returns>
         public async Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _authMateContext.Users
-                .Include(i => i.UserRoles).ThenInclude(i => i.Role)
-                .Include(i => i.UserInAccounts).ThenInclude(i => i.Account)
-                .SingleAsync(i => i.Email == email, cancellationToken);
+            var user = await _authMateContext.Users.SingleOrDefaultAsync(i => i.Email == email, cancellationToken);
+            if (user == null) return null;
+            user.UserRoles = _authMateContext.UserRoles.Where(i => i.AppUserId == user.Id).Include(i => i.Role).ToList();
+            user.UserInAccounts = _authMateContext.UserInAccounts.Where(i => i.AppUserId == user.Id).Include(i => i.Account).ToList();
+
+            return user;
         }
 
         /// <summary>
@@ -223,7 +228,7 @@ namespace Luval.AuthMate
         /// <param name="newUser">The new user to create.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The created user.</returns>
-        public async Task<AppUser> CreateUserAsAdminAsync(AppUser newUser, CancellationToken cancellationToken)
+        public async Task<AppUser> CreateUserAsAdminAsync(AppUser newUser, CancellationToken cancellationToken = default)
         {
             var account = await _authMateContext.Accounts.SingleOrDefaultAsync(x => x.Owner == newUser.Email, cancellationToken);
             if (account == null)
@@ -253,6 +258,31 @@ namespace Luval.AuthMate
             await AddUserToAccountAsync(user, user.Email);
 
             return newUser;
+        }
+
+        public async Task OnUserAuthorizedAsync(ClaimsIdentity contextUser, string providerType, Func<ClaimsIdentity> authorizeUser)
+        {
+            var user = default(AppUser);
+
+            if(contextUser.HasClaim(i => i.Type == "AppUserJson"))
+            {
+                user = JsonSerializer.Deserialize<AppUser>(contextUser.GetValue("AppUserJson"));
+                user.UpdateClaims(contextUser, providerType);
+                return;
+            }
+
+            user = await GetUserByEmailAsync(contextUser.GetValue(ClaimTypes.Email));
+            if (user == null)
+            {
+                user = await CreateUserAsAdminAsync(contextUser.ToUser());
+                user.UpdateClaims(contextUser, providerType);
+            }
+            else
+                user.UpdateClaims(contextUser, providerType);
+
+            if (authorizeUser != null) authorizeUser();
+            return;
+
         }
 
         #endregion
