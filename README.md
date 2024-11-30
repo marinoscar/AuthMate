@@ -36,3 +36,63 @@ public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
     }
 }
 ```
+## Getting Google Client Id and Client Secret
+To configure the OAuth you need to get the information from google follow the steps in this article https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-8.0
+
+## Configuring your application
+Here is an example code of how to configure your application to use Google Authentication
+
+``` csharp
+public static void Main(string[] args)
+{
+    var builder = WebApplication.CreateBuilder(args);
+    // Add services to the container.
+    builder.Services.AddRazorComponents()
+        .AddInteractiveServerComponents();
+    // Add controllers
+    builder.Services.AddControllers();
+    builder.Services.AddHttpClient();
+    builder.Services.AddHttpContextAccessor();
+    // Configure AuthMate
+    var dbContext = new PostgresAuthMateContext(ConfigHelper.GetValueAsString("ConnectionString:Authorization"));
+    var authService = new AuthMateService(
+            dbContext,
+            "Free", "Administrator"
+        );
+    // Function to be called after the user is authorized by Google
+    Func<OAuthCreatingTicketContext, Task> onTicket = async contex =>
+    {
+        await authService.OnUserAuthorizedAsync(contex.Identity, "Google", null);
+    };
+    // Add Google Authentication configuration
+    builder.Services.AddGoogleAuth(new GoogleOAuthConfiguration()
+    {
+        // client id from your config file
+        ClientId = ConfigHelper.GetValueAsString("Authentication:Google:ClientID"),
+        // the client secret from your config file
+        ClientSecret = ConfigHelper.GetValueAsString("Authentication:Google:ClientSecret"),
+        OnCreatingTicket = onTicket // function call
+    });
+    var app = builder.Build();
+    // Configure the HTTP request pipeline.
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseExceptionHandler("/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+    }
+    app.UseHttpsRedirection();
+    /*** Adds support for controllers     ****/
+    app.MapControllers();
+    app.MapBlazorHub();
+    app.UseRouting();
+    app.UseAuthorization();
+    app.UseAuthentication();
+    /*** End code to suupport controllers ****/
+    app.UseStaticFiles();
+    app.UseAntiforgery();
+    app.MapRazorComponents<App>()
+        .AddInteractiveServerRenderMode();
+    app.Run();
+}
+```
