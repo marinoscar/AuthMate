@@ -84,7 +84,6 @@ public static void Main(string[] args)
     app.UseHttpsRedirection();
     /*** Adds support for controllers     ****/
     app.MapControllers();
-    app.MapBlazorHub();
     app.UseRouting();
     app.UseAuthorization();
     app.UseAuthentication();
