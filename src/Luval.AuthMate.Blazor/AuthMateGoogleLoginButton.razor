@@ -1,16 +1,19 @@
 ﻿@inject NavigationManager Navigation
 
-<FluentButton OnClick="@OnClickNavigate">
-    <FluentIcon Value="@(Icon.FromImageUrl("/icons/google-brands-solid.svg"))" Color="Color.Error" Slot="start" />
+<FluentButton @onclick="OnClickNavigate">
+    <FluentIcon Value="@(new AuthMateIcons.GoogleLogo())" Color="Color.Error" Slot="start" />
     @ButtonText
 </FluentButton>
 
 @code {
+    [Parameter]
     public string ButtonText { get; set; } = "Google Authenticate";
+
+    [Parameter]
     public string NavigateTo { get; set; } = "/auth/google-login";
 
-    private void OnClickNavigate()
+    private void OnClickNavigate(MouseEventArgs e)
     {
-        Navigation.NavigateTo("/target-page");
+        Navigation.NavigateTo(NavigateTo);
     }
 }

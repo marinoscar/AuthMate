@@ -8,10 +8,11 @@
     <Title>AuthMate Blazor Components</Title>
     <Copyright>Oscar Marin</Copyright>
     <PackageIcon>AuthMate.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile></PackageReadmeFile>
     <PackageProjectUrl>https://github.com/marinoscar/authmate</PackageProjectUrl>
     <RepositoryUrl>https://github.com/marinoscar/authmate</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,10 +21,6 @@
 
   <ItemGroup>
     <None Include="..\..\media\AuthMate.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
