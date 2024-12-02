@@ -72,6 +72,8 @@ CREATE TABLE "AppUser" (
     "ProviderType" VARCHAR(50) NOT NULL,
     "ProfilePictureUrl" VARCHAR(500),
     "UtcActiveUntil" TIMESTAMP,
+	"UtcLastLogin" TIMESTAMP,
+	"Timezone" VARCHAR(100),
     "Metadata" TEXT,
     "AccountId" BIGINT NOT NULL,
     "UtcCreatedOn" TIMESTAMP NOT NULL,
@@ -91,6 +93,8 @@ COMMENT ON COLUMN "AppUser"."ProviderKey" IS 'The unique key provided by the aut
 COMMENT ON COLUMN "AppUser"."ProviderType" IS 'The type of the authentication provider (e.g., Google, Microsoft, Facebook).';
 COMMENT ON COLUMN "AppUser"."ProfilePictureUrl" IS 'The URL of the user''s profile picture.';
 COMMENT ON COLUMN "AppUser"."UtcActiveUntil" IS 'Indicates the UTC date until which the user is active in the system.';
+COMMENT ON COLUMN "AppUser"."UtcLastLogin" IS 'Indicates the UTC date and time that the user was authenticated.';
+COMMENT ON COLUMN "AppUser"."Timezone" IS 'The timezone the user has to resolve UTC dates.';
 COMMENT ON COLUMN "AppUser"."Metadata" IS 'Metadata for the user, stored as a JSON object in string format.';
 COMMENT ON COLUMN "AppUser"."AccountId" IS 'The foreign key referencing the associated Account.';
 COMMENT ON COLUMN "AppUser"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
@@ -197,3 +201,30 @@ VALUES (
     CURRENT_TIMESTAMP,
     0
 );
+
+-- Drop the table if it exists
+DROP TABLE IF EXISTS "AppUserLoginHistory" CASCADE;
+
+-- Create the AppUserLoginHistory table
+CREATE TABLE "AppUserLoginHistory" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "UtcLogIn" TIMESTAMP NOT NULL,
+    "Email" VARCHAR(256) NOT NULL,
+    "DeviceOperatingSystem" VARCHAR(128) NOT NULL,
+    "IpAddress" VARCHAR(45) NOT NULL,
+    "DeviceName" VARCHAR(128) NOT NULL
+);
+
+-- Create an index on the Email column
+CREATE INDEX "IX_AppUserLoginHistory_Email" ON "AppUserLoginHistory" ("Email");
+
+-- Add comments for the table and its columns
+COMMENT ON TABLE "AppUserLoginHistory" IS 'Tracks all application user login events in the system.';
+COMMENT ON COLUMN "AppUserLoginHistory"."Id" IS 'The unique identifier for the login entry.';
+COMMENT ON COLUMN "AppUserLoginHistory"."UtcLogIn" IS 'The UTC timestamp when the login occurred.';
+COMMENT ON COLUMN "AppUserLoginHistory"."Email" IS 'The email of the user who logged in.';
+COMMENT ON COLUMN "AppUserLoginHistory"."DeviceOperatingSystem" IS 'The operating system of the device used for login.';
+COMMENT ON COLUMN "AppUserLoginHistory"."IpAddress" IS 'The IP address from which the login occurred.';
+COMMENT ON COLUMN "AppUserLoginHistory"."DeviceName" IS 'The name of the device used for login.';
+
+

@@ -45,6 +45,16 @@ namespace Luval.AuthMate
         /// </summary>
         public DbSet<PreAuthorizedAppUser> PreAuthorizedAppUsers { get; set; }
 
+        /// <summary>
+        /// Gets or sets the DbSet for AccountInvite entities
+        /// </summary>
+        public DbSet<AccountInvite> AccountInvites { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DBSet for AppUserLoginHistory entities
+        /// </summary>
+        public DbSet<AppUserLoginHistory> AppUserLoginHistories { get; set; }
+
 
         /// <summary>
         /// Configures the model and relationships between entities.
@@ -103,7 +113,7 @@ namespace Luval.AuthMate
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
 
-            // Configure AppUser entity
+            // Configure PreAuthorizedAppUser entity
             modelBuilder.Entity<PreAuthorizedAppUser>()
                 .HasKey(au => au.Id);
             modelBuilder.Entity<PreAuthorizedAppUser>()
@@ -113,6 +123,23 @@ namespace Luval.AuthMate
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<PreAuthorizedAppUser>()
                 .HasIndex(a => a.Email).IsUnique();
+
+
+            // Configure AccountInvite entity
+            modelBuilder.Entity<AccountInvite>()
+                .HasKey(au => au.Id);
+            modelBuilder.Entity<AccountInvite>()
+                .HasOne(aur => aur.Role)
+                .WithMany()
+                .HasForeignKey(aur => aur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // Configure AppUserLoginHistory entity
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .HasKey(au => au.Id);
+
+
         }
     }
 

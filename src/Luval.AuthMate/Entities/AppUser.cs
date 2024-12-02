@@ -75,6 +75,18 @@ namespace Luval.AuthMate.Entities
         public DateTime? UtcActiveUntil { get; set; }
 
         /// <summary>
+        /// Indicates the UTC date and time that the user was authenticated.
+        /// </summary>
+        [Column("UtcLastLogin")]
+        public DateTime? UtcLastLogin { get; set; }
+
+        /// <summary>
+        /// The timezone the user has to resolve UTC dates.
+        /// </summary>
+        [Column("Timezone")]
+        public string? Timezone { get; set; }
+
+        /// <summary>
         /// Metadata for the user, stored as a JSON object in string format.
         /// </summary>
         [Column("Metadata")]

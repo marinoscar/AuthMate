@@ -39,6 +39,16 @@ namespace Luval.AuthMate
         public DbSet<PreAuthorizedAppUser> PreAuthorizedAppUsers { get; set; }
 
         /// <summary>
+        /// Gets or sets the DbSet for AccountInvite entities
+        /// </summary>
+        public DbSet<AccountInvite> AccountInvites { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DBSet for AppUserLoginHistory entities
+        /// </summary>
+        public DbSet<AppUserLoginHistory> AppUserLoginHistories { get; set; }
+
+        /// <summary>
         /// Saves changes made in this context to the database.
         /// </summary>
         /// <returns>The number of state entries written to the database.</returns>
