@@ -1,0 +1,46 @@
+﻿@using Luval.AuthMate.Entities
+@using Microsoft.AspNetCore.Http
+@using System.Text.RegularExpressions
+
+@inject IHttpContextAccessor context
+
+<FluentProfileMenu Image="@_user.ProfilePictureUrl"
+HeaderLabel="Microsoft"
+Initials="@_user.GetDisplayNameInitials()"
+FullName="@_user.DisplayName"
+EMail="@_user.Email"
+FooterLink="@AccountNavigateTo"
+HeaderButton="@SignoutNavigateTo"
+PopoverStyle="min-width: 330px;" />
+
+@code {
+
+    /// <summary>
+    /// The url that will trigger the session to logout
+    /// </summary>
+    [Parameter]
+    public string SignoutNavigateTo { get; set; } = "/auth/logout";
+    /// <summary>
+    /// The page where the user profile information will be shown
+    /// </summary>
+    [Parameter]
+    public string AccountNavigateTo { get; set; } = "/profile";
+
+    private AppUser _user;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnInitialized();
+        if (_user != null) return;
+        if (context.HttpContext != null &&
+            context.HttpContext.User != null &&
+           context.HttpContext.User.Identity != null &&
+           context.HttpContext.User.Identity.IsAuthenticated)
+        {
+            _user = context.HttpContext.User.ToUser();
+
+        }
+    }
+}
+
+

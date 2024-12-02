@@ -1,0 +1,16 @@
+﻿@inject NavigationManager Navigation
+
+<FluentButton OnClick="@OnClickNavigate">
+    <FluentIcon Value="@(Icon.FromImageUrl("/icons/google-brands-solid.svg"))" Color="Color.Error" Slot="start" />
+    @ButtonText
+</FluentButton>
+
+@code {
+    public string ButtonText { get; set; } = "Google Authenticate";
+    public string NavigateTo { get; set; } = "/auth/google-login";
+
+    private void OnClickNavigate()
+    {
+        Navigation.NavigateTo("/target-page");
+    }
+}

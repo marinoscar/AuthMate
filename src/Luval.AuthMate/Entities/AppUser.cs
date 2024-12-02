@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Diagnostics.Metrics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Luval.AuthMate.Entities
 {
@@ -149,6 +150,22 @@ namespace Luval.AuthMate.Entities
                 WriteIndented = true,
                 ReferenceHandler = ReferenceHandler.IgnoreCycles
             });
+        }
+
+        /// <summary>
+        /// Gets the initials for the display name
+        /// </summary>
+        /// <returns>The initials or an empty string</returns>
+        public string GetDisplayNameInitials()
+        {
+            if(string.IsNullOrWhiteSpace(DisplayName)) return string.Empty;
+            string pattern = @"\S+";
+            // Use Regex.Matches to find all matches
+            var matches = Regex.Matches(DisplayName, pattern);
+            if(matches == null || matches.Count < 1) return string.Empty;
+            var items = matches.Select(i => i.Value).ToList();
+            if(items.Count == 1) return items[0].Substring(0, 2).ToUpperInvariant();
+            return string.Join("", items.Take(2).Select(i => i.First().ToString().ToUpperInvariant()));
         }
     }
 
