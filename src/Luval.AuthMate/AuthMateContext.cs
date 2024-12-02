@@ -52,10 +52,16 @@ namespace Luval.AuthMate
             // Configure AccountType entity
             modelBuilder.Entity<AccountType>()
                 .HasKey(at => at.Id);
+            modelBuilder.Entity<AccountType>()
+                .HasIndex(a => a.Name).IsUnique();
 
             // Configure Account entity
             modelBuilder.Entity<Account>()
                 .HasKey(a => a.Id);
+            modelBuilder.Entity<Account>()
+                .HasIndex(a => a.Name).IsUnique();
+            modelBuilder.Entity<Account>()
+                .HasIndex(a => a.Owner).IsUnique();
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.AccountType)
                 .WithMany()
@@ -70,6 +76,8 @@ namespace Luval.AuthMate
                 .WithMany()
                 .HasForeignKey(au => au.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<AppUser>()
+                .HasIndex(a => a.Email).IsUnique();
 
             // Configure AppUserRole entity
             modelBuilder.Entity<AppUserRole>()

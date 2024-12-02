@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS "AccountType" CASCADE;
 -- Create the table
 CREATE TABLE "AccountType" (
     "Id" BIGSERIAL PRIMARY KEY,
-    "Name" VARCHAR(100) NOT NULL,
+    "Name" VARCHAR(100) NOT NULL UNIQUE,
     "UtcCreatedOn" TIMESTAMP NOT NULL DEFAULT NOW(),
     "CreatedBy" VARCHAR NULL,
     "UtcUpdatedOn" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -35,8 +35,8 @@ DROP TABLE IF EXISTS "Account" CASCADE;
 CREATE TABLE "Account" (
     "Id" BIGSERIAL PRIMARY KEY,
     "AccountTypeId" BIGINT NOT NULL,
-    "Owner" VARCHAR(255) NOT NULL,
-    "Name" VARCHAR NULL,
+    "Owner" VARCHAR(255) NOT NULL UNIQUE,
+    "Name" VARCHAR NULL UNIQUE,
     "Description" TEXT NULL,
     "UtcCreatedOn" TIMESTAMP NOT NULL,
     "CreatedBy" VARCHAR NULL,
@@ -67,7 +67,7 @@ DROP TABLE IF EXISTS "AppUser" CASCADE;
 CREATE TABLE "AppUser" (
     "Id" BIGSERIAL PRIMARY KEY,
     "DisplayName" VARCHAR(255),
-    "Email" VARCHAR(255) NOT NULL,
+    "Email" VARCHAR(255) NOT NULL UNIQUE,
     "ProviderKey" VARCHAR(255) NOT NULL,
     "ProviderType" VARCHAR(50) NOT NULL,
     "ProfilePictureUrl" VARCHAR(500),
@@ -105,7 +105,7 @@ DROP TABLE IF EXISTS "Role" CASCADE;
 -- Create the table
 CREATE TABLE "Role" (
     "Id" BIGSERIAL PRIMARY KEY,
-    "Name" VARCHAR(100) NOT NULL,
+    "Name" VARCHAR(100) NOT NULL UNIQUE,
     "Description" VARCHAR(500),
     "UtcCreatedOn" TIMESTAMP NOT NULL DEFAULT NOW(),
     "CreatedBy" VARCHAR NULL,
