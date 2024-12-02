@@ -128,6 +128,9 @@ namespace Luval.AuthMate.Entities
         [Column("Version")]
         public uint Version { get; set; }
 
+        [NotMapped]
+        public IList<AppUserRole> UserRoles { get; set; } = new List<AppUserRole>();
+
         #endregion
 
         /// <summary>

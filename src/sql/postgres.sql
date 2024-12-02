@@ -160,3 +160,31 @@ COMMENT ON COLUMN "AppUserRole"."CreatedBy" IS 'The user who created the record.
 COMMENT ON COLUMN "AppUserRole"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
 COMMENT ON COLUMN "AppUserRole"."UpdatedBy" IS 'The user who last updated the record.';
 COMMENT ON COLUMN "AppUserRole"."Version" IS 'The version of the record, incremented on updates.';
+
+-- Drop the table if it exists
+DROP TABLE IF EXISTS "PreAuthorizedAppUser" CASCADE;
+
+-- Create the table
+CREATE TABLE "PreAuthorizedAppUser" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "Email" VARCHAR(255) NOT NULL UNIQUE,
+    "AccountTypeId" BIGINT NOT NULL,
+    "UtcCreatedOn" TIMESTAMP NOT NULL,
+    "CreatedBy" VARCHAR NULL,
+    "UtcUpdatedOn" TIMESTAMP NOT NULL,
+    "UpdatedBy" VARCHAR NULL,
+    "Version" INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT fk_accounttype FOREIGN KEY ("AccountTypeId") REFERENCES "AccountType" ("Id") ON DELETE CASCADE
+);
+
+-- Add comments for the table and columns
+COMMENT ON TABLE "PreAuthorizedAppUser" IS 'Represents a pre-authorized user who has the ability to create an account in the system.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."Id" IS 'The unique identifier for the pre-authorized user.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."Email" IS 'The email address of the pre-authorized user.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."AccountTypeId" IS 'The foreign key referencing the AccountType entity.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."CreatedBy" IS 'The user who created the record.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."UpdatedBy" IS 'The user who last updated the record.';
+COMMENT ON COLUMN "PreAuthorizedAppUser"."Version" IS 'The version of the record, incremented on updates.';
+

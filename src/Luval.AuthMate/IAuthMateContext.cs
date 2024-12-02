@@ -34,6 +34,11 @@ namespace Luval.AuthMate
         DbSet<Role> Roles { get; }
 
         /// <summary>
+        /// Gets or sets the DbSet for PreAuthorizedAppUser entities.
+        /// </summary>
+        public DbSet<PreAuthorizedAppUser> PreAuthorizedAppUsers { get; set; }
+
+        /// <summary>
         /// Saves changes made in this context to the database.
         /// </summary>
         /// <returns>The number of state entries written to the database.</returns>

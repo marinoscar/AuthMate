@@ -13,7 +13,7 @@ namespace Luval.AuthMate
     /// <summary>
     /// Represents the EntityFramework DbContext for managing the authentication-related entities in the system.
     /// </summary>
-    public class AuthMateContext : DbContext
+    public class AuthMateContext : DbContext, IAuthMateContext
     {
         /// <summary>
         /// Gets or sets the DbSet for AccountType entities.
@@ -40,7 +40,12 @@ namespace Luval.AuthMate
         /// </summary>
         public DbSet<Role> Roles { get; set; }
 
-        
+        /// <summary>
+        /// Gets or sets the DbSet for PreAuthorizedAppUser entities.
+        /// </summary>
+        public DbSet<PreAuthorizedAppUser> PreAuthorizedAppUsers { get; set; }
+
+
         /// <summary>
         /// Configures the model and relationships between entities.
         /// </summary>
@@ -78,6 +83,7 @@ namespace Luval.AuthMate
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<AppUser>()
                 .HasIndex(a => a.Email).IsUnique();
+            
 
             // Configure AppUserRole entity
             modelBuilder.Entity<AppUserRole>()
@@ -96,6 +102,17 @@ namespace Luval.AuthMate
             // Configure Role entity
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
+
+            // Configure AppUser entity
+            modelBuilder.Entity<PreAuthorizedAppUser>()
+                .HasKey(au => au.Id);
+            modelBuilder.Entity<PreAuthorizedAppUser>()
+                .HasOne(au => au.AccountType)
+                .WithMany()
+                .HasForeignKey(au => au.AccountTypeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<PreAuthorizedAppUser>()
+                .HasIndex(a => a.Email).IsUnique();
         }
     }
 

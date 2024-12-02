@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Luval.AuthMate
@@ -27,6 +28,10 @@ namespace Luval.AuthMate
         /// <returns>An <see cref="AppUser"/> populated with data from the claims.</returns>
         public static AppUser ToUser(this ClaimsIdentity identity)
         {
+            if (!string.IsNullOrWhiteSpace(identity.GetValue("AppUserJson")))
+            {
+                return JsonSerializer.Deserialize<AppUser>(identity.GetValue("AppUserJson"));
+            }
             return new AppUser()
             {
                 ProviderType = identity.GetValue("AppUserProviderType"),
@@ -49,6 +54,5 @@ namespace Luval.AuthMate
             if (!c.HasClaim(i => i.Type == type)) return null;
             return c.Claims.First(i => i.Type == type).Value;
         }
-
     }
 }

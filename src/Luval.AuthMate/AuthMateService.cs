@@ -202,11 +202,27 @@ namespace Luval.AuthMate
         /// <returns>The user entity.</returns>
         public async Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
+            var user = await TryGetUserByEmailAsync(email, cancellationToken);
+
+            if (user == null) throw new InvalidOperationException($"User with email '{email}' not found.");
+
+            return user;
+        }
+
+        /// <summary>
+        /// Retrieves a user by their email. if no user is found returns null
+        /// </summary>
+        /// <param name="email">The email of the user.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The user entity if found, otherwise returns null</returns>
+        public async Task<AppUser> TryGetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
             var user = await _context.AppUsers
                 .Include(u => u.Account)
                 .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            if (user != null)
+                user.UserRoles = await _context.AppUserRoles.Include(i => i.Role).Where(i => i.AppUserId == user.Id).ToListAsync(cancellationToken);
 
-            if (user == null) throw new InvalidOperationException($"User with email '{email}' not found.");
             return user;
         }
 
@@ -214,14 +230,14 @@ namespace Luval.AuthMate
         /// Registers a new admin user by creating an account and assigning the Administrator role.
         /// </summary>
         /// <param name="appUser">The instance of the AppUser to be created.</param>
-        /// <param name="accountTypeName">The name of the account type for the user's account.</param>
+        /// <param name="accountType">The name of the <see cref="AccountType"/> for the user's account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created AppUser entity.</returns>
-        public async Task<AppUser> RegisterAdminUserAsync(AppUser appUser, string accountTypeName, CancellationToken cancellationToken = default)
+        public async Task<AppUser> RegisterUserInAdminRoleAsync(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default)
         {
             if (appUser == null) throw new ArgumentNullException(nameof(appUser));
             if (string.IsNullOrWhiteSpace(appUser.Email)) throw new ArgumentException("Email is required for the AppUser.", nameof(appUser.Email));
-            if (string.IsNullOrWhiteSpace(accountTypeName)) throw new ArgumentException("Account type name is required.", nameof(accountTypeName));
+            if (accountType == null) throw new ArgumentException("Account type name is required.", nameof(accountType));
 
             // Create a new account for the user
             var account = new Account
@@ -229,12 +245,6 @@ namespace Luval.AuthMate
                 Name = appUser.Email,
                 Owner = appUser.Email
             };
-
-            var accountType = await _context.AccountTypes.FirstOrDefaultAsync(at => at.Name == accountTypeName, cancellationToken);
-            if (accountType == null)
-            {
-                throw new InvalidOperationException($"Account type '{accountTypeName}' not found.");
-            }
 
             account.AccountTypeId = accountType.Id;
             account.AccountType = accountType;
@@ -276,6 +286,79 @@ namespace Luval.AuthMate
 
             return appUser;
         }
+
+        /// <summary>
+        /// Retrieves a pre-authorized user by their email.
+        /// </summary>
+        /// <param name="email">The email of the pre-authorized user to retrieve.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The PreAuthorizedAppUser entity if found; otherwise, null.</returns>
+        public async Task<PreAuthorizedAppUser> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email is required.", nameof(email));
+
+            return await _context.PreAuthorizedAppUsers
+                .Include(p => p.AccountType) // Include AccountType for additional details
+                .FirstOrDefaultAsync(p => p.Email == email, cancellationToken);
+        }
+
+        /// <summary>
+        /// Handles the authorization process for a user based on their identity and associated claims.
+        /// </summary>
+        /// <param name="identity">The claims identity of the user attempting to authenticate.</param>
+        /// <param name="additionalValidation">An optional action for performing additional validation or customization of the user and claims identity.</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>The authenticated <see cref="AppUser"/> entity.</returns>
+        /// <exception cref="AuthMateException">
+        /// Thrown when:
+        /// <list type="bullet">
+        /// <item><description>The identity object is null or invalid.</description></item>
+        /// <item><description>The user's email is not valid or missing.</description></item>
+        /// <item><description>The user cannot be authenticated or pre-authorized.</description></item>
+        /// </list>
+        /// </exception>
+        /// <remarks>
+        public async Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, CancellationToken cancellationToken)
+        {
+            if (identity == null) throw new AuthMateException("Unable to retrive Identity object from the session context");
+
+            //Add information about the google provider
+            identity.AddClaim(new Claim("AppUserProviderType", "Google"));
+            //Creates an App user object
+            var contextUser = identity.ToUser();
+
+            if (string.IsNullOrWhiteSpace(contextUser.Email)) throw new AuthMateException("User does not have a valid email and it is required");
+
+            var user = default(AppUser);
+
+            //Tries to get the user from the database
+            user = await TryGetUserByEmailAsync(contextUser.Email);
+
+            var preAuthorizedUser = default(PreAuthorizedAppUser);
+
+            if (user == null)
+                preAuthorizedUser = await GetPreAuthorizedAppUserByEmailAsync(contextUser.Email, cancellationToken);
+
+            if(preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
+
+
+
+            //If the user is null and it is a power user it creates a new account
+             user = await RegisterUserInAdminRoleAsync(contextUser,
+                    preAuthorizedUser.AccountType);
+
+            if (user == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
+
+            //Adds the user complete data to a claim
+            identity.AddClaim(new Claim("AppUserJson", user.ToString()));
+
+            if (additionalValidation != null) 
+                additionalValidation(user, identity); //performs a user additional validation on the claims identity and the application user
+
+            return user;
+        }
+
 
 
     }
