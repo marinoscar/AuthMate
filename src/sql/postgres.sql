@@ -188,3 +188,12 @@ COMMENT ON COLUMN "PreAuthorizedAppUser"."UtcUpdatedOn" IS 'The UTC timestamp wh
 COMMENT ON COLUMN "PreAuthorizedAppUser"."UpdatedBy" IS 'The user who last updated the record.';
 COMMENT ON COLUMN "PreAuthorizedAppUser"."Version" IS 'The version of the record, incremented on updates.';
 
+-- Adds one user to the list
+INSERT INTO "PreAuthorizedAppUser" ("Email", "AccountTypeId", "UtcCreatedOn", "UtcUpdatedOn", "Version")
+VALUES (
+    'oscar.marin.saenz@gmail.com',
+    (SELECT "Id" FROM "AccountType" WHERE "Name" = 'Free'),
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP,
+    0
+);
