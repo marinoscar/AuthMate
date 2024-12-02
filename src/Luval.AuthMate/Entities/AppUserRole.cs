@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Luval.AuthMate.Entities
 {
@@ -14,31 +16,34 @@ namespace Luval.AuthMate.Entities
     /// Represents the relationship between a user and a role in the system.
     /// </summary>
     [Table("AppUserRole")]
-    public class AppUserRole : BaseEntity
+    public class AppUserRole
     {
         /// <summary>
         /// The unique identifier for the UserRole relationship.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("Id")]
         public ulong Id { get; set; }
 
         /// <summary>
         /// The foreign key referencing the User table.
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "AppUserId is required.")]
+        [Column("AppUserId")]
         public ulong AppUserId { get; set; }
 
         /// <summary>
         /// Navigation property for the User.
         /// </summary>
-        //[ForeignKey(nameof(AppUserId))]
+        [ForeignKey(nameof(AppUserId))]
         public AppUser User { get; set; }
 
         /// <summary>
         /// The foreign key referencing the Role table.
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "RoleId is required.")]
+        [Column("RoleId")]
         public ulong RoleId { get; set; }
 
         /// <summary>
@@ -52,27 +57,34 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// The UTC timestamp when the record was created.
         /// </summary>
+        [Required(ErrorMessage = "UtcCreatedOn is required.")]
+        [Column("UtcCreatedOn")]
         public DateTime UtcCreatedOn { get; set; }
 
         /// <summary>
         /// The user who created the record.
         /// </summary>
+        [Column("CreatedBy")]
         public string? CreatedBy { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the record was last updated.
         /// </summary>
+        [Required(ErrorMessage = "UtcUpdatedOn is required.")]
+        [Column("UtcUpdatedOn")]
         public DateTime UtcUpdatedOn { get; set; }
 
         /// <summary>
         /// The user who last updated the record.
         /// </summary>
+        [Column("UpdatedBy")]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
         /// The version of the record, incremented on updates.
         /// </summary>
         [ConcurrencyCheck]
+        [Column("Version")]
         public uint Version { get; set; }
 
         #endregion
@@ -85,6 +97,21 @@ namespace Luval.AuthMate.Entities
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// Returns a string representation of the AppUserRole object.
+        /// </summary>
+        /// <returns>A JSON-formatted string representing the object.</returns>
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
+        }
     }
+
+
 
 }

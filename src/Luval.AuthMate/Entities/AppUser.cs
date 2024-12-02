@@ -18,91 +18,114 @@ namespace Luval.AuthMate.Entities
     /// Represents a user in the system, storing authentication and profile information.
     /// </summary>
     [Table("AppUser")]
-    public class AppUser : BaseEntity
+    public class AppUser
     {
         /// <summary>
         /// The unique identifier for the User.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("Id")]
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The name of the application user
+        /// The name of the application user.
         /// </summary>
-        public string DisplayName { get; set; }
+        [MaxLength(255, ErrorMessage = "DisplayName must not exceed 255 characters.")]
+        [Column("DisplayName")]
+        public string? DisplayName { get; set; }
 
         /// <summary>
         /// The email address of the user.
         /// </summary>
-        [Required]
-        [MaxLength(255)]
-        [EmailAddress]
+        [Required(ErrorMessage = "Email is required.")]
+        [MaxLength(255, ErrorMessage = "Email must not exceed 255 characters.")]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        [Column("Email")]
         public string Email { get; set; }
 
         /// <summary>
         /// The unique key provided by the authentication provider (e.g., Google, Microsoft).
         /// </summary>
-        [Required]
-        [MaxLength(255)]
+        [Required(ErrorMessage = "ProviderKey is required.")]
+        [MaxLength(255, ErrorMessage = "ProviderKey must not exceed 255 characters.")]
+        [Column("ProviderKey")]
         public string ProviderKey { get; set; }
 
         /// <summary>
         /// The type of the authentication provider (e.g., Google, Microsoft, Facebook).
         /// </summary>
-        [Required]
-        [MaxLength(50)]
+        [Required(ErrorMessage = "ProviderType is required.")]
+        [MaxLength(50, ErrorMessage = "ProviderType must not exceed 50 characters.")]
+        [Column("ProviderType")]
         public string ProviderType { get; set; }
 
         /// <summary>
         /// The URL of the user's profile picture.
         /// </summary>
-        [MaxLength(500)]
-        public string ProfilePictureUrl { get; set; }
+        [MaxLength(500, ErrorMessage = "ProfilePictureUrl must not exceed 500 characters.")]
+        [Column("ProfilePictureUrl")]
+        public string? ProfilePictureUrl { get; set; }
 
         /// <summary>
-        /// Indicates the UTC data in which the user is active in the system
+        /// Indicates the UTC date until which the user is active in the system.
         /// </summary>
+        [Column("UtcActiveUntil")]
         public DateTime? UtcActiveUntil { get; set; }
 
         /// <summary>
         /// Metadata for the user, stored as a JSON object in string format.
         /// </summary>
+        [Column("Metadata")]
         public string? Metadata { get; set; }
+
+        /// <summary>
+        /// The foreign key referencing the associated Account.
+        /// </summary>
+        [Required(ErrorMessage = "AccountId is required.")]
+        [Column("AccountId")]
+        public ulong AccountId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the associated Account.
+        /// </summary>
+        [ForeignKey(nameof(AccountId))]
+        public Account Account { get; set; }
 
         #region Control Fields
 
         /// <summary>
         /// The UTC timestamp when the record was created.
         /// </summary>
+        [Required(ErrorMessage = "UtcCreatedOn is required.")]
+        [Column("UtcCreatedOn")]
         public DateTime UtcCreatedOn { get; set; }
 
         /// <summary>
         /// The user who created the record.
         /// </summary>
+        [Column("CreatedBy")]
         public string? CreatedBy { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the record was last updated.
         /// </summary>
+        [Required(ErrorMessage = "UtcUpdatedOn is required.")]
+        [Column("UtcUpdatedOn")]
         public DateTime UtcUpdatedOn { get; set; }
 
         /// <summary>
         /// The user who last updated the record.
         /// </summary>
+        [Column("UpdatedBy")]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
         /// The version of the record, incremented on updates.
         /// </summary>
         [ConcurrencyCheck]
+        [Column("Version")]
         public uint Version { get; set; }
-
-        [NotMapped]
-        public List<AppUserRole> UserRoles { get; set; } = new List<AppUserRole>();
-
-        [NotMapped]
-        public List<AppUserInAccount> UserInAccounts { get; set; } = new List<AppUserInAccount> { };
 
         #endregion
 
@@ -116,50 +139,18 @@ namespace Luval.AuthMate.Entities
         }
 
         /// <summary>
-        /// Indicates if the user has a role assigned
+        /// Returns a string representation of the AppUser object.
         /// </summary>
-        /// <param name="roleName">The name of the role</param>
-        public bool HasRole(string roleName)
-        {
-            return UserRoles != null && UserRoles.Any(i => i.Role != null && i.Role.Name.ToLowerInvariant() == roleName.ToLowerInvariant());
-        }
-
-        /// <summary>
-        /// Updates the claims in the specified <see cref="ClaimsIdentity"/> instance with information from the current <see cref="AppUser"/>.
-        /// </summary>
-        /// <param name="identity">The <see cref="ClaimsIdentity"/> instance to update with claims.</param>
-        /// <param name="providerType">The type of the authentication provider (e.g., Google, Microsoft).</param>
-        /// <remarks>
-        /// This method adds claims such as the user's JSON representation, provider type, user ID, active until date,
-        /// roles, and the associated account ID, if applicable.
-        /// </remarks>
-        public void UpdateClaims(ClaimsIdentity identity, string providerType)
-        {
-            var activeDate = UtcActiveUntil ?? DateTime.UtcNow.AddYears(5);
-            identity.AddClaim(new Claim("AppUserJson", ToString()));
-            identity.AddClaim(new Claim("AppUserProviderType", providerType));
-            identity.AddClaim(new Claim("AppUserId", Id.ToString()));
-            identity.AddClaim(new Claim("AppUserUtcActiveUntil", activeDate.ToString("u")));
-
-            foreach (var role in UserRoles)
-            {
-                if (role != null && role.Role != null)
-                    identity.AddClaim(new Claim(ClaimTypes.Role, role.Role.Name));
-            }
-
-            var account = UserInAccounts.FirstOrDefault();
-            if (account != null)
-                identity.AddClaim(new Claim("AppUserAccountId", UserInAccounts.First().AccountId.ToString()));
-        }
-
+        /// <returns>A JSON-formatted string representing the object.</returns>
         public override string ToString()
         {
-            var json =  JsonSerializer.Serialize(this,
-                new JsonSerializerOptions()
-                { WriteIndented = true, ReferenceHandler = ReferenceHandler.IgnoreCycles });
-            return json.ToString();
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
         }
-
     }
+
 
 }

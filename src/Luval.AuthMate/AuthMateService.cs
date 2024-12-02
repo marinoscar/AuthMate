@@ -11,281 +11,274 @@ using System.Threading.Tasks;
 namespace Luval.AuthMate
 {
     /// <summary>
-    /// Provides methods to manage accounts, roles, and users in an authentication service.
+    /// Service for managing authentication-related operations in the system.
     /// </summary>
     public class AuthMateService : IAuthMateService
     {
-        private readonly IAuthMateContext _authMateContext;
-        private readonly string _defaultAccountType;
-        private readonly string _defaultAdministratorRole;
+        private readonly IAuthMateContext _context;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthMateService"/> class.
         /// </summary>
-        /// <param name="authMateContext">The database context for AuthMate.</param>
-        /// <param name="defaultAcountTypeName">The default account type name.</param>
-        /// <param name="defaultAdministratorRole">The default administrator role name.</param>
-        public AuthMateService(IAuthMateContext authMateContext, string defaultAcountTypeName, string defaultAdministratorRole)
+        /// <param name="context">The database context interface to be used for database operations.</param>
+        public AuthMateService(IAuthMateContext context)
         {
-            _authMateContext = authMateContext;
-            _defaultAccountType = defaultAcountTypeName;
-            _defaultAdministratorRole = defaultAdministratorRole;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        #region Account Management
-
         /// <summary>
-        /// Creates a new account type if it does not exist.
+        /// Creates a new account type.
         /// </summary>
         /// <param name="name">The name of the account type.</param>
-        /// <param name="user">The user creating the account type.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The created or existing account type.</returns>
-        public async Task<AccountType> CreateAccountTypeAsync(string name, AppUser user, CancellationToken cancellationToken = default)
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created account type entity.</returns>
+        public async Task<AccountType> CreateAccountTypeAsync(string name, CancellationToken cancellationToken = default)
         {
-            var accountType = await _authMateContext.AccountTypes.FirstOrDefaultAsync(x => x.Name == name);
-            if (accountType == null)
-            {
-                accountType = _authMateContext.AccountTypes.Add(new AccountType()
-                { Name = name, Version = 1, CreatedBy = user.Email, UpdatedBy = user.Email }).Entity;
-                await _authMateContext.SaveChangesAsync(cancellationToken);
-            }
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Account type name is required.", nameof(name));
 
+            var accountType = new AccountType { Name = name };
+            await _context.AccountTypes.AddAsync(accountType, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
             return accountType;
         }
 
+
         /// <summary>
-        /// Creates a new account for the specified user if it does not exist.
+        /// Creates a new account.
         /// </summary>
-        /// <param name="user">The user for whom the account is created.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The created or existing account.</returns>
-        public async Task<Account> CreateAccountAsync(AppUser user, CancellationToken cancellationToken = default)
+        /// <param name="name">The name of the account.</param>
+        /// <param name="accountTypeName">The name of the account type.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created account entity.</returns>
+        public async Task<Account> CreateAccountAsync(string name, string accountTypeName, CancellationToken cancellationToken = default)
         {
-            var account = await GetAccountAsync(user.Email, cancellationToken);
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name is required.", nameof(name));
+            if (string.IsNullOrWhiteSpace(accountTypeName)) throw new ArgumentException("Account type name is required.", nameof(accountTypeName));
+
+            var accountType = await _context.AccountTypes.FirstOrDefaultAsync(at => at.Name == accountTypeName, cancellationToken);
+            if (accountType == null) throw new InvalidOperationException($"Account type '{accountTypeName}' not found.");
+
+            var account = new Account { Name = name, AccountTypeId = accountType.Id };
+            await _context.Accounts.AddAsync(account, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return account;
+        }
+
+        /// <summary>
+        /// Creates a new app user and associates it with an existing account.
+        /// </summary>
+        /// <param name="appUser">The app user entity to be created.</param>
+        /// <param name="owner">The owner to retrieve the account for association.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created app user entity.</returns>
+        public async Task<AppUser> CreateAppUserAsync(AppUser appUser, string owner, CancellationToken cancellationToken = default)
+        {
+            if (appUser == null) throw new ArgumentNullException(nameof(appUser));
+            if (string.IsNullOrWhiteSpace(owner)) throw new ArgumentException("Owner is required to find the account.", nameof(owner));
+
+            // Retrieve the account for the given owner
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Owner == owner, cancellationToken);
             if (account == null)
-            {
-                account = _authMateContext.Accounts.Add(new Account()
-                {
-                    Owner = user.Email,
-                    CreatedBy = user.Email,
-                    UpdatedBy = user.Email
-                }).Entity;
-                await _authMateContext.SaveChangesAsync(cancellationToken);
-            }
-            return account;
+                throw new InvalidOperationException($"No account found for the owner '{owner}'.");
+
+            // Associate the user with the account
+            appUser.AccountId = account.Id;
+            appUser.Account = account;
+
+            // Add and save the new AppUser entity
+            await _context.AppUsers.AddAsync(appUser, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return appUser;
         }
 
+
         /// <summary>
-        /// Retrieves an account based on the owner's email.
+        /// Updates an app user.
         /// </summary>
-        /// <param name="owner">The owner's email.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The account if found; otherwise, null.</returns>
-        public async Task<Account> GetAccountAsync(string owner, CancellationToken cancellationToken = default)
+        /// <param name="appUser">The updated app user entity.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated app user entity.</returns>
+        public async Task<AppUser> UpdateAppUserAsync(AppUser appUser, CancellationToken cancellationToken = default)
         {
-            var account = await _authMateContext.Accounts.SingleOrDefaultAsync(x => x.Owner == owner, cancellationToken);
-            if (account != null)
-            {
-                var accountType = await _authMateContext.AccountTypes.SingleOrDefaultAsync(x => x.Id == account.AccountTypeId, cancellationToken);
-                account.AccountType = accountType;
-            }
-            return account;
+            if (appUser == null) throw new ArgumentNullException(nameof(appUser));
+            _context.AppUsers.Update(appUser);
+            await _context.SaveChangesAsync(cancellationToken);
+            return appUser;
         }
 
         /// <summary>
-        /// Adds a user to an account if they are not already associated with it.
+        /// Creates a role.
         /// </summary>
-        /// <param name="user">The user to add to the account.</param>
-        /// <param name="ownerEmail">The email of the account owner.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The <see cref="AppUserInAccount"/> entity representing the user's association with the account.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if the account associated with the ownerEmail is not found.</exception>
-        public async Task<AppUserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default)
-        {
-            var account = await _authMateContext.Accounts.SingleAsync(x => x.Owner == ownerEmail, cancellationToken);
-            var userInAccount = await _authMateContext.UserInAccounts.SingleOrDefaultAsync(x => x.AppUserId == user.Id && x.AccountId == account.Id, cancellationToken);
-
-            if (userInAccount == null)
-            {
-                userInAccount = _authMateContext.UserInAccounts.Add(new AppUserInAccount()
-                {
-                    CreatedBy = ownerEmail,
-                    UpdatedBy = ownerEmail,
-                    AppUserId = user.Id,
-                    AccountId = account.Id
-                }).Entity;
-                await _authMateContext.SaveChangesAsync(cancellationToken);
-            }
-            return userInAccount;
-        }
-
-        #endregion
-
-        #region Role Management
-
-        /// <summary>
-        /// Creates a new role if it does not exist.
-        /// </summary>
-        /// <param name="roleName">The name of the role.</param>
+        /// <param name="name">The name of the role.</param>
         /// <param name="description">The description of the role.</param>
-        /// <param name="user">The user creating the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The created or existing role.</returns>
-        public async Task<Role> CreatRoleAsync(string roleName, string description, AppUser user, CancellationToken cancellationToken = default)
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created role entity.</returns>
+        public async Task<Role> CreateRoleAsync(string name, string description, CancellationToken cancellationToken = default)
         {
-            var role = await GetRoleByNameAsync(roleName, cancellationToken);
-            if (role == null)
-            {
-                _authMateContext.Roles.Add(new Role
-                {
-                    Name = roleName,
-                    CreatedBy = user.Email,
-                    Description = description,
-                    UpdatedBy = user.Email
-                });
-                await _authMateContext.SaveChangesAsync(cancellationToken);
-            }
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Role name is required.", nameof(name));
+
+            var role = new Role { Name = name, Description = description };
+            await _context.Roles.AddAsync(role, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
             return role;
         }
 
         /// <summary>
-        /// Retrieves a role based on its name.
+        /// Updates a role.
         /// </summary>
-        /// <param name="roleName">The name of the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The role if found; otherwise, null.</returns>
-        public async Task<Role> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken) =>
-            await _authMateContext.Roles.SingleOrDefaultAsync(x => x.Name == roleName, cancellationToken);
-
-        /// <summary>
-        /// Deletes a role based on its name.
-        /// </summary>
-        /// <param name="roleName">The name of the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <exception cref="ArgumentException">Thrown if the role does not exist.</exception>
-        public async Task DeleteRoleAsync(string roleName, CancellationToken cancellationToken = default)
+        /// <param name="role">The updated role entity.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated role entity.</returns>
+        public async Task<Role> UpdateRoleAsync(Role role, CancellationToken cancellationToken = default)
         {
-            var role = await _authMateContext.Roles.SingleOrDefaultAsync(x => x.Name == roleName, cancellationToken);
-            if (role == null) throw new ArgumentException("The provided role name is not in the database", nameof(roleName));
-            _authMateContext.Roles.Remove(role);
-            await _authMateContext.SaveChangesAsync(cancellationToken);
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            _context.Roles.Update(role);
+            await _context.SaveChangesAsync(cancellationToken);
+            return role;
         }
 
         /// <summary>
-        /// Adds a user to a specific role if they are not already assigned to it.
+        /// Deletes a role.
         /// </summary>
-        /// <param name="userEmail">The email of the user to assign the role.</param>
-        /// <param name="roleName">The name of the role to assign.</param>
-        /// <param name="ownerEmail">The email of the account owner performing the action.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The <see cref="AppUserRole"/> entity representing the user's role assignment.</returns>
-        public async Task<AppUserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default)
+        /// <param name="roleId">The ID of the role to delete.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task DeleteRoleAsync(ulong roleId, CancellationToken cancellationToken = default)
         {
-            var user = await GetUserByEmailAsync(userEmail, cancellationToken);
-            var role = await GetRoleByNameAsync(roleName, cancellationToken);
+            var role = await _context.Roles.FindAsync(new object[] { roleId }, cancellationToken);
+            if (role == null) throw new InvalidOperationException($"Role with ID '{roleId}' not found.");
 
-            var userRole = await _authMateContext.UserRoles.SingleOrDefaultAsync(i => i.AppUserId == user.Id && i.RoleId == role.Id, cancellationToken);
-            if (userRole == null)
-            {
-                userRole = _authMateContext.UserRoles.Add(new AppUserRole()
-                {
-                    AppUserId = user.Id,
-                    RoleId = role.Id,
-                    CreatedBy = ownerEmail,
-                    UpdatedBy = ownerEmail
-                }).Entity;
-
-                await _authMateContext.SaveChangesAsync(cancellationToken);
-            }
-            return userRole;
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Adds a user to a role.
+        /// </summary>
+        /// <param name="userEmail">The email of the user.</param>
+        /// <param name="roleName">The name of the role.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task AddUserToRoleAsync(string userEmail, string roleName, CancellationToken cancellationToken = default)
+        {
+            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == userEmail, cancellationToken);
+            if (user == null) throw new InvalidOperationException($"User with email '{userEmail}' not found.");
 
-        #endregion
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName, cancellationToken);
+            if (role == null) throw new InvalidOperationException($"Role '{roleName}' not found.");
 
-        #region User Management
+            var userRole = new AppUserRole { AppUserId = user.Id, RoleId = role.Id };
+            await _context.AppUserRoles.AddAsync(userRole, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
 
         /// <summary>
-        /// Retrieves a user by their email address.
+        /// Removes a user from a role.
         /// </summary>
-        /// <param name="email">The user's email address.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The user if found; otherwise, null.</returns>
+        /// <param name="userEmail">The email of the user.</param>
+        /// <param name="roleName">The name of the role.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task RemoveUserFromRoleAsync(string userEmail, string roleName, CancellationToken cancellationToken = default)
+        {
+            var userRole = await _context.AppUserRoles
+                .Include(aur => aur.User)
+                .Include(aur => aur.Role)
+                .FirstOrDefaultAsync(aur => aur.User.Email == userEmail && aur.Role.Name == roleName, cancellationToken);
+
+            if (userRole == null) throw new InvalidOperationException($"No relationship found between user '{userEmail}' and role '{roleName}'.");
+
+            _context.AppUserRoles.Remove(userRole);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Retrieves a user by their email.
+        /// </summary>
+        /// <param name="email">The email of the user.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The user entity.</returns>
         public async Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            var user = await _authMateContext.Users.SingleOrDefaultAsync(i => i.Email == email, cancellationToken);
-            if (user == null) return null;
-            user.UserRoles = _authMateContext.UserRoles.Where(i => i.AppUserId == user.Id).Include(i => i.Role).ToList();
-            user.UserInAccounts = _authMateContext.UserInAccounts.Where(i => i.AppUserId == user.Id).Include(i => i.Account).ToList();
+            var user = await _context.AppUsers
+                .Include(u => u.Account)
+                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
+            if (user == null) throw new InvalidOperationException($"User with email '{email}' not found.");
             return user;
         }
 
         /// <summary>
-        /// Creates a new user as an administrator.
+        /// Registers a new admin user by creating an account and assigning the Administrator role.
         /// </summary>
-        /// <param name="newUser">The new user to create.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The created user.</returns>
-        public async Task<AppUser> CreateUserAsAdminAsync(AppUser newUser, CancellationToken cancellationToken = default)
+        /// <param name="appUser">The instance of the AppUser to be created.</param>
+        /// <param name="accountTypeName">The name of the account type for the user's account.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created AppUser entity.</returns>
+        public async Task<AppUser> RegisterAdminUserAsync(AppUser appUser, string accountTypeName, CancellationToken cancellationToken = default)
         {
-            var account = await _authMateContext.Accounts.SingleOrDefaultAsync(x => x.Owner == newUser.Email, cancellationToken);
-            if (account == null)
+            if (appUser == null) throw new ArgumentNullException(nameof(appUser));
+            if (string.IsNullOrWhiteSpace(appUser.Email)) throw new ArgumentException("Email is required for the AppUser.", nameof(appUser.Email));
+            if (string.IsNullOrWhiteSpace(accountTypeName)) throw new ArgumentException("Account type name is required.", nameof(accountTypeName));
+
+            // Create a new account for the user
+            var account = new Account
             {
-                var accountType = await _authMateContext.AccountTypes.SingleOrDefaultAsync(x => x.Name == _defaultAccountType);
-                account = _authMateContext.Accounts.Add(new Account()
+                Name = appUser.Email,
+                Owner = appUser.Email
+            };
+
+            var accountType = await _context.AccountTypes.FirstOrDefaultAsync(at => at.Name == accountTypeName, cancellationToken);
+            if (accountType == null)
+            {
+                throw new InvalidOperationException($"Account type '{accountTypeName}' not found.");
+            }
+
+            account.AccountTypeId = accountType.Id;
+            account.AccountType = accountType;
+
+            await _context.Accounts.AddAsync(account, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Assign the account to the user
+            appUser.AccountId = account.Id;
+            appUser.Account = account;
+
+            await _context.AppUsers.AddAsync(appUser, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Check if the Administrator role exists
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Administrator", cancellationToken);
+            if (adminRole == null)
+            {
+                // Create the Administrator role if it doesn't exist
+                adminRole = new Role
                 {
-                    Owner = newUser.Email,
-                    CreatedBy = newUser.Email,
-                    UpdatedBy = newUser.Email,
-                    AccountTypeId = accountType.Id,
-                    AccountType = accountType,
-                }).Entity;
+                    Name = "Administrator",
+                    Description = "Administrator role with full permissions."
+                };
+                await _context.Roles.AddAsync(adminRole, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
             }
-            var user = await _authMateContext.Users.SingleOrDefaultAsync(i => i.Email == newUser.Email, cancellationToken);
-            if (user == null)
+
+            // Assign the Administrator role to the user
+            var userRole = new AppUserRole
             {
-                newUser.UtcCreatedOn = DateTime.UtcNow;
-                newUser.UtcUpdatedOn = DateTime.UtcNow;
-                newUser.CreatedBy = newUser.Email;
-                newUser.UpdatedBy = newUser.Email;
-                user = _authMateContext.Users.Add(newUser).Entity;
-            }
-            await _authMateContext.SaveChangesAsync();
+                AppUserId = appUser.Id,
+                RoleId = adminRole.Id,
+                User = appUser,
+                Role = adminRole
+            };
+            await _context.AppUserRoles.AddAsync(userRole, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
-            await AddUserToRoleAsync(user.Email, _defaultAdministratorRole, user.Email, cancellationToken);
-            await AddUserToAccountAsync(user, user.Email);
-
-            return newUser;
+            return appUser;
         }
 
-        public async Task OnUserAuthorizedAsync(ClaimsIdentity contextUser, string providerType, Func<ClaimsIdentity> authorizeUser)
-        {
-            var user = default(AppUser);
 
-            if(contextUser.HasClaim(i => i.Type == "AppUserJson"))
-            {
-                user = JsonSerializer.Deserialize<AppUser>(contextUser.GetValue("AppUserJson"));
-                user.UpdateClaims(contextUser, providerType);
-                return;
-            }
-
-            user = await GetUserByEmailAsync(contextUser.GetValue(ClaimTypes.Email));
-            if (user == null)
-            {
-                user = await CreateUserAsAdminAsync(contextUser.ToUser());
-                user.UpdateClaims(contextUser, providerType);
-            }
-            else
-                user.UpdateClaims(contextUser, providerType);
-
-            if (authorizeUser != null) authorizeUser();
-            return;
-
-        }
-
-        #endregion
     }
+
 
 }

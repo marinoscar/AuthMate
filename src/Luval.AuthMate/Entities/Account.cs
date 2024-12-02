@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Luval.AuthMate.Entities
 {
@@ -15,19 +17,21 @@ namespace Luval.AuthMate.Entities
     /// Represents an account in the system, with a reference to its type and owner information.
     /// </summary>
     [Table("Account")]
-    public class Account : BaseEntity
+    public class Account
     {
         /// <summary>
         /// The unique identifier for the Account.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("Id")]
         public ulong Id { get; set; }
 
         /// <summary>
         /// The foreign key referencing the Account Type.
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "AccountTypeId is required.")]
+        [Column("AccountTypeId")]
         public ulong AccountTypeId { get; set; }
 
         /// <summary>
@@ -39,36 +43,57 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// The owner of the account (typically the user who created it).
         /// </summary>
-        [Required]
-        [MaxLength(255)]
+        [Required(ErrorMessage = "Owner is required.")]
+        [MaxLength(255, ErrorMessage = "Owner must not exceed 255 characters.")]
+        [MinLength(1, ErrorMessage = "Owner must be at least 1 character long.")]
+        [Column("Owner")]
         public string Owner { get; set; }
+
+        /// <summary>
+        /// The name of the account.
+        /// </summary>
+        [Column("Name")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// A description of the account.
+        /// </summary>
+        [Column("Description")]
+        public string? Description { get; set; }
 
         #region Control Fields
 
         /// <summary>
         /// The UTC timestamp when the record was created.
         /// </summary>
+        [Required(ErrorMessage = "UtcCreatedOn is required.")]
+        [Column("UtcCreatedOn")]
         public DateTime UtcCreatedOn { get; set; }
 
         /// <summary>
         /// The user who created the record.
         /// </summary>
+        [Column("CreatedBy")]
         public string? CreatedBy { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the record was last updated.
         /// </summary>
+        [Required(ErrorMessage = "UtcUpdatedOn is required.")]
+        [Column("UtcUpdatedOn")]
         public DateTime UtcUpdatedOn { get; set; }
 
         /// <summary>
         /// The user who last updated the record.
         /// </summary>
+        [Column("UpdatedBy")]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
         /// The version of the record, incremented on updates.
         /// </summary>
         [ConcurrencyCheck]
+        [Column("Version")]
         public uint Version { get; set; }
 
         #endregion
@@ -81,6 +106,20 @@ namespace Luval.AuthMate.Entities
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// Returns a string representation of the Account object.
+        /// </summary>
+        /// <returns>A JSON-formatted string representing the object.</returns>
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
+        }
     }
+
 
 }

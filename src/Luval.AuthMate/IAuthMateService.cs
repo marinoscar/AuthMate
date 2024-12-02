@@ -2,97 +2,105 @@
 
 namespace Luval.AuthMate
 {
+
     /// <summary>
-    /// Defines methods for managing accounts, roles, and users in the authentication service.
+    /// Interface for managing authentication-related operations in the system.
     /// </summary>
     public interface IAuthMateService
     {
         /// <summary>
-        /// Adds a user to an account if they are not already associated with it.
-        /// </summary>
-        /// <param name="user">The user to add to the account.</param>
-        /// <param name="ownerEmail">The email of the account owner.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUserInAccount"/> entity.</returns>
-        Task<AppUserInAccount> AddUserToAccountAsync(AppUser user, string ownerEmail, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Adds a user to a specific role if they are not already assigned to it.
-        /// </summary>
-        /// <param name="userEmail">The email of the user to assign the role.</param>
-        /// <param name="roleName">The name of the role to assign.</param>
-        /// <param name="ownerEmail">The email of the account owner performing the action.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUserRole"/> entity.</returns>
-        Task<AppUserRole> AddUserToRoleAsync(string userEmail, string roleName, string ownerEmail, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Creates a new account for the specified user if it does not exist.
-        /// </summary>
-        /// <param name="user">The user for whom the account is created.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Account"/> entity.</returns>
-        Task<Account> CreateAccountAsync(AppUser user, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Creates a new account type if it does not exist.
+        /// Creates a new account type.
         /// </summary>
         /// <param name="name">The name of the account type.</param>
-        /// <param name="user">The user creating the account type.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AccountType"/> entity.</returns>
-        Task<AccountType> CreateAccountTypeAsync(string name, AppUser user, CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created account type entity.</returns>
+        Task<AccountType> CreateAccountTypeAsync(string name, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates a new user as an administrator.
+        /// Creates a new account.
         /// </summary>
-        /// <param name="newUser">The new user to create.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUser"/> entity.</returns>
-        Task<AppUser> CreateUserAsAdminAsync(AppUser newUser, CancellationToken cancellationToken);
+        /// <param name="name">The name of the account.</param>
+        /// <param name="accountTypeName">The name of the account type.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created account entity.</returns>
+        Task<Account> CreateAccountAsync(string name, string accountTypeName, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates a new role if it does not exist.
+        /// Creates a new app user and associates it with an existing account.
         /// </summary>
-        /// <param name="roleName">The name of the role.</param>
+        /// <param name="appUser">The app user entity to be created.</param>
+        /// <param name="owner">The owner to retrieve the account for association.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created app user entity.</returns>
+        Task<AppUser> CreateAppUserAsync(AppUser appUser, string owner, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Updates an app user.
+        /// </summary>
+        /// <param name="appUser">The updated app user entity.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated app user entity.</returns>
+        Task<AppUser> UpdateAppUserAsync(AppUser appUser, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Creates a role.
+        /// </summary>
+        /// <param name="name">The name of the role.</param>
         /// <param name="description">The description of the role.</param>
-        /// <param name="user">The user creating the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Role"/> entity.</returns>
-        Task<Role> CreatRoleAsync(string roleName, string description, AppUser user, CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created role entity.</returns>
+        Task<Role> CreateRoleAsync(string name, string description, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Deletes a role based on its name.
+        /// Updates a role.
         /// </summary>
+        /// <param name="role">The updated role entity.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated role entity.</returns>
+        Task<Role> UpdateRoleAsync(Role role, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a role.
+        /// </summary>
+        /// <param name="roleId">The ID of the role to delete.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task DeleteRoleAsync(ulong roleId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Adds a user to a role.
+        /// </summary>
+        /// <param name="userEmail">The email of the user.</param>
         /// <param name="roleName">The name of the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        /// <exception cref="ArgumentException">Thrown if the role does not exist.</exception>
-        Task DeleteRoleAsync(string roleName, CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task AddUserToRoleAsync(string userEmail, string roleName, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Retrieves an account based on the owner's email.
+        /// Removes a user from a role.
         /// </summary>
-        /// <param name="owner">The owner's email.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Account"/> entity.</returns>
-        Task<Account> GetAccountAsync(string owner, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Retrieves a role based on its name.
-        /// </summary>
+        /// <param name="userEmail">The email of the user.</param>
         /// <param name="roleName">The name of the role.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Role"/> entity.</returns>
-        Task<Role> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken);
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task RemoveUserFromRoleAsync(string userEmail, string roleName, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Retrieves a user by their email address.
+        /// Retrieves a user by their email.
         /// </summary>
-        /// <param name="email">The user's email address.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="AppUser"/> entity.</returns>
+        /// <param name="email">The email of the user.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The user entity.</returns>
         Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Registers a new admin user by creating an account and assigning the Administrator role.
+        /// </summary>
+        /// <param name="appUser">The instance of the AppUser to be created.</param>
+        /// <param name="accountTypeName">The name of the account type for the user's account.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created AppUser entity.</returns>
+        Task<AppUser> RegisterAdminUserAsync(AppUser appUser, string accountTypeName, CancellationToken cancellationToken = default);
     }
 
 }

@@ -11,178 +11,85 @@ namespace Luval.AuthMate
 {
 
     /// <summary>
-    /// Represents the database context for authentication and authorization in the system.
+    /// Represents the EntityFramework DbContext for managing the authentication-related entities in the system.
     /// </summary>
-    public class AuthMateContext : DbContext, IAuthMateContext
+    public class AuthMateContext : DbContext
     {
-        ///// <summary>
-        ///// Initializes a new instance of the <see cref="AuthMateContext"/> class.
-        ///// </summary>
-        ///// <param name="options">The options to configure the context.</param>
-        //public AuthMateContext(DbContextOptions<AuthMateContext> options)
-        //    : base(options)
-        //{
-        //}
-
         /// <summary>
-        /// DbSet for AccountType entities.
+        /// Gets or sets the DbSet for AccountType entities.
         /// </summary>
         public DbSet<AccountType> AccountTypes { get; set; }
 
         /// <summary>
-        /// DbSet for Account entities.
+        /// Gets or sets the DbSet for Account entities.
         /// </summary>
         public DbSet<Account> Accounts { get; set; }
 
         /// <summary>
-        /// DbSet for User entities.
+        /// Gets or sets the DbSet for AppUser entities.
         /// </summary>
-        public DbSet<AppUser> Users { get; set; }
+        public DbSet<AppUser> AppUsers { get; set; }
 
         /// <summary>
-        /// DbSet for Role entities.
+        /// Gets or sets the DbSet for AppUserRole entities.
+        /// </summary>
+        public DbSet<AppUserRole> AppUserRoles { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DbSet for Role entities.
         /// </summary>
         public DbSet<Role> Roles { get; set; }
 
+        
         /// <summary>
-        /// DbSet for UserRole entities.
+        /// Configures the model and relationships between entities.
         /// </summary>
-        public DbSet<AppUserRole> UserRoles { get; set; }
-
-        /// <summary>
-        /// DbSet for UserInAccount entities.
-        /// </summary>
-        public DbSet<AppUserInAccount> UserInAccounts { get; set; }
-
-        /// <summary>
-        /// Configures the database model and relationships.
-        /// </summary>
-        /// <param name="modelBuilder">The model builder for configuring the schema.</param>
+        /// <param name="modelBuilder">The builder used to configure the entities.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // AccountType Configuration
+            // Configure AccountType entity
             modelBuilder.Entity<AccountType>()
-                .HasKey(a => a.Id);
-            modelBuilder.Entity<AccountType>()
-                .HasIndex(a => a.Name)
-                .IsUnique();
-            modelBuilder.Entity<AccountType>()
-                .Property(a => a.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-            
+                .HasKey(at => at.Id);
 
-            // Account Configuration
+            // Configure Account entity
             modelBuilder.Entity<Account>()
                 .HasKey(a => a.Id);
-            modelBuilder.Entity<Account>()
-                .HasIndex(i => i.Owner)
-                .IsUnique();
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.AccountType)
                 .WithMany()
                 .HasForeignKey(a => a.AccountTypeId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<Account>()
-                .Property(a => a.Owner)
-                .IsRequired()
-                .HasMaxLength(255);
 
-            // User Configuration
+            // Configure AppUser entity
             modelBuilder.Entity<AppUser>()
-                .HasKey(u => u.Id);
+                .HasKey(au => au.Id);
             modelBuilder.Entity<AppUser>()
-               .HasIndex(i => i.Email)
-               .IsUnique();
-            modelBuilder.Entity<AppUser>()
-                .Property(u => u.Email)
-                .IsRequired()
-                .HasMaxLength(255);
-            modelBuilder.Entity<AppUser>()
-                .Property(u => u.ProviderKey)
-                .IsRequired()
-                .HasMaxLength(255);
-            modelBuilder.Entity<AppUser>()
-                .Property(u => u.ProviderType)
-                .IsRequired()
-                .HasMaxLength(50);
-            modelBuilder.Entity<AppUser>()
-                .Property(u => u.ProfilePictureUrl)
-                .HasMaxLength(500);
+                .HasOne(au => au.Account)
+                .WithMany()
+                .HasForeignKey(au => au.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            //modelBuilder.Entity<AppUser>()
-            //    .HasMany<AppUserRole>(i => i.UserRoles);
-            //modelBuilder.Entity<AppUser>()
-            //    .HasMany<AppUserInAccount>(i => i.UserInAccounts);
+            // Configure AppUserRole entity
+            modelBuilder.Entity<AppUserRole>()
+                .HasKey(aur => aur.Id);
+            modelBuilder.Entity<AppUserRole>()
+                .HasOne(aur => aur.User)
+                .WithMany()
+                .HasForeignKey(aur => aur.AppUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<AppUserRole>()
+                .HasOne(aur => aur.Role)
+                .WithMany()
+                .HasForeignKey(aur => aur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Role Configuration
+            // Configure Role entity
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
-            modelBuilder.Entity<Role>()
-                .HasIndex(r => r.Name)
-                .IsUnique();
-            modelBuilder.Entity<Role>()
-                .Property(r => r.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-            modelBuilder.Entity<Role>()
-                .Property(r => r.Description)
-                .HasMaxLength(500);
-
-            // UserRole Configuration
-            modelBuilder.Entity<AppUserRole>()
-                .HasKey(ur => ur.Id);
-            modelBuilder.Entity<AppUserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany()
-                .HasForeignKey(ur => ur.AppUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<AppUserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany()
-                .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // UserInAccount Configuration
-            modelBuilder.Entity<AppUserInAccount>()
-                .HasKey(ua => ua.Id);
-            modelBuilder.Entity<AppUserInAccount>()
-                .HasOne(ua => ua.User)
-                .WithMany()
-                .HasForeignKey(ua => ua.AppUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<AppUserInAccount>()
-                .HasOne(ua => ua.Account)
-                .WithMany()
-                .HasForeignKey(ua => ua.AccountId)
-                .OnDelete(DeleteBehavior.Cascade);
-        }
-
-        /// <inheritdoc/>
-        public override int SaveChanges()
-        {
-            return base.SaveChanges();
-        }
-
-        /// <inheritdoc/>
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
-        {
-            return base.SaveChanges(acceptAllChangesOnSuccess);
-        }
-
-        /// <inheritdoc/>
-        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-        {
-            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return base.SaveChangesAsync(cancellationToken);
         }
     }
+
 
 }
