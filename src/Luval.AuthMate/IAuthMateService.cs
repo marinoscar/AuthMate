@@ -109,7 +109,7 @@ namespace Luval.AuthMate
         /// <param name="accountType">The name of the <see cref="AccountType"/> for the user's account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created AppUser entity.</returns>
-        Task<AppUser> RegisterUserInAdminRoleAsync(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default)
+        Task<AppUser> RegisterUserInAdminRoleAsync(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves a pre-authorized user by their email.
@@ -135,7 +135,7 @@ namespace Luval.AuthMate
         /// </list>
         /// </exception>
         /// <remarks>
-        Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, CancellationToken cancellationToken)
+        Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, CancellationToken cancellationToken);
     }
 
 }
