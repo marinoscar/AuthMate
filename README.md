@@ -160,3 +160,112 @@ public class AuthController : ControllerBase
 
 }
 ```
+# Database Information
+The database has been implemented in postgres but can be very easily implemented in any other database engine that supports Entity framework, all you need to do is to extend this class https://github.com/marinoscar/AuthMate/blob/main/src/Luval.AuthMate/AuthMateContext.cs
+
+## ERD Model
+![ERD Model](https://raw.githubusercontent.com/marinoscar/AuthMate/refs/heads/main/media/database_erd.svg)
+
+## Semantic Model
+
+### 1. `AccountType`
+- Represents the type of an account (e.g., Free, Tier1, Tier2).
+- **Primary Key**: `Id`
+- **Attributes**:
+  - `Name`: The name of the account type.
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+- **Default Values**:
+  - A default row for the "Free" account type.
+
+### 2. `Account`
+- Represents an account with reference to its type and owner information.
+- **Primary Key**: `Id`
+- **Foreign Key**: `AccountTypeId` (references `AccountType.Id`)
+- **Attributes**:
+  - `Owner`: Owner of the account.
+  - `Name`: Account name.
+  - `Description`: Description of the account.
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+
+### 3. `AppUser`
+- Represents a user with authentication and profile information.
+- **Primary Key**: `Id`
+- **Foreign Key**: `AccountId` (references `Account.Id`)
+- **Attributes**:
+  - `DisplayName`: Display name of the user.
+  - `Email`: Email address (unique).
+  - `ProviderKey`: Authentication provider key.
+  - `ProviderType`: Type of authentication provider (e.g., Google, Microsoft).
+  - `ProfilePictureUrl`: URL for the user's profile picture.
+  - `UtcActiveUntil`: Date until which the user is active.
+  - `Metadata`: Additional metadata in JSON format.
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+
+### 4. `Role`
+- Represents roles in the system (e.g., Admin, User).
+- **Primary Key**: `Id`
+- **Attributes**:
+  - `Name`: Role name.
+  - `Description`: Description of the role's responsibilities.
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+- **Default Values**:
+  - Predefined roles include Administrator, Owner, Member, and Visitor.
+
+### 5. `AppUserRole`
+- Represents the relationship between users and roles.
+- **Primary Key**: `Id`
+- **Foreign Keys**:
+  - `AppUserId` (references `AppUser.Id`)
+  - `RoleId` (references `Role.Id`)
+- **Attributes**:
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+
+### 6. `PreAuthorizedAppUser`
+- Represents pre-authorized users who can create accounts in the system.
+- **Primary Key**: `Id`
+- **Foreign Key**: `AccountTypeId` (references `AccountType.Id`)
+- **Attributes**:
+  - `Email`: Email address of the pre-authorized user.
+  - `UtcCreatedOn`: Timestamp of record creation.
+  - `CreatedBy`: Creator of the record.
+  - `UtcUpdatedOn`: Timestamp of the last update.
+  - `UpdatedBy`: Last updater of the record.
+  - `Version`: Version control for the record.
+
+## Relationships
+1. `AccountType` has a **one-to-many** relationship with `Account`.
+2. `Account` has a **one-to-many** relationship with `AppUser`.
+3. `Role` has a **many-to-many** relationship with `AppUser` via `AppUserRole`.
+4. `AccountType` has a **one-to-many** relationship with `PreAuthorizedAppUser`.
+
+---
+
+### Diagram
+Consider using tools like [dbdiagram.io](https://dbdiagram.io) or [draw.io](https://drawio.com) to create a visual representation of this model.
+
+---
+
+### Sample Data
+- Default account type: `Free`
+- Predefined roles: `Administrator`, `Owner`, `Member`, `Visitor`.
+- Pre-authorized user: `oscar.marin.saenz@gmail.com` (associated with the "Free" account type).
