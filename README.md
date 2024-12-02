@@ -46,53 +46,78 @@ Here is an example code of how to configure your application to use Google Authe
 public static void Main(string[] args)
 {
     var builder = WebApplication.CreateBuilder(args);
-    // Add services to the container.
-    builder.Services.AddRazorComponents()
-        .AddInteractiveServerComponents();
-    // Add controllers
-    builder.Services.AddControllers();
-    builder.Services.AddHttpClient();
-    builder.Services.AddHttpContextAccessor();
-    // Configure AuthMate
-    var dbContext = new PostgresAuthMateContext(ConfigHelper.GetValueAsString("ConnectionString:Authorization"));
-    var authService = new AuthMateService(
-            dbContext,
-            "Free", "Administrator"
-        );
-    // Function to be called after the user is authorized by Google
-    Func<OAuthCreatingTicketContext, Task> onTicket = async contex =>
+
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddFluentUIComponents();
+
+// AuthMate: Add support for controllers
+builder.Services.AddControllers();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+
+// AuthMate: Configure the database implementation
+var dbContext = 
+    new PostgresAuthMateContext(ConfigHelper.GetValueAsString("ConnectionString:Authorization")); //postgres implementaion
+
+// AuthMate: Creates an instance of the service
+var authService = new AuthMateService(
+        dbContext //provides the database context
+    );
+
+// AuthMate: Function to be called after the user is authorized by Google
+Func<OAuthCreatingTicketContext, Task> onTicket = async context =>
+{
+
+    //Checks for the user in the database and performs other validations, see the implementation here
+    //https://github.com/marinoscar/AuthMate/blob/64b55c66f8bcd2534b5f8d8e02d1c3d1a439a9ef/src/Luval.AuthMate/AuthMateService.cs#L306
+    await authService.UserAuthorizationProcessAsync(context.Identity, (u, c) =>
     {
-        await authService.OnUserAuthorizedAsync(contex.Identity, "Google", null);
-    };
-    // Add Google Authentication configuration
-    builder.Services.AddGoogleAuth(new GoogleOAuthConfiguration()
-    {
-        // client id from your config file
-        ClientId = ConfigHelper.GetValueAsString("Authentication:Google:ClientID"),
-        // the client secret from your config file
-        ClientSecret = ConfigHelper.GetValueAsString("Authentication:Google:ClientSecret"),
-        OnCreatingTicket = onTicket // function call
-    });
-    var app = builder.Build();
-    // Configure the HTTP request pipeline.
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseExceptionHandler("/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-    }
-    app.UseHttpsRedirection();
-    /*** Adds support for controllers     ****/
-    app.MapControllers();
-    app.UseRouting();
-    app.UseAuthorization();
-    app.UseAuthentication();
-    /*** End code to suupport controllers ****/
-    app.UseStaticFiles();
-    app.UseAntiforgery();
-    app.MapRazorComponents<App>()
-        .AddInteractiveServerRenderMode();
-    app.Run();
+        if (Debugger.IsAttached)
+            Console.WriteLine($"User Id: {u.Id} Email {u.Email} Provider Key: {u.ProviderKey}");
+
+    }, CancellationToken.None);
+
+
+};
+// AuthMate: Add Google Authentication configuration
+builder.Services.AddGoogleAuth(new GoogleOAuthConfiguration()
+{
+    // client id from your config file
+    ClientId = ConfigHelper.GetValueAsString("Authentication:Google:ClientID"),
+    // the client secret from your config file
+    ClientSecret = ConfigHelper.GetValueAsString("Authentication:Google:ClientSecret"),
+    OnCreatingTicket = onTicket // function call
+});
+
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+/*** AuthMate: Additional configuration  ****/
+app.MapControllers();
+app.UseRouting();
+app.UseAuthorization();
+app.UseAuthentication();
+/*** AuthMate:                           ****/
+
+app.UseStaticFiles();
+app.UseAntiforgery();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();
 }
 ```
 ## Create a Controller in your Web Application
