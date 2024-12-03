@@ -98,6 +98,10 @@ namespace Luval.AuthMate
         public async Task<AppUser> UpdateAppUserAsync(AppUser appUser, CancellationToken cancellationToken = default)
         {
             if (appUser == null) throw new ArgumentNullException(nameof(appUser));
+            appUser.UtcCreatedOn = new DateTime(appUser.UtcCreatedOn.Ticks, DateTimeKind.Utc);
+            appUser.UtcUpdatedOn = DateTime.UtcNow;
+            appUser.UpdatedBy = appUser.Email;
+            appUser.Version++;
             _context.AppUsers.Update(appUser);
             await _context.SaveChangesAsync(cancellationToken);
             return appUser;
@@ -467,9 +471,6 @@ namespace Luval.AuthMate
             identity.AddClaim(new Claim("AppUserJson", user.ToString()));
             //Updates the user last login value
             user.UtcLastLogin = DateTime.UtcNow;
-            user.Version++;
-            user.UpdatedBy = user.Email;
-            user.UtcUpdatedOn = DateTime.UtcNow;
             await UpdateAppUserAsync(user, cancellationToken);
 
             if (deviceInfo != null)
