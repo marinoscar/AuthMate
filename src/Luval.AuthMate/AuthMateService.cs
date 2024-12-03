@@ -298,10 +298,82 @@ namespace Luval.AuthMate
         }
 
         /// <summary>
+        /// Adds a login history record to the database asynchronously.
+        /// </summary>
+        /// <param name="history">
+        /// The <see cref="AppUserLoginHistory"/> instance representing the login history to be added. 
+        /// This parameter cannot be null.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> that can be used to cancel the operation.
+        /// Defaults to <see cref="CancellationToken.None"/> if not specified.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. 
+        /// The task result contains the <see cref="AppUserLoginHistory"/> instance that was added.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the <paramref name="history"/> parameter is null.
+        /// </exception>
+        public async Task<AppUserLoginHistory> AddLogHistoryAsync(AppUserLoginHistory history, CancellationToken cancellationToken = default)
+        {
+            if (history == null) throw new ArgumentNullException(nameof(history));
+
+            await _context.AppUserLoginHistories.AddAsync(history, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return history;
+        }
+
+        /// <summary>
+        /// Adds a login history record to the database asynchronously using device information and user email.
+        /// </summary>
+        /// <param name="deviceInfo">
+        /// The <see cref="DeviceInfo"/> instance representing the device details (e.g., browser, OS, IP address).
+        /// This parameter cannot be null.
+        /// </param>
+        /// <param name="email">
+        /// The email address of the user. This parameter cannot be null or whitespace.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> that can be used to cancel the operation.
+        /// Defaults to <see cref="CancellationToken.None"/> if not specified.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.
+        /// The task result contains the <see cref="AppUserLoginHistory"/> instance that was added.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the <paramref name="deviceInfo"/> parameter is null.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the <paramref name="email"/> parameter is null or contains only whitespace.
+        /// </exception>
+        public async Task<AppUserLoginHistory> AddLogHistoryAsync(DeviceInfo deviceInfo, string email, CancellationToken cancellationToken = default)
+        {
+            if (deviceInfo == null) throw new ArgumentNullException(nameof(deviceInfo));
+            if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException(nameof(email));
+
+            var history = await AddLogHistoryAsync(new AppUserLoginHistory()
+            {
+                Email = email,
+                Browser = deviceInfo.Browser,
+                IpAddress = deviceInfo.IpAddress,
+                OS = deviceInfo.OS,
+                UtcLogIn = DateTime.UtcNow
+            }, cancellationToken);
+
+            return history;
+        }
+
+
+
+        /// <summary>
         /// Handles the authorization process for a user based on their identity and associated claims.
         /// </summary>
         /// <param name="identity">The claims identity of the user attempting to authenticate.</param>
         /// <param name="additionalValidation">An optional action for performing additional validation or customization of the user and claims identity.</param>
+        /// <param name="deviceInfo">Information from the device that is producing the loging request.</param>
         /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>The authenticated <see cref="AppUser"/> entity.</returns>
         /// <exception cref="AuthMateException">
@@ -313,7 +385,7 @@ namespace Luval.AuthMate
         /// </list>
         /// </exception>
         /// <remarks>
-        public async Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, CancellationToken cancellationToken)
+        public async Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default)
         {
             if (identity == null) throw new AuthMateException("Unable to retrive Identity object from the session context");
 
@@ -334,20 +406,20 @@ namespace Luval.AuthMate
             if (user == null)
                 preAuthorizedUser = await GetPreAuthorizedAppUserByEmailAsync(contextUser.Email, cancellationToken);
 
-            if(preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
+            if (preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
 
 
 
             //If the user is null and it is a power user it creates a new account
-             user = await RegisterUserInAdminRoleAsync(contextUser,
-                    preAuthorizedUser.AccountType);
+            user = await RegisterUserInAdminRoleAsync(contextUser,
+                   preAuthorizedUser.AccountType);
 
             if (user == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
 
             //Adds the user complete data to a claim
             identity.AddClaim(new Claim("AppUserJson", user.ToString()));
 
-            if (additionalValidation != null) 
+            if (additionalValidation != null)
                 additionalValidation(user, identity); //performs a user additional validation on the claims identity and the application user
 
             //Updates the user last login value
@@ -357,10 +429,14 @@ namespace Luval.AuthMate
             user.UtcUpdatedOn = DateTime.UtcNow;
             await UpdateAppUserAsync(user, cancellationToken);
 
+            if(deviceInfo != null)
+            //Add an entry to the login history table
+                await AddLogHistoryAsync(deviceInfo, user.Email, cancellationToken);
+
             return user;
         }
 
-        
+
 
 
 

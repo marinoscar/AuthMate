@@ -11,8 +11,6 @@
 <script>
     async function getDeviceInfo() {
 
-    const ipData = await ipResponse.json();
-
     // Use UAParser.js to get OS and Browser details
     const parser = new UAParser();
     const result = parser.getResult();
@@ -37,30 +35,39 @@
     [Parameter]
     public string NavigateTo { get; set; } = "/auth/google-login";
 
+    [Parameter]
+    public string ReturnUrl { get; set; } = "/";
+
     private DeviceInfo DeviceInfo { get; set; } = default(DeviceInfo);
 
     private void OnClickNavigate(MouseEventArgs e)
     {
         var info = string.Empty;
         if (DeviceInfo != null) info = DeviceInfo.ToString();
-        HttpUtility.HtmlEncode(info); 
-        Navigation.NavigateTo(string.Format("{0}?deviceInfo={1}&returnUrl=",NavigateTo, info));
+        info = HttpUtility.HtmlEncode(info);
+        Navigation.NavigateTo(string.Format("{0}?deviceInfo={1}&returnUrl={2}", NavigateTo, info, HttpUtility.HtmlEncode(ReturnUrl)));
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await base.OnInitializedAsync();
+        await base.OnAfterRenderAsync(firstRender);
         await GetDeviceInfo();
-
     }
 
     private async Task GetDeviceInfo()
     {
         // Call the JavaScript function
-        var deviceInfo = await JSRuntime.InvokeAsync<DeviceInfo>("getDeviceInfo");
-        if (deviceInfo != null) 
+        DeviceInfo deviceInfo = default;
+        try
+        {
+            deviceInfo = await JSRuntime.InvokeAsync<DeviceInfo>("getDeviceInfo");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        if (deviceInfo != null)
             deviceInfo.IpAddress = contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-
         DeviceInfo = deviceInfo;
 
     }
