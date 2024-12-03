@@ -243,7 +243,7 @@ CREATE TABLE "AccountInvite" (
     "RejectedReason" VARCHAR(512),
     "UtcCreatedOn" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "CreatedBy" VARCHAR(256),
-    "UtcUpdatedOn" TIMESTAMP,
+    "UtcUpdatedOn" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "UpdatedBy" VARCHAR(256),
     "Version" INTEGER NOT NULL DEFAULT 1,
 
@@ -254,6 +254,22 @@ CREATE TABLE "AccountInvite" (
 
 -- Create an index on the Email column
 CREATE INDEX "IX_AccountInvite_Email" ON "AccountInvite" ("Email");
+
+--Add a row to the table
+INSERT INTO "AccountInvite" (
+    "Email",
+    "UtcExpiration",
+	"AccountId",
+    "RoleId"
+) VALUES (
+    'oscar@marin.cr',                                -- Email
+    (NOW() + INTERVAL '1 year'),                     -- UtcExpiration
+	(SELECT "Id" FROM "Account" 
+	 WHERE "Owner" = 'oscar.marin.saenz@gmail.com'), -- AccountId
+    (SELECT "Id" FROM "Role" 
+	 WHERE "Name" = 'Owner')                        -- RoleId
+);
+
 
 -- Add comments for the table and its columns
 COMMENT ON TABLE "AccountInvite" IS 'Tracks invitations sent to users to join an account with specific roles.';
@@ -271,6 +287,3 @@ COMMENT ON COLUMN "AccountInvite"."CreatedBy" IS 'The identifier of the user who
 COMMENT ON COLUMN "AccountInvite"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
 COMMENT ON COLUMN "AccountInvite"."UpdatedBy" IS 'The identifier of the user who last updated the record.';
 COMMENT ON COLUMN "AccountInvite"."Version" IS 'The version of the record for concurrency handling.';
-
-
-
