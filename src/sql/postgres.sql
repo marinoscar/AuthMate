@@ -210,9 +210,9 @@ CREATE TABLE "AppUserLoginHistory" (
     "Id" BIGSERIAL PRIMARY KEY,
     "UtcLogIn" TIMESTAMP NOT NULL,
     "Email" VARCHAR(256) NOT NULL,
-    "DeviceOperatingSystem" VARCHAR(128) NOT NULL,
+    "OS" VARCHAR(128) NOT NULL,
     "IpAddress" VARCHAR(45) NOT NULL,
-    "DeviceName" VARCHAR(128) NOT NULL
+    "Browser" VARCHAR(128) NOT NULL
 );
 
 -- Create an index on the Email column
@@ -223,8 +223,54 @@ COMMENT ON TABLE "AppUserLoginHistory" IS 'Tracks all application user login eve
 COMMENT ON COLUMN "AppUserLoginHistory"."Id" IS 'The unique identifier for the login entry.';
 COMMENT ON COLUMN "AppUserLoginHistory"."UtcLogIn" IS 'The UTC timestamp when the login occurred.';
 COMMENT ON COLUMN "AppUserLoginHistory"."Email" IS 'The email of the user who logged in.';
-COMMENT ON COLUMN "AppUserLoginHistory"."DeviceOperatingSystem" IS 'The operating system of the device used for login.';
+COMMENT ON COLUMN "AppUserLoginHistory"."OS" IS 'The operating system of the device used for login.';
 COMMENT ON COLUMN "AppUserLoginHistory"."IpAddress" IS 'The IP address from which the login occurred.';
-COMMENT ON COLUMN "AppUserLoginHistory"."DeviceName" IS 'The name of the device used for login.';
+COMMENT ON COLUMN "AppUserLoginHistory"."Browser" IS 'The browser of the device used for login.';
+
+-- Drop the table if it exists
+DROP TABLE IF EXISTS "AccountInvite" CASCADE;
+
+-- Create the AccountInvite table
+CREATE TABLE "AccountInvite" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "AccountId" BIGINT NOT NULL,
+    "Email" VARCHAR(256) NOT NULL UNIQUE,
+    "UtcExpiration" TIMESTAMP NOT NULL,
+    "UserMessage" VARCHAR(1024),
+    "RoleId" BIGINT,
+    "UtcAcceptedOn" TIMESTAMP,
+    "UtcRejectedOn" TIMESTAMP,
+    "RejectedReason" VARCHAR(512),
+    "UtcCreatedOn" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "CreatedBy" VARCHAR(256),
+    "UtcUpdatedOn" TIMESTAMP,
+    "UpdatedBy" VARCHAR(256),
+    "Version" INTEGER NOT NULL DEFAULT 1,
+
+    -- Foreign Key Constraints
+    CONSTRAINT "FK_AccountInvite_Account" FOREIGN KEY ("AccountId") REFERENCES "Account" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_AccountInvite_Role" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE SET NULL
+);
+
+-- Create an index on the Email column
+CREATE INDEX "IX_AccountInvite_Email" ON "AccountInvite" ("Email");
+
+-- Add comments for the table and its columns
+COMMENT ON TABLE "AccountInvite" IS 'Tracks invitations sent to users to join an account with specific roles.';
+COMMENT ON COLUMN "AccountInvite"."Id" IS 'The unique identifier for the invitation.';
+COMMENT ON COLUMN "AccountInvite"."AccountId" IS 'The foreign key to the Account table.';
+COMMENT ON COLUMN "AccountInvite"."Email" IS 'The email address of the invitee.';
+COMMENT ON COLUMN "AccountInvite"."UtcExpiration" IS 'The UTC timestamp when the invitation expires.';
+COMMENT ON COLUMN "AccountInvite"."UserMessage" IS 'The message included in the invitation.';
+COMMENT ON COLUMN "AccountInvite"."RoleId" IS 'The foreign key to the Role table, nullable.';
+COMMENT ON COLUMN "AccountInvite"."UtcAcceptedOn" IS 'The UTC timestamp when the invitation was accepted.';
+COMMENT ON COLUMN "AccountInvite"."UtcRejectedOn" IS 'The UTC timestamp when the invitation was rejected.';
+COMMENT ON COLUMN "AccountInvite"."RejectedReason" IS 'The reason provided for rejecting the invitation.';
+COMMENT ON COLUMN "AccountInvite"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN "AccountInvite"."CreatedBy" IS 'The identifier of the user who created the record.';
+COMMENT ON COLUMN "AccountInvite"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN "AccountInvite"."UpdatedBy" IS 'The identifier of the user who last updated the record.';
+COMMENT ON COLUMN "AccountInvite"."Version" IS 'The version of the record for concurrency handling.';
+
 
 

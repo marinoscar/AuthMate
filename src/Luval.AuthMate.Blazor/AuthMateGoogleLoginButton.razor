@@ -1,4 +1,29 @@
-﻿@inject NavigationManager Navigation
+﻿@using Luval.AuthMate.Entities
+@using System.Web
+@using Microsoft.AspNetCore.Http
+
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject HttpClient HttpClient
+@inject IHttpContextAccessor contextAccessor
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
+<script>
+    async function getDeviceInfo() {
+
+    const ipData = await ipResponse.json();
+
+    // Use UAParser.js to get OS and Browser details
+    const parser = new UAParser();
+    const result = parser.getResult();
+
+    return {
+    IpAddress: '', // Extracted from the external service
+    OS: `${result.os.name} ${result.os.version}`,
+    Browser: `${result.browser.name} ${result.browser.version}`
+    };
+    }
+</script>
 
 <FluentButton @onclick="OnClickNavigate">
     <FluentIcon Value="@(new AuthMateIcons.GoogleLogo())" Color="Color.Error" Slot="start" />
@@ -12,8 +37,31 @@
     [Parameter]
     public string NavigateTo { get; set; } = "/auth/google-login";
 
+    private DeviceInfo DeviceInfo { get; set; } = default(DeviceInfo);
+
     private void OnClickNavigate(MouseEventArgs e)
     {
-        Navigation.NavigateTo(NavigateTo);
+        var info = string.Empty;
+        if (DeviceInfo != null) info = DeviceInfo.ToString();
+        HttpUtility.HtmlEncode(info); 
+        Navigation.NavigateTo(string.Format("{0}?deviceInfo={1}&returnUrl=",NavigateTo, info));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await GetDeviceInfo();
+
+    }
+
+    private async Task GetDeviceInfo()
+    {
+        // Call the JavaScript function
+        var deviceInfo = await JSRuntime.InvokeAsync<DeviceInfo>("getDeviceInfo");
+        if (deviceInfo != null) 
+            deviceInfo.IpAddress = contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+        DeviceInfo = deviceInfo;
+
     }
 }

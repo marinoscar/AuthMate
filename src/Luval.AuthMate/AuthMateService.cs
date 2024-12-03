@@ -350,8 +350,17 @@ namespace Luval.AuthMate
             if (additionalValidation != null) 
                 additionalValidation(user, identity); //performs a user additional validation on the claims identity and the application user
 
+            //Updates the user last login value
+            user.UtcLastLogin = DateTime.UtcNow;
+            user.Version++;
+            user.UpdatedBy = user.Email;
+            user.UtcUpdatedOn = DateTime.UtcNow;
+            await UpdateAppUserAsync(user, cancellationToken);
+
             return user;
         }
+
+        
 
 
 

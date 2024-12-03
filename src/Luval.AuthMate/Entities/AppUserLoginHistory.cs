@@ -43,11 +43,11 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// The operating system of the device used for login.
         /// </summary>
-        [Required(ErrorMessage = "DeviceOperatingSystem is required.")]
-        [MinLength(2, ErrorMessage = "DeviceOperatingSystem must be at least 2 characters long.")]
-        [MaxLength(128, ErrorMessage = "DeviceOperatingSystem cannot exceed 128 characters.")]
-        [Column("DeviceOperatingSystem")]
-        public string DeviceOperatingSystem { get; set; }
+        [Required(ErrorMessage = "OS is required.")]
+        [MinLength(2, ErrorMessage = "OS must be at least 2 characters long.")]
+        [MaxLength(128, ErrorMessage = "OS cannot exceed 128 characters.")]
+        [Column("OS")]
+        public string OS { get; set; }
 
         /// <summary>
         /// The IP address from which the login occurred.
@@ -59,20 +59,20 @@ namespace Luval.AuthMate.Entities
         public string IpAddress { get; set; }
 
         /// <summary>
-        /// The name of the device used for login.
+        /// The name of the browser used for login.
         /// </summary>
         [Required(ErrorMessage = "DeviceName is required.")]
-        [MinLength(2, ErrorMessage = "DeviceName must be at least 2 characters long.")]
-        [MaxLength(128, ErrorMessage = "DeviceName cannot exceed 128 characters.")]
-        [Column("DeviceName")]
-        public string DeviceName { get; set; }
+        [MinLength(2, ErrorMessage = "Browser must be at least 2 characters long.")]
+        [MaxLength(128, ErrorMessage = "Browser cannot exceed 128 characters.")]
+        [Column("Browser")]
+        public string Browser { get; set; }
 
         /// <summary>
         /// Initializes control fields to their default values.
         /// </summary>
         public AppUserLoginHistory()
         {
-            
+            UtcLogIn = DateTime.UtcNow;
         }
 
         /// <summary>
