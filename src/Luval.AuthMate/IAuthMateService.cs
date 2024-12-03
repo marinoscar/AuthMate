@@ -120,22 +120,48 @@ namespace Luval.AuthMate
         Task<PreAuthorizedAppUser> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Handles the authorization process for a user based on their identity and associated claims.
+        /// Handles the authorization process for a user based on their identity, associated claims, and other contextual information.
         /// </summary>
-        /// <param name="identity">The claims identity of the user attempting to authenticate.</param>
-        /// <param name="additionalValidation">An optional action for performing additional validation or customization of the user and claims identity.</param>
-        /// <param name="deviceInfo">Information from the device that is producing the loging request.</param>
-        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
-        /// <returns>The authenticated <see cref="AppUser"/> entity.</returns>
+        /// <param name="identity">
+        /// The <see cref="ClaimsIdentity"/> representing the user's identity. This parameter cannot be null.
+        /// </param>
+        /// <param name="additionalValidation">
+        /// An optional action for performing additional validation or customization of the <see cref="AppUser"/> and the <see cref="ClaimsIdentity"/>.
+        /// This parameter allows injecting custom logic to validate or modify the user or claims.
+        /// </param>
+        /// <param name="deviceInfo">
+        /// Optional <see cref="DeviceInfo"/> containing information about the device initiating the login request, such as IP address and browser details.
+        /// Defaults to <c>null</c>.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> to observe while waiting for the task to complete. Defaults to <see cref="CancellationToken.None"/>.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.
+        /// The task result contains the authenticated <see cref="AppUser"/> entity.
+        /// </returns>
         /// <exception cref="AuthMateException">
         /// Thrown when:
         /// <list type="bullet">
-        /// <item><description>The identity object is null or invalid.</description></item>
-        /// <item><description>The user's email is not valid or missing.</description></item>
-        /// <item><description>The user cannot be authenticated or pre-authorized.</description></item>
+        /// <item><description>The <paramref name="identity"/> object is null or invalid.</description></item>
+        /// <item><description>The user's email is missing or invalid.</description></item>
+        /// <item><description>No user can be authenticated, pre-authorized, or found in invitations.</description></item>
+        /// <item><description>Failed to register or authenticate a pre-authorized user.</description></item>
         /// </list>
         /// </exception>
         /// <remarks>
+        /// This method performs a series of checks to authenticate and authorize a user:
+        /// <list type="number">
+        /// <item>Verifies that the <paramref name="identity"/> is valid and contains an email claim.</item>
+        /// <item>Attempts to retrieve an existing user from the database using the user's email.</item>
+        /// <item>If no user is found, checks for an invitation in the system associated with the user's email.</item>
+        /// <item>If no invitation is found, checks the list of pre-authorized users to see if the user qualifies for a role.</item>
+        /// <item>If the user is pre-authorized, creates a new account with the specified account type.</item>
+        /// <item>Performs optional additional validation logic using the <paramref name="additionalValidation"/> action.</item>
+        /// <item>Updates the user's login information, including device details, and returns the authenticated user entity.</item>
+        /// </list>
+        /// If all checks fail, an <see cref="AuthMateException"/> is thrown, indicating that the user could not be authenticated.
+        /// </remarks>
         Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -184,6 +210,26 @@ namespace Luval.AuthMate
         /// Thrown when the <paramref name="history"/> parameter is null.
         /// </exception>
         Task<AppUserLoginHistory> AddLogHistoryAsync(AppUserLoginHistory history, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Checks for an invitation for a user based on their identity and, if found, creates a new user account associated with the invitation.
+        /// </summary>
+        /// <param name="identity">
+        /// The <see cref="ClaimsIdentity"/> representing the identity of the user. This parameter cannot be null.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> that can be used to cancel the operation.
+        /// Defaults to <see cref="CancellationToken.None"/> if not specified.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.
+        /// The task result contains the <see cref="AppUser"/> instance if the invitation exists and the user is created;
+        /// otherwise, <c>null</c> if no invitation is found.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the <paramref name="identity"/> parameter is null.
+        /// </exception>
+        Task<AppUser> CheckForInvitationForUserAsync(ClaimsIdentity identity, CancellationToken cancellationToken = default);
     }
 
 }

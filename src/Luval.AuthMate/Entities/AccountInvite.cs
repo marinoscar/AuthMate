@@ -32,6 +32,12 @@ namespace Luval.AuthMate.Entities
         public ulong AccountId { get; set; }
 
         /// <summary>
+        /// Navigation property for the associated Account.
+        /// </summary>
+        [ForeignKey(nameof(AccountId))]
+        public Account Account { get; set; }
+
+        /// <summary>
         /// The email address of the invitee.
         /// </summary>
         [Required(ErrorMessage = "Email is required.")]

@@ -1,6 +1,7 @@
 ﻿using Luval.AuthMate.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Principal;
 
 namespace Luval.AuthMate
 {
@@ -369,25 +370,54 @@ namespace Luval.AuthMate
 
 
         /// <summary>
-        /// Handles the authorization process for a user based on their identity and associated claims.
+        /// Handles the authorization process for a user based on their identity, associated claims, and other contextual information.
         /// </summary>
-        /// <param name="identity">The claims identity of the user attempting to authenticate.</param>
-        /// <param name="additionalValidation">An optional action for performing additional validation or customization of the user and claims identity.</param>
-        /// <param name="deviceInfo">Information from the device that is producing the loging request.</param>
-        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
-        /// <returns>The authenticated <see cref="AppUser"/> entity.</returns>
+        /// <param name="identity">
+        /// The <see cref="ClaimsIdentity"/> representing the user's identity. This parameter cannot be null.
+        /// </param>
+        /// <param name="additionalValidation">
+        /// An optional action for performing additional validation or customization of the <see cref="AppUser"/> and the <see cref="ClaimsIdentity"/>.
+        /// This parameter allows injecting custom logic to validate or modify the user or claims.
+        /// </param>
+        /// <param name="deviceInfo">
+        /// Optional <see cref="DeviceInfo"/> containing information about the device initiating the login request, such as IP address and browser details.
+        /// Defaults to <c>null</c>.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> to observe while waiting for the task to complete. Defaults to <see cref="CancellationToken.None"/>.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.
+        /// The task result contains the authenticated <see cref="AppUser"/> entity.
+        /// </returns>
         /// <exception cref="AuthMateException">
         /// Thrown when:
         /// <list type="bullet">
-        /// <item><description>The identity object is null or invalid.</description></item>
-        /// <item><description>The user's email is not valid or missing.</description></item>
-        /// <item><description>The user cannot be authenticated or pre-authorized.</description></item>
+        /// <item><description>The <paramref name="identity"/> object is null or invalid.</description></item>
+        /// <item><description>The user's email is missing or invalid.</description></item>
+        /// <item><description>No user can be authenticated, pre-authorized, or found in invitations.</description></item>
+        /// <item><description>Failed to register or authenticate a pre-authorized user.</description></item>
         /// </list>
         /// </exception>
         /// <remarks>
+        /// This method performs a series of checks to authenticate and authorize a user:
+        /// <list type="number">
+        /// <item>Verifies that the <paramref name="identity"/> is valid and contains an email claim.</item>
+        /// <item>Attempts to retrieve an existing user from the database using the user's email.</item>
+        /// <item>If no user is found, checks for an invitation in the system associated with the user's email.</item>
+        /// <item>If no invitation is found, checks the list of pre-authorized users to see if the user qualifies for a role.</item>
+        /// <item>If the user is pre-authorized, creates a new account with the specified account type.</item>
+        /// <item>Performs optional additional validation logic using the <paramref name="additionalValidation"/> action.</item>
+        /// <item>Updates the user's login information, including device details, and returns the authenticated user entity.</item>
+        /// </list>
+        /// If all checks fail, an <see cref="AuthMateException"/> is thrown, indicating that the user could not be authenticated.
+        /// </remarks>
         public async Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default)
         {
             if (identity == null) throw new AuthMateException("Unable to retrive Identity object from the session context");
+
+            //variables
+            var preAuthorizedUser = default(PreAuthorizedAppUser);
 
             //Add information about the google provider
             identity.AddClaim(new Claim("AppUserProviderType", "Google"));
@@ -401,27 +431,40 @@ namespace Luval.AuthMate
             //Tries to get the user from the database
             user = await TryGetUserByEmailAsync(contextUser.Email);
 
-            var preAuthorizedUser = default(PreAuthorizedAppUser);
+            //if a user is found then, we complete the transaction
+            if (user != null)
+                return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken);
 
-            if (user == null)
-                preAuthorizedUser = await GetPreAuthorizedAppUserByEmailAsync(contextUser.Email, cancellationToken);
+            //if no user is found we look in the invites
+            user = await CheckForInvitationForUserAsync(identity, cancellationToken);
 
-            if (preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
+            //If a user is found in the invite list, then we complete the transaction
+            if (user != null)
+                return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken);
 
+            // if no user is found, we look in the preauthorized list
+            preAuthorizedUser = await GetPreAuthorizedAppUserByEmailAsync(contextUser.Email, cancellationToken);
 
+            //If there is no user and nothing on the super user list, then throw an exception
+            if (user == null && preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
 
             //If the user is null and it is a power user it creates a new account
-            user = await RegisterUserInAdminRoleAsync(contextUser,
-                   preAuthorizedUser.AccountType);
+            if(preAuthorizedUser != null)
+                user = await RegisterUserInAdminRoleAsync(contextUser, preAuthorizedUser.AccountType);
 
+            //If the RegisterUserInAdminRoleAsync method returns null then we cannot continue
             if (user == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
-
-            //Adds the user complete data to a claim
-            identity.AddClaim(new Claim("AppUserJson", user.ToString()));
 
             if (additionalValidation != null)
                 additionalValidation(user, identity); //performs a user additional validation on the claims identity and the application user
 
+            return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken);
+        }
+
+        private async Task<AppUser> UpdateUserLoginInformationAsync(ClaimsIdentity identity, AppUser user, DeviceInfo deviceInfo, CancellationToken cancellationToken = default)
+        {
+            //Adds the user complete data to a claim
+            identity.AddClaim(new Claim("AppUserJson", user.ToString()));
             //Updates the user last login value
             user.UtcLastLogin = DateTime.UtcNow;
             user.Version++;
@@ -429,12 +472,70 @@ namespace Luval.AuthMate
             user.UtcUpdatedOn = DateTime.UtcNow;
             await UpdateAppUserAsync(user, cancellationToken);
 
-            if(deviceInfo != null)
-            //Add an entry to the login history table
+            if (deviceInfo != null)
+                //Add an entry to the login history table
                 await AddLogHistoryAsync(deviceInfo, user.Email, cancellationToken);
 
             return user;
         }
+
+        /// <summary>
+        /// Checks for an invitation for a user based on their identity and, if found, creates a new user account associated with the invitation.
+        /// </summary>
+        /// <param name="identity">
+        /// The <see cref="ClaimsIdentity"/> representing the identity of the user. This parameter cannot be null.
+        /// </param>
+        /// <param name="cancellationToken">
+        /// A <see cref="CancellationToken"/> that can be used to cancel the operation.
+        /// Defaults to <see cref="CancellationToken.None"/> if not specified.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.
+        /// The task result contains the <see cref="AppUser"/> instance if the invitation exists and the user is created;
+        /// otherwise, <c>null</c> if no invitation is found.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the <paramref name="identity"/> parameter is null.
+        /// </exception>
+        public async Task<AppUser> CheckForInvitationForUserAsync(ClaimsIdentity identity, CancellationToken cancellationToken = default)
+        {
+            if (identity == null) throw new ArgumentNullException(nameof(identity));
+            var user = identity.ToUser();
+
+            var invitation = await _context.AccountInvites.Include(i => i.Account).Include(i => i.Role)
+                .FirstOrDefaultAsync(i => i.Email == user.Email);
+
+            // If there is no invitation, return null
+            if (invitation == null) return null;
+
+            // Create user account
+            user.AccountId = invitation.AccountId;
+            user.Account = invitation.Account;
+            user.CreatedBy = user.Email;
+            user.UpdatedBy = user.Email;
+            user.UtcCreatedOn = DateTime.UtcNow;
+            user.UtcUpdatedOn = user.UtcCreatedOn;
+
+            await _context.AppUsers.AddAsync(user, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var userRole = new AppUserRole()
+            {
+                AppUserId = user.Id,
+                RoleId = invitation.RoleId,
+                User = user,
+                Role = invitation.Role
+            };
+
+            await _context.AppUserRoles.AddAsync(userRole, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            user.UserRoles.Add(userRole);
+
+            return user;
+        }
+
 
 
 
