@@ -1,0 +1,28 @@
+﻿<FluentStack VerticalAlignment="VerticalAlignment.Center">
+    <!-- Input Box -->
+    <FluentTextField Placeholder="@Placeholder" @bind-Value=SearchText Style="flex: 1;" />
+
+    <!-- Button with Search Icon -->
+    <FluentButton Appearance="Appearance.Lightweight" @onclick=HandleSearchAsync>
+        <FluentIcon Value="@(new LuvalIcons.SearchIcon())" />
+    </FluentButton>
+</FluentStack>
+
+@code {
+    [Parameter]
+    public string Placeholder { get; set; } = "Enter text...";
+
+    [Parameter]
+    public string SearchText { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> SearchButtonClicked { get; set; }
+
+    private async Task HandleSearchAsync()
+    {
+        if( SearchButtonClicked.HasDelegate){
+            await SearchButtonClicked.InvokeAsync(SearchText);
+        }
+    }
+
+}
