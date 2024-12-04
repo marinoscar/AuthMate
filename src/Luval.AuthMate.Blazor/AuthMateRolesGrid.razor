@@ -1,0 +1,39 @@
+﻿@inject Luval.AuthMate.Blazor.RolesPresenter _presenter
+
+
+<FluentDataGrid Items="@_presenter.Data"
+ResizableColumns=true>
+    <PropertyColumn Property="@(p => p.Name)" Title="Name" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                @* <FluentSearch Autofocus=true @bind-Value=_presenter.NameFilter 
+                             @oninput="_presenter.ApplyNameFilter" @bind-Value:after="_presenter.ClearNameFilter"
+                             ImmediateDelay=10000 Placeholder="Name" Style="width: 100%;" Label="Filter" /> *@
+
+                <LuvalTextFilter Placeholder="Enter text.." SearchButtonClicked="@ApplyNameFilter">
+
+                </LuvalTextFilter>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="@(p => p.Description)" Title="Description" Sortable="true" />
+    <PropertyColumn Property="@(p => p.UtcUpdatedOn)" Title="Updated On" Format="yyyy-MM-dd" Sortable="true">
+        <div class="search-box">
+            <LuvalDateRangeFilter></LuvalDateRangeFilter>
+        </div>
+    </PropertyColumn>
+</FluentDataGrid>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        //Loads the entire dataset
+        _presenter.LoadData();
+    }
+
+    private void ApplyNameFilter(string filter){
+
+        _presenter.ApplyNameFilter(filter);
+    }
+}
