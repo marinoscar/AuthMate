@@ -1,8 +1,7 @@
 ﻿@inject Luval.AuthMate.Blazor.RolesPresenter _presenter
 
-
 <FluentDataGrid Items="@_presenter.Data"
-ResizableColumns=true>
+                ResizableColumns=true>
     <PropertyColumn Property="@(p => p.Name)" Title="Name" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
@@ -18,22 +17,25 @@ ResizableColumns=true>
     </PropertyColumn>
     <PropertyColumn Property="@(p => p.Description)" Title="Description" Sortable="true" />
     <PropertyColumn Property="@(p => p.UtcUpdatedOn)" Title="Updated On" Format="yyyy-MM-dd" Sortable="true">
-        <div class="search-box">
-            <LuvalDateRangeFilter></LuvalDateRangeFilter>
-        </div>
+        <ColumnOptions>
+            <div class="search-box">
+                <LuvalDateRangeFilter></LuvalDateRangeFilter>
+            </div>
+        </ColumnOptions>
     </PropertyColumn>
 </FluentDataGrid>
 
-@code {
-
+@code{
     protected override void OnInitialized()
     {
         //Loads the entire dataset
         _presenter.LoadData();
     }
 
-    private void ApplyNameFilter(string filter){
+    private void ApplyNameFilter(string filter)
+    {
 
         _presenter.ApplyNameFilter(filter);
     }
+
 }
