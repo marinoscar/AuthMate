@@ -1,0 +1,33 @@
+﻿<FluentStack VerticalAlignment="VerticalAlignment.Center">
+
+    <!-- Start Date Input -->
+    <FluentDatePicker Label="Start Date" AriaLabel="To" @bind-Value="@StartDate" />
+
+    <!-- End Date Input -->
+    <FluentDatePicker Label="End Date" AriaLabel="To" @bind-Value="@EndDate" />
+
+    <!-- Apply Button -->
+    <FluentButton Appearance="Appearance.Lightweight">
+        Apply
+    </FluentButton>
+</FluentStack>
+
+@code {
+    [Parameter]
+    public DateTime? StartDate { get; set; } = DateTime.Now;
+
+    [Parameter]
+    public DateTime? EndDate { get; set; } = DateTime.Now;
+
+    [Parameter]
+    public EventCallback<(DateTime Start, DateTime End)> OnApply { get; set; }
+
+    // private async Task ApplyDateRange()
+    // {
+    //     if (OnApply.HasDelegate)
+    //     {
+    //         await OnApply.InvokeAsync((StartDate, EndDate));
+    //     }
+    // }
+}
+
