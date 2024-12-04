@@ -1,4 +1,4 @@
-﻿<FluentStack VerticalAlignment="VerticalAlignment.Center">
+﻿<FluentStack Orientation="Orientation.Vertical">
 
     <!-- Start Date Input -->
     <FluentDatePicker Label="Start Date" AriaLabel="To" @bind-Value="@StartDate" />
@@ -7,9 +7,11 @@
     <FluentDatePicker Label="End Date" AriaLabel="To" @bind-Value="@EndDate" />
 
     <!-- Apply Button -->
-    <FluentButton Appearance="Appearance.Lightweight">
-        Apply
-    </FluentButton>
+    <FluentStack HorizontalAlignment="HorizontalAlignment.End">
+        <FluentButton Appearance="Appearance.Lightweight">
+            Apply
+        </FluentButton>
+    </FluentStack>
 </FluentStack>
 
 @code {
