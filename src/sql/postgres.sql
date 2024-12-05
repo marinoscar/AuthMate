@@ -1,3 +1,4 @@
+
 -- Drop the table if it exists
 DROP TABLE IF EXISTS "AccountType" CASCADE;
 
@@ -228,10 +229,11 @@ COMMENT ON COLUMN "InviteToApplication"."UpdatedBy" IS 'The user who last update
 COMMENT ON COLUMN "InviteToApplication"."Version" IS 'The version of the record, incremented on updates.';
 
 -- Adds one user to the list
-INSERT INTO "InviteToApplication" ("Email", "AccountTypeId", "UtcCreatedOn", "UtcUpdatedOn", "Version")
+INSERT INTO "InviteToApplication" ("Email", "AccountTypeId", "UtcExpiration", "UtcCreatedOn", "UtcUpdatedOn", "Version")
 VALUES (
     'oscar.marin.saenz@gmail.com',
     (SELECT "Id" FROM "AccountType" WHERE "Name" = 'Free'),
+	(NOW() + INTERVAL '1 year'),                     -- UtcExpiration
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,
     0
@@ -265,6 +267,7 @@ CREATE TABLE "InviteToAccount" (
 -- Create an index on the Email column
 CREATE INDEX "IX_InviteToAccount_Email" ON "InviteToAccount" ("Email");
 
+/*
 -- Add a row to the table
 INSERT INTO "InviteToAccount" (
     "Email",
@@ -274,11 +277,10 @@ INSERT INTO "InviteToAccount" (
 ) VALUES (
     'oscar@marin.cr',                                -- Email
     (NOW() + INTERVAL '1 year'),                     -- UtcExpiration
-    (SELECT "Id" FROM "Account" 
-     WHERE "Owner" = 'oscar.marin.saenz@gmail.com'), -- AccountId
-    (SELECT "Id" FROM "Role" 
-     WHERE "Name" = 'Owner')                         -- RoleId
+    (SELECT "Id" FROM "Account" WHERE "Owner" = 'oscar.marin.saenz@gmail.com'), -- AccountId
+    (SELECT "Id" FROM "Role" WHERE "Name" = 'Owner') -- RoleId
 );
+*/
 
 -- Add comments for the table and its columns
 COMMENT ON TABLE "InviteToAccount" IS 'Tracks invitations sent to users to join an account with specific roles.';
