@@ -166,43 +166,6 @@ COMMENT ON COLUMN "AppUserRole"."UpdatedBy" IS 'The user who last updated the re
 COMMENT ON COLUMN "AppUserRole"."Version" IS 'The version of the record, incremented on updates.';
 
 -- Drop the table if it exists
-DROP TABLE IF EXISTS "PreAuthorizedAppUser" CASCADE;
-
--- Create the table
-CREATE TABLE "PreAuthorizedAppUser" (
-    "Id" BIGSERIAL PRIMARY KEY,
-    "Email" VARCHAR(255) NOT NULL UNIQUE,
-    "AccountTypeId" BIGINT NOT NULL,
-    "UtcCreatedOn" TIMESTAMP NOT NULL,
-    "CreatedBy" VARCHAR NULL,
-    "UtcUpdatedOn" TIMESTAMP NOT NULL,
-    "UpdatedBy" VARCHAR NULL,
-    "Version" INTEGER NOT NULL DEFAULT 0,
-    CONSTRAINT fk_accounttype FOREIGN KEY ("AccountTypeId") REFERENCES "AccountType" ("Id") ON DELETE CASCADE
-);
-
--- Add comments for the table and columns
-COMMENT ON TABLE "PreAuthorizedAppUser" IS 'Represents a pre-authorized user who has the ability to create an account in the system.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."Id" IS 'The unique identifier for the pre-authorized user.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."Email" IS 'The email address of the pre-authorized user.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."AccountTypeId" IS 'The foreign key referencing the AccountType entity.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."CreatedBy" IS 'The user who created the record.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."UpdatedBy" IS 'The user who last updated the record.';
-COMMENT ON COLUMN "PreAuthorizedAppUser"."Version" IS 'The version of the record, incremented on updates.';
-
--- Adds one user to the list
-INSERT INTO "PreAuthorizedAppUser" ("Email", "AccountTypeId", "UtcCreatedOn", "UtcUpdatedOn", "Version")
-VALUES (
-    'oscar.marin.saenz@gmail.com',
-    (SELECT "Id" FROM "AccountType" WHERE "Name" = 'Free'),
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP,
-    0
-);
-
--- Drop the table if it exists
 DROP TABLE IF EXISTS "AppUserLoginHistory" CASCADE;
 
 -- Create the AppUserLoginHistory table
@@ -228,19 +191,66 @@ COMMENT ON COLUMN "AppUserLoginHistory"."IpAddress" IS 'The IP address from whic
 COMMENT ON COLUMN "AppUserLoginHistory"."Browser" IS 'The browser of the device used for login.';
 
 -- Drop the table if it exists
-DROP TABLE IF EXISTS "AccountInvite" CASCADE;
+DROP TABLE IF EXISTS "InviteToApplication" CASCADE;
 
--- Create the AccountInvite table
-CREATE TABLE "AccountInvite" (
+-- Create the table
+CREATE TABLE "InviteToApplication" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "Email" VARCHAR(255) NOT NULL UNIQUE,
+    "AccountTypeId" BIGINT NOT NULL,
+    "UtcExpiration" TIMESTAMP NOT NULL,
+    "UserMessage" VARCHAR(1024),
+    "UtcAcceptedOn" TIMESTAMP,
+    "UtcRejectedOn" TIMESTAMP,
+    "RejectedReason" VARCHAR(512),
+    "UtcCreatedOn" TIMESTAMP NOT NULL,
+    "CreatedBy" VARCHAR NULL,
+    "UtcUpdatedOn" TIMESTAMP NOT NULL,
+    "UpdatedBy" VARCHAR NULL,
+    "Version" INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT fk_accounttype FOREIGN KEY ("AccountTypeId") REFERENCES "AccountType" ("Id") ON DELETE CASCADE
+);
+
+-- Add comments for the table and columns
+COMMENT ON TABLE "InviteToApplication" IS 'Represents a pre-authorized user who has the ability to create an account in the system.';
+COMMENT ON COLUMN "InviteToApplication"."Id" IS 'The unique identifier for the invitation.';
+COMMENT ON COLUMN "InviteToApplication"."Email" IS 'The email address of the pre-authorized user.';
+COMMENT ON COLUMN "InviteToApplication"."UtcExpiration" IS 'The UTC timestamp when the invitation expires.';
+COMMENT ON COLUMN "InviteToApplication"."UserMessage" IS 'The message included in the invitation.';
+COMMENT ON COLUMN "InviteToApplication"."UtcAcceptedOn" IS 'The UTC timestamp when the invitation was accepted.';
+COMMENT ON COLUMN "InviteToApplication"."UtcRejectedOn" IS 'The UTC timestamp when the invitation was rejected.';
+COMMENT ON COLUMN "InviteToApplication"."RejectedReason" IS 'The reason provided for rejecting the invitation.';
+COMMENT ON COLUMN "InviteToApplication"."AccountTypeId" IS 'The foreign key referencing the AccountType entity.';
+COMMENT ON COLUMN "InviteToApplication"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN "InviteToApplication"."CreatedBy" IS 'The user who created the record.';
+COMMENT ON COLUMN "InviteToApplication"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN "InviteToApplication"."UpdatedBy" IS 'The user who last updated the record.';
+COMMENT ON COLUMN "InviteToApplication"."Version" IS 'The version of the record, incremented on updates.';
+
+-- Adds one user to the list
+INSERT INTO "InviteToApplication" ("Email", "AccountTypeId", "UtcCreatedOn", "UtcUpdatedOn", "Version")
+VALUES (
+    'oscar.marin.saenz@gmail.com',
+    (SELECT "Id" FROM "AccountType" WHERE "Name" = 'Free'),
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP,
+    0
+);
+
+-- Drop the table if it exists
+DROP TABLE IF EXISTS "InviteToAccount" CASCADE;
+
+-- Create the InviteToAccount table
+CREATE TABLE "InviteToAccount" (
     "Id" BIGSERIAL PRIMARY KEY,
     "AccountId" BIGINT NOT NULL,
     "Email" VARCHAR(256) NOT NULL UNIQUE,
     "UtcExpiration" TIMESTAMP NOT NULL,
     "UserMessage" VARCHAR(1024),
-    "RoleId" BIGINT,
     "UtcAcceptedOn" TIMESTAMP,
     "UtcRejectedOn" TIMESTAMP,
     "RejectedReason" VARCHAR(512),
+    "RoleId" BIGINT,
     "UtcCreatedOn" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "CreatedBy" VARCHAR(256),
     "UtcUpdatedOn" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -248,42 +258,41 @@ CREATE TABLE "AccountInvite" (
     "Version" INTEGER NOT NULL DEFAULT 1,
 
     -- Foreign Key Constraints
-    CONSTRAINT "FK_AccountInvite_Account" FOREIGN KEY ("AccountId") REFERENCES "Account" ("Id") ON DELETE CASCADE,
-    CONSTRAINT "FK_AccountInvite_Role" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE SET NULL
+    CONSTRAINT "FK_InviteToAccount_Account" FOREIGN KEY ("AccountId") REFERENCES "Account" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_InviteToAccount_Role" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE SET NULL
 );
 
 -- Create an index on the Email column
-CREATE INDEX "IX_AccountInvite_Email" ON "AccountInvite" ("Email");
+CREATE INDEX "IX_InviteToAccount_Email" ON "InviteToAccount" ("Email");
 
---Add a row to the table
-INSERT INTO "AccountInvite" (
+-- Add a row to the table
+INSERT INTO "InviteToAccount" (
     "Email",
     "UtcExpiration",
-	"AccountId",
+    "AccountId",
     "RoleId"
 ) VALUES (
     'oscar@marin.cr',                                -- Email
     (NOW() + INTERVAL '1 year'),                     -- UtcExpiration
-	(SELECT "Id" FROM "Account" 
-	 WHERE "Owner" = 'oscar.marin.saenz@gmail.com'), -- AccountId
+    (SELECT "Id" FROM "Account" 
+     WHERE "Owner" = 'oscar.marin.saenz@gmail.com'), -- AccountId
     (SELECT "Id" FROM "Role" 
-	 WHERE "Name" = 'Owner')                        -- RoleId
+     WHERE "Name" = 'Owner')                         -- RoleId
 );
 
-
 -- Add comments for the table and its columns
-COMMENT ON TABLE "AccountInvite" IS 'Tracks invitations sent to users to join an account with specific roles.';
-COMMENT ON COLUMN "AccountInvite"."Id" IS 'The unique identifier for the invitation.';
-COMMENT ON COLUMN "AccountInvite"."AccountId" IS 'The foreign key to the Account table.';
-COMMENT ON COLUMN "AccountInvite"."Email" IS 'The email address of the invitee.';
-COMMENT ON COLUMN "AccountInvite"."UtcExpiration" IS 'The UTC timestamp when the invitation expires.';
-COMMENT ON COLUMN "AccountInvite"."UserMessage" IS 'The message included in the invitation.';
-COMMENT ON COLUMN "AccountInvite"."RoleId" IS 'The foreign key to the Role table, nullable.';
-COMMENT ON COLUMN "AccountInvite"."UtcAcceptedOn" IS 'The UTC timestamp when the invitation was accepted.';
-COMMENT ON COLUMN "AccountInvite"."UtcRejectedOn" IS 'The UTC timestamp when the invitation was rejected.';
-COMMENT ON COLUMN "AccountInvite"."RejectedReason" IS 'The reason provided for rejecting the invitation.';
-COMMENT ON COLUMN "AccountInvite"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
-COMMENT ON COLUMN "AccountInvite"."CreatedBy" IS 'The identifier of the user who created the record.';
-COMMENT ON COLUMN "AccountInvite"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
-COMMENT ON COLUMN "AccountInvite"."UpdatedBy" IS 'The identifier of the user who last updated the record.';
-COMMENT ON COLUMN "AccountInvite"."Version" IS 'The version of the record for concurrency handling.';
+COMMENT ON TABLE "InviteToAccount" IS 'Tracks invitations sent to users to join an account with specific roles.';
+COMMENT ON COLUMN "InviteToAccount"."Id" IS 'The unique identifier for the invitation.';
+COMMENT ON COLUMN "InviteToAccount"."AccountId" IS 'The foreign key to the Account table.';
+COMMENT ON COLUMN "InviteToAccount"."Email" IS 'The email address of the invitee.';
+COMMENT ON COLUMN "InviteToAccount"."UtcExpiration" IS 'The UTC timestamp when the invitation expires.';
+COMMENT ON COLUMN "InviteToAccount"."UserMessage" IS 'The message included in the invitation.';
+COMMENT ON COLUMN "InviteToAccount"."UtcAcceptedOn" IS 'The UTC timestamp when the invitation was accepted.';
+COMMENT ON COLUMN "InviteToAccount"."UtcRejectedOn" IS 'The UTC timestamp when the invitation was rejected.';
+COMMENT ON COLUMN "InviteToAccount"."RejectedReason" IS 'The reason provided for rejecting the invitation.';
+COMMENT ON COLUMN "InviteToAccount"."RoleId" IS 'The foreign key to the Role table, nullable.';
+COMMENT ON COLUMN "InviteToAccount"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN "InviteToAccount"."CreatedBy" IS 'The identifier of the user who created the record.';
+COMMENT ON COLUMN "InviteToAccount"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN "InviteToAccount"."UpdatedBy" IS 'The identifier of the user who last updated the record.';
+COMMENT ON COLUMN "InviteToAccount"."Version" IS 'The version of the record for concurrency handling.';
