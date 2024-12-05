@@ -13,8 +13,8 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents an invitation sent to a user to join an account with a specific role.
     /// </summary>
-    [Table("AccountInvite")]
-    public class AccountInvite
+    [Table("InviteToAccount")]
+    public class InviteToAccount
     {
         /// <summary>
         /// The unique identifier for the invitation.
@@ -61,19 +61,6 @@ namespace Luval.AuthMate.Entities
         public string? UserMessage { get; set; }
 
         /// <summary>
-        /// The foreign key referencing the Role table.
-        /// </summary>
-        [Required(ErrorMessage = "RoleId is required.")]
-        [Column("RoleId")]
-        public ulong RoleId { get; set; }
-
-        /// <summary>
-        /// Navigation property for the Role.
-        /// </summary>
-        [ForeignKey(nameof(RoleId))]
-        public Role Role { get; set; }
-
-        /// <summary>
         /// The UTC timestamp when the invitation was accepted.
         /// </summary>
         [Column("UtcAcceptedOn")]
@@ -91,6 +78,19 @@ namespace Luval.AuthMate.Entities
         [MaxLength(512, ErrorMessage = "RejectedReason cannot exceed 512 characters.")]
         [Column("RejectedReason")]
         public string? RejectedReason { get; set; }
+
+        /// <summary>
+        /// The foreign key referencing the Role table.
+        /// </summary>
+        [Required(ErrorMessage = "RoleId is required.")]
+        [Column("RoleId")]
+        public ulong RoleId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the Role.
+        /// </summary>
+        [ForeignKey(nameof(RoleId))]
+        public Role Role { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the record was created.
@@ -127,7 +127,7 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes control fields to their default values.
         /// </summary>
-        public AccountInvite()
+        public InviteToAccount()
         {
             UtcCreatedOn = DateTime.UtcNow;
             Version = 1;

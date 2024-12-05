@@ -292,7 +292,7 @@ namespace Luval.AuthMate
         /// <param name="email">The email of the pre-authorized user to retrieve.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The PreAuthorizedAppUser entity if found; otherwise, null.</returns>
-        public async Task<PreAuthorizedAppUser> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<InviteToApplication> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email is required.", nameof(email));
@@ -421,7 +421,7 @@ namespace Luval.AuthMate
             if (identity == null) throw new AuthMateException("Unable to retrive Identity object from the session context");
 
             //variables
-            var preAuthorizedUser = default(PreAuthorizedAppUser);
+            var preAuthorizedUser = default(InviteToApplication);
 
             //Add information about the google provider
             identity.AddClaim(new Claim("AppUserProviderType", "Google"));

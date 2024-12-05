@@ -117,7 +117,7 @@ namespace Luval.AuthMate
         /// <param name="email">The email of the pre-authorized user to retrieve.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The PreAuthorizedAppUser entity if found; otherwise, null.</returns>
-        Task<PreAuthorizedAppUser> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<InviteToApplication> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Handles the authorization process for a user based on their identity, associated claims, and other contextual information.

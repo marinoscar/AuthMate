@@ -13,8 +13,8 @@ namespace Luval.AuthMate.Entities
     /// <summary>
     /// Represents a pre-authorized user who has the ability to create an account in the system.
     /// </summary>
-    [Table("PreAuthorizedAppUser")]
-    public class PreAuthorizedAppUser
+    [Table("InviteToApplication")]
+    public class InviteToApplication
     {
         /// <summary>
         /// The unique identifier for the pre-authorized user.
@@ -45,6 +45,39 @@ namespace Luval.AuthMate.Entities
         /// </summary>
         [ForeignKey(nameof(AccountTypeId))]
         public AccountType AccountType { get; set; }
+
+        /// <summary>
+        /// The UTC timestamp when the invitation expires.
+        /// </summary>
+        [Required(ErrorMessage = "UtcExpiration is required.")]
+        [Column("UtcExpiration")]
+        public DateTime UtcExpiration { get; set; }
+
+        /// <summary>
+        /// The message included in the invitation.
+        /// </summary>
+        [MaxLength(1024, ErrorMessage = "UserMessage cannot exceed 1024 characters.")]
+        [Column("UserMessage")]
+        public string? UserMessage { get; set; }
+
+        /// <summary>
+        /// The UTC timestamp when the invitation was accepted.
+        /// </summary>
+        [Column("UtcAcceptedOn")]
+        public DateTime? UtcAcceptedOn { get; set; }
+
+        /// <summary>
+        /// The UTC timestamp when the invitation was rejected.
+        /// </summary>
+        [Column("UtcRejectedOn")]
+        public DateTime? UtcRejectedOn { get; set; }
+
+        /// <summary>
+        /// The reason provided for rejecting the invitation.
+        /// </summary>
+        [MaxLength(512, ErrorMessage = "RejectedReason cannot exceed 512 characters.")]
+        [Column("RejectedReason")]
+        public string? RejectedReason { get; set; }
 
         #region Control Fields
 
@@ -86,7 +119,7 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public PreAuthorizedAppUser()
+        public InviteToApplication()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
