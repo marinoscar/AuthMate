@@ -54,5 +54,23 @@ namespace Luval.AuthMate
             if (!c.HasClaim(i => i.Type == type)) return null;
             return c.Claims.First(i => i.Type == type).Value;
         }
+
+        /// <summary>
+        /// Force the creation of the DateTime struct into a Utc Kind
+        /// </summary>
+        public static DateTime? ForceUtc(this DateTime? d)
+        {
+            if (!d.HasValue) return null;
+            return d.Value.ForceUtc();
+        }
+
+        /// <summary>
+        /// Force the creation of the DateTime struct into a Utc Kind
+        /// </summary>
+        public static DateTime ForceUtc(this DateTime d)
+        {
+            return new DateTime(d.Ticks, DateTimeKind.Utc);
+        }
+
     }
 }

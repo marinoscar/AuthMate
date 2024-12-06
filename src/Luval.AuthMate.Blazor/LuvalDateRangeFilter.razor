@@ -8,8 +8,12 @@
 
     <!-- Apply Button -->
     <FluentStack HorizontalAlignment="HorizontalAlignment.End">
-        <FluentButton Appearance="Appearance.Lightweight">
-            Apply
+        <!-- Button with Search Icon -->
+        <FluentButton Appearance="Appearance.Lightweight" @onclick=HandleSearch>
+            <FluentIcon Value="@(new LuvalIcons.SearchIcon())" />
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Lightweight" @onclick=OnClear>
+            <FluentIcon Value="@(new LuvalIcons.XMarkIcon())" />
         </FluentButton>
     </FluentStack>
 </FluentStack>
@@ -22,14 +26,21 @@
     public DateTime? EndDate { get; set; } = DateTime.Now;
 
     [Parameter]
-    public EventCallback<(DateTime Start, DateTime End)> OnApply { get; set; }
+    public EventCallback<(DateTime? Start, DateTime? End)> OnSearchClicked { get; set; }
 
-    // private async Task ApplyDateRange()
-    // {
-    //     if (OnApply.HasDelegate)
-    //     {
-    //         await OnApply.InvokeAsync((StartDate, EndDate));
-    //     }
-    // }
+    [Parameter]
+    public EventCallback OnClearClicked { get; set; }
+
+    private async Task HandleSearch()
+    {
+        if (OnSearchClicked.HasDelegate)
+            await OnSearchClicked.InvokeAsync((StartDate, EndDate));
+    }
+
+    public async Task OnClear()
+    {
+        if (OnClearClicked.HasDelegate)
+            await OnClearClicked.InvokeAsync();
+    }
 }
 

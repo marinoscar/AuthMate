@@ -1,7 +1,7 @@
 ﻿@inject Luval.AuthMate.Blazor.RolesPresenter _presenter
 
 <FluentDataGrid Items="@_presenter.Data"
-                ResizableColumns=true>
+ResizableColumns=true>
     <PropertyColumn Property="@(p => p.Name)" Title="Name" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
@@ -9,7 +9,7 @@
                              @oninput="_presenter.ApplyNameFilter" @bind-Value:after="_presenter.ClearNameFilter"
                              ImmediateDelay=10000 Placeholder="Name" Style="width: 100%;" Label="Filter" /> *@
 
-                <LuvalTextFilter Placeholder="Enter text.." SearchButtonClicked="@ApplyNameFilter">
+                <LuvalTextFilter Placeholder="Enter text.." OnSearchClicked="@ApplyNameFilter" OnClearClicked="@ClearNameFilter" >
 
                 </LuvalTextFilter>
             </div>
@@ -19,7 +19,9 @@
     <PropertyColumn Property="@(p => p.UtcUpdatedOn)" Title="Updated On" Format="yyyy-MM-dd" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
-                <LuvalDateRangeFilter></LuvalDateRangeFilter>
+                <LuvalDateRangeFilter OnSearchClicked="@ApplyDateFilter" OnClearClicked="@ClearDateFilter">
+
+                </LuvalDateRangeFilter>
             </div>
         </ColumnOptions>
     </PropertyColumn>
@@ -28,14 +30,28 @@
 @code{
     protected override void OnInitialized()
     {
-        //Loads the entire dataset
-        _presenter.LoadData();
+
     }
 
     private void ApplyNameFilter(string filter)
     {
+        if (string.IsNullOrWhiteSpace(filter)) _presenter.RemoveFilter("name");
+        _presenter.AddOrUpdateFilter("name", i => i.Name.ToLower().Contains(filter.ToLower()));
+    }
 
-        _presenter.ApplyNameFilter(filter);
+    private void ApplyDateFilter((DateTime? start, DateTime? end) range)
+    {
+        if (range.start == null && range.end == null) _presenter.RemoveFilter("date");
+        _presenter.AddOrUpdateFilter("date", i => i.UtcUpdatedOn > range.start.ForceUtc() && i.UtcUpdatedOn <= range.end.ForceUtc());
+    }
+
+    private void ClearNameFilter(){
+        _presenter.RemoveFilter("name");
+    }
+
+    private void ClearDateFilter()
+    {
+        _presenter.RemoveFilter("date");
     }
 
 }

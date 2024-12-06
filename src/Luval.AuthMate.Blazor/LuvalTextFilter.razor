@@ -3,8 +3,11 @@
     <FluentTextField Placeholder="@Placeholder" @bind-Value=SearchText Style="flex: 1;" />
 
     <!-- Button with Search Icon -->
-    <FluentButton Appearance="Appearance.Lightweight" @onclick=HandleSearchAsync>
+    <FluentButton Appearance="Appearance.Lightweight" @onclick=HandleSearch>
         <FluentIcon Value="@(new LuvalIcons.SearchIcon())" />
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Lightweight" @onclick=OnClear>
+        <FluentIcon Value="@(new LuvalIcons.XMarkIcon())" />
     </FluentButton>
 </FluentStack>
 
@@ -16,13 +19,23 @@
     public string SearchText { get; set; } = string.Empty;
 
     [Parameter]
-    public EventCallback<string> SearchButtonClicked { get; set; }
+    public EventCallback<string> OnSearchClicked { get; set; }
 
-    private async Task HandleSearchAsync()
+    [Parameter]
+    public EventCallback OnClearClicked { get; set; }
+
+    private async Task HandleSearch()
     {
-        if( SearchButtonClicked.HasDelegate){
-            await SearchButtonClicked.InvokeAsync(SearchText);
+        if( OnSearchClicked.HasDelegate){
+            await OnSearchClicked.InvokeAsync(SearchText);
         }
     }
+
+    public async Task OnClear()
+    {
+        if (OnClearClicked.HasDelegate)
+            await OnClearClicked.InvokeAsync();
+    }
+
 
 }
