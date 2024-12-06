@@ -7,11 +7,6 @@ using System.Threading.Tasks;
 
 namespace Luval.AuthMate.Blazor
 {
-    /// <summary>
-    /// The FilterManager<T> class provides a reusable and flexible mechanism for managing dynamic filtering of IQueryable data. It allows users to add, update, remove, and clear filters on specific properties or columns of the entity type T. 
-    /// The filters are stored as expressions and applied dynamically to the base query.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class GridFilterManager<T>
     {
         private readonly IQueryable<T> _baseQuery;
