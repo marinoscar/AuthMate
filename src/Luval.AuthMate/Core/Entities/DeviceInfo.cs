@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authentication;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -74,7 +75,7 @@ namespace Luval.AuthMate.Core.Entities
         /// <param name="data">The string representation of the device information.</param>
         /// <returns>A new <see cref="DeviceInfo"/> instance.</returns>
         /// <exception cref="ArgumentException">Thrown if the input string format is invalid.</exception>
-        public static DeviceInfo FromString(string data)
+        public static DeviceInfo Create(string data)
         {
             if (string.IsNullOrWhiteSpace(data))
             {
@@ -89,6 +90,29 @@ namespace Luval.AuthMate.Core.Entities
             string browser = parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2]) ? parts[2] : "Unknown";
 
             return new DeviceInfo(ipAddress, os, browser);
+        }
+
+        /// <summary>
+        /// Creates a new instance from a <see cref="AuthenticationProperties"/> object
+        /// </summary>
+        /// <param name="properties">The instance to extract the information from</param>
+        /// <returns>A new instance of <see cref="DeviceInfo"/></returns>
+        public static DeviceInfo Create(AuthenticationProperties properties)
+        {
+            if(properties == null) return CreateEmpty();
+            return Create(properties.Items);
+        }
+
+        /// <summary>
+        /// Creates a new instance from a <see cref="IDictionary{TKey, TValue}"/> object
+        /// </summary>
+        /// <param name="items">The instance to extract the information from</param>
+        /// <returns>A new instance of <see cref="DeviceInfo"/></returns>
+        public static DeviceInfo Create(IDictionary<string, string?> items)
+        {
+            if (items == null) return CreateEmpty();
+            if (!items.ContainsKey("deviceInfo")) return CreateEmpty();
+            return Create(items["deviceInfo"]);
         }
 
         /// <summary>

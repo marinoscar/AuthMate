@@ -13,12 +13,12 @@ namespace Luval.AuthMate.Core
     public static class GoogleServiceExtensions
     {
 
-        public static IServiceCollection AddGoogleAuth(this IServiceCollection s, Func<OAuthCreatingTicketContext, Task> onCreatingTicket)
+        public static IServiceCollection AddAuthMateGoogleAuth(this IServiceCollection s, Func<OAuthCreatingTicketContext, Task> onCreatingTicket)
         {
-            return s.AddGoogleAuth(new GoogleOAuthConfiguration() { OnCreatingTicket = onCreatingTicket });
+            return s.AddAuthMateGoogleAuth(new GoogleOAuthConfiguration() { OnCreatingTicket = onCreatingTicket });
         }
 
-        public static IServiceCollection AddGoogleAuth(this IServiceCollection s, GoogleOAuthConfiguration config)
+        public static IServiceCollection AddAuthMateGoogleAuth(this IServiceCollection s, GoogleOAuthConfiguration config)
         {
 
             s.AddAuthentication("Cookies")

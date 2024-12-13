@@ -1,4 +1,8 @@
 ﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Core.Services;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,6 +74,19 @@ namespace Luval.AuthMate.Core
         public static DateTime ForceUtc(this DateTime d)
         {
             return new DateTime(d.Ticks, DateTimeKind.Utc);
+        }
+
+        /// <summary>
+        /// Adds the AuthMater services
+        /// </summary>
+        public static IServiceCollection AddAuthMateServices(this IServiceCollection s, Func<IServiceProvider, IAuthMateContext> authMateDbContextFactory)
+        {
+            s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
+            s.AddScoped<AppUserService>();
+            s.AddScoped<RoleService>();
+            s.AddScoped<AccountService>();
+            s.AddScoped<AuthenticationService>();
+            return s;
         }
 
     }
