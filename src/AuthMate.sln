@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Postgres", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Blazor", "Luval.AuthMate.Blazor\Luval.AuthMate.Blazor.csproj", "{833FD5EB-1406-4642-B462-C165029A3F83}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Tests", "Luval.AuthMate.Tests\Luval.AuthMate.Tests.csproj", "{C2E7D229-7A91-4880-9E41-E0D3A19965F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{833FD5EB-1406-4642-B462-C165029A3F83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{833FD5EB-1406-4642-B462-C165029A3F83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{833FD5EB-1406-4642-B462-C165029A3F83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2E7D229-7A91-4880-9E41-E0D3A19965F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2E7D229-7A91-4880-9E41-E0D3A19965F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2E7D229-7A91-4880-9E41-E0D3A19965F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2E7D229-7A91-4880-9E41-E0D3A19965F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
