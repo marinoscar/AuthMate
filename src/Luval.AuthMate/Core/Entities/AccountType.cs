@@ -9,18 +9,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
-
-
     /// <summary>
-    /// Represents a role in the system, such as Admin, User, or Manager.
+    /// Represents the type of an account in the system, such as Free, Tier1, or Tier2.
     /// </summary>
-    [Table("Role")]
-    public class Role
+    [Table("AccountType")]
+    public class AccountType
     {
         /// <summary>
-        /// The unique identifier for the Role.
+        /// The unique identifier for the Account Type.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,20 +26,13 @@ namespace Luval.AuthMate.Entities
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The name of the role (e.g., Admin, User).
+        /// The name of the account type (e.g., Free, Tier1, Tier2).
         /// </summary>
         [Required(ErrorMessage = "Name is required.")]
         [MaxLength(100, ErrorMessage = "Name must not exceed 100 characters.")]
         [MinLength(1, ErrorMessage = "Name must be at least 1 character long.")]
         [Column("Name")]
         public string Name { get; set; }
-
-        /// <summary>
-        /// A brief description of the role and its responsibilities.
-        /// </summary>
-        [MaxLength(500, ErrorMessage = "Description must not exceed 500 characters.")]
-        [Column("Description")]
-        public string? Description { get; set; }
 
         #region Control Fields
 
@@ -83,14 +74,14 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public Role()
+        public AccountType()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Returns a string representation of the Role object.
+        /// Returns a string representation of the AccountType object.
         /// </summary>
         /// <returns>A JSON-formatted string representing the object.</returns>
         public override string ToString()

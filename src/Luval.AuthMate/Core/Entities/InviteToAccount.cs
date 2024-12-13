@@ -8,43 +8,43 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
     /// <summary>
-    /// Represents a pre-authorized user who has the ability to create an account in the system.
+    /// Represents an invitation sent to a user to join an account with a specific role.
     /// </summary>
-    [Table("InviteToApplication")]
-    public class InviteToApplication
+    [Table("InviteToAccount")]
+    public class InviteToAccount
     {
         /// <summary>
-        /// The unique identifier for the pre-authorized user.
+        /// The unique identifier for the invitation.
         /// </summary>
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Required(ErrorMessage = "Id is required.")]
         [Column("Id")]
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The email address of the pre-authorized user.
+        /// The foreign key to the Account table.
+        /// </summary>
+        [Required(ErrorMessage = "AccountId is required.")]
+        [Column("AccountId")]
+        public ulong AccountId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the associated Account.
+        /// </summary>
+        [ForeignKey(nameof(AccountId))]
+        public Account Account { get; set; }
+
+        /// <summary>
+        /// The email address of the invitee.
         /// </summary>
         [Required(ErrorMessage = "Email is required.")]
-        [MaxLength(255, ErrorMessage = "Email must not exceed 255 characters.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        [MinLength(5, ErrorMessage = "Email must be at least 5 characters long.")]
+        [MaxLength(256, ErrorMessage = "Email cannot exceed 256 characters.")]
         [Column("Email")]
         public string Email { get; set; }
-
-        /// <summary>
-        /// The foreign key referencing the AccountType entity.
-        /// </summary>
-        [Required(ErrorMessage = "AccountTypeId is required.")]
-        [Column("AccountTypeId")]
-        public ulong AccountTypeId { get; set; }
-
-        /// <summary>
-        /// Navigation property for the associated AccountType.
-        /// </summary>
-        [ForeignKey(nameof(AccountTypeId))]
-        public AccountType AccountType { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the invitation expires.
@@ -79,7 +79,18 @@ namespace Luval.AuthMate.Entities
         [Column("RejectedReason")]
         public string? RejectedReason { get; set; }
 
-        #region Control Fields
+        /// <summary>
+        /// The foreign key referencing the Role table.
+        /// </summary>
+        [Required(ErrorMessage = "RoleId is required.")]
+        [Column("RoleId")]
+        public ulong RoleId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the Role.
+        /// </summary>
+        [ForeignKey(nameof(RoleId))]
+        public Role Role { get; set; }
 
         /// <summary>
         /// The UTC timestamp when the record was created.
@@ -89,7 +100,7 @@ namespace Luval.AuthMate.Entities
         public DateTime UtcCreatedOn { get; set; }
 
         /// <summary>
-        /// The user who created the record.
+        /// The identifier of the user who created the record.
         /// </summary>
         [Column("CreatedBy")]
         public string? CreatedBy { get; set; }
@@ -97,38 +108,35 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// The UTC timestamp when the record was last updated.
         /// </summary>
-        [Required(ErrorMessage = "UtcUpdatedOn is required.")]
         [Column("UtcUpdatedOn")]
-        public DateTime UtcUpdatedOn { get; set; }
+        public DateTime? UtcUpdatedOn { get; set; }
 
         /// <summary>
-        /// The user who last updated the record.
+        /// The identifier of the user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
-        /// The version of the record, incremented on updates.
+        /// The version of the record for concurrency handling.
         /// </summary>
-        [ConcurrencyCheck]
+        [Required(ErrorMessage = "Version is required.")]
         [Column("Version")]
         public uint Version { get; set; }
 
-        #endregion
-
         /// <summary>
-        /// Initializes the control fields for the entity.
+        /// Initializes control fields to their default values.
         /// </summary>
-        public InviteToApplication()
+        public InviteToAccount()
         {
             UtcCreatedOn = DateTime.UtcNow;
-            UtcUpdatedOn = DateTime.UtcNow;
+            Version = 1;
         }
 
         /// <summary>
-        /// Returns a string representation of the PreAuthorizedAppUser object.
+        /// Returns a string representation of the AccountInvite object.
         /// </summary>
-        /// <returns>A JSON-formatted string representing the object.</returns>
+        /// <returns>A JSON-formatted string representation of the object.</returns>
         public override string ToString()
         {
             return JsonSerializer.Serialize(this, new JsonSerializerOptions

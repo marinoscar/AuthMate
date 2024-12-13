@@ -1,9 +1,11 @@
-﻿using Luval.AuthMate.Entities;
+﻿using Luval.AuthMate.Core;
+using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Principal;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Infrastructure.Data
 {
     /// <summary>
     /// Service for managing authentication-related operations in the system.
@@ -453,7 +455,7 @@ namespace Luval.AuthMate
             if (user == null && preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
 
             //If the user is null and it is a power user it creates a new account
-            if(preAuthorizedUser != null)
+            if (preAuthorizedUser != null)
                 user = await RegisterUserInAdminRoleAsync(contextUser, preAuthorizedUser.AccountType);
 
             //If the RegisterUserInAdminRoleAsync method returns null then we cannot continue

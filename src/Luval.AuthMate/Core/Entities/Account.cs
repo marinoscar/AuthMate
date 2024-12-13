@@ -9,16 +9,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
+
+
     /// <summary>
-    /// Represents the type of an account in the system, such as Free, Tier1, or Tier2.
+    /// Represents an account in the system, with a reference to its type and owner information.
     /// </summary>
-    [Table("AccountType")]
-    public class AccountType
+    [Table("Account")]
+    public class Account
     {
         /// <summary>
-        /// The unique identifier for the Account Type.
+        /// The unique identifier for the Account.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -26,13 +28,38 @@ namespace Luval.AuthMate.Entities
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The name of the account type (e.g., Free, Tier1, Tier2).
+        /// The foreign key referencing the Account Type.
         /// </summary>
-        [Required(ErrorMessage = "Name is required.")]
-        [MaxLength(100, ErrorMessage = "Name must not exceed 100 characters.")]
-        [MinLength(1, ErrorMessage = "Name must be at least 1 character long.")]
+        [Required(ErrorMessage = "AccountTypeId is required.")]
+        [Column("AccountTypeId")]
+        public ulong AccountTypeId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the Account Type.
+        /// </summary>
+        [ForeignKey(nameof(AccountTypeId))]
+        public AccountType AccountType { get; set; }
+
+        /// <summary>
+        /// The owner of the account (typically the user who created it).
+        /// </summary>
+        [Required(ErrorMessage = "Owner is required.")]
+        [MaxLength(255, ErrorMessage = "Owner must not exceed 255 characters.")]
+        [MinLength(1, ErrorMessage = "Owner must be at least 1 character long.")]
+        [Column("Owner")]
+        public string Owner { get; set; }
+
+        /// <summary>
+        /// The name of the account.
+        /// </summary>
         [Column("Name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// A description of the account.
+        /// </summary>
+        [Column("Description")]
+        public string? Description { get; set; }
 
         #region Control Fields
 
@@ -74,14 +101,14 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public AccountType()
+        public Account()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Returns a string representation of the AccountType object.
+        /// Returns a string representation of the Account object.
         /// </summary>
         /// <returns>A JSON-formatted string representing the object.</returns>
         public override string ToString()

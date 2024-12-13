@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
     /// <summary>
     /// Represents a log entry for application user login activity in the system.

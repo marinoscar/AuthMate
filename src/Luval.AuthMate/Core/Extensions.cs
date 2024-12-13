@@ -1,4 +1,4 @@
-﻿using Luval.AuthMate.Entities;
+﻿using Luval.AuthMate.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Core
 {
     public static class Extensions
     {
@@ -18,7 +18,7 @@ namespace Luval.AuthMate
         /// <returns>An <see cref="AppUser"/> populated with data from the claims.</returns>
         public static AppUser ToUser(this ClaimsPrincipal identity)
         {
-            return ToUser((ClaimsIdentity)identity.Identity);
+            return ((ClaimsIdentity)identity.Identity).ToUser();
         }
 
         /// <summary>

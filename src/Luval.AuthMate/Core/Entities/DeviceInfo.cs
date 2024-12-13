@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
     /// <summary>
     /// Represents information about a device, including its name, IP address, operating system, and browser.
@@ -52,7 +52,7 @@ namespace Luval.AuthMate.Entities
         /// <param name="ipAddress">The IP address of the device.</param>
         /// <param name="os">The operating system of the device.</param>
         /// <param name="browser">The browser used on the device.</param>
-        public DeviceInfo( string ipAddress, string os, string browser)
+        public DeviceInfo(string ipAddress, string os, string browser)
         {
             IpAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
             OS = os ?? throw new ArgumentNullException(nameof(os));

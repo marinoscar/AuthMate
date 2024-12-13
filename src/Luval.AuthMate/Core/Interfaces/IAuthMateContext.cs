@@ -1,7 +1,7 @@
-﻿using Luval.AuthMate.Entities;
+﻿using Luval.AuthMate.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Core.Interfaces
 {
     /// <summary>
     /// Represents the interface for the AuthMate DbContext, used to manage authentication-related entities in the system.

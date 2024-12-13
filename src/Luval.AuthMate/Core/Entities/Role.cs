@@ -9,18 +9,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
-namespace Luval.AuthMate.Entities
+namespace Luval.AuthMate.Core.Entities
 {
 
 
     /// <summary>
-    /// Represents an account in the system, with a reference to its type and owner information.
+    /// Represents a role in the system, such as Admin, User, or Manager.
     /// </summary>
-    [Table("Account")]
-    public class Account
+    [Table("Role")]
+    public class Role
     {
         /// <summary>
-        /// The unique identifier for the Account.
+        /// The unique identifier for the Role.
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,36 +28,18 @@ namespace Luval.AuthMate.Entities
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The foreign key referencing the Account Type.
+        /// The name of the role (e.g., Admin, User).
         /// </summary>
-        [Required(ErrorMessage = "AccountTypeId is required.")]
-        [Column("AccountTypeId")]
-        public ulong AccountTypeId { get; set; }
-
-        /// <summary>
-        /// Navigation property for the Account Type.
-        /// </summary>
-        [ForeignKey(nameof(AccountTypeId))]
-        public AccountType AccountType { get; set; }
-
-        /// <summary>
-        /// The owner of the account (typically the user who created it).
-        /// </summary>
-        [Required(ErrorMessage = "Owner is required.")]
-        [MaxLength(255, ErrorMessage = "Owner must not exceed 255 characters.")]
-        [MinLength(1, ErrorMessage = "Owner must be at least 1 character long.")]
-        [Column("Owner")]
-        public string Owner { get; set; }
-
-        /// <summary>
-        /// The name of the account.
-        /// </summary>
+        [Required(ErrorMessage = "Name is required.")]
+        [MaxLength(100, ErrorMessage = "Name must not exceed 100 characters.")]
+        [MinLength(1, ErrorMessage = "Name must be at least 1 character long.")]
         [Column("Name")]
-        public string? Name { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
-        /// A description of the account.
+        /// A brief description of the role and its responsibilities.
         /// </summary>
+        [MaxLength(500, ErrorMessage = "Description must not exceed 500 characters.")]
         [Column("Description")]
         public string? Description { get; set; }
 
@@ -101,14 +83,14 @@ namespace Luval.AuthMate.Entities
         /// <summary>
         /// Initializes the control fields for the entity.
         /// </summary>
-        public Account()
+        public Role()
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Returns a string representation of the Account object.
+        /// Returns a string representation of the Role object.
         /// </summary>
         /// <returns>A JSON-formatted string representing the object.</returns>
         public override string ToString()

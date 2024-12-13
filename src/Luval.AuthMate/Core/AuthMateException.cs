@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Core
 {
     public class AuthMateException : Exception
     {

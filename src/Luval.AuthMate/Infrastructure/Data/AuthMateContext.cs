@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Luval.AuthMate.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
+using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Infrastructure.Data
 {
 
     /// <summary>
@@ -93,7 +94,7 @@ namespace Luval.AuthMate
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<AppUser>()
                 .HasIndex(a => a.Email).IsUnique();
-            
+
 
             // Configure AppUserRole entity
             modelBuilder.Entity<AppUserRole>()

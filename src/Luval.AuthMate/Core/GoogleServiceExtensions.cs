@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Luval.AuthMate.Infrastructure.Configuration;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -7,14 +8,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate.OAuth
+namespace Luval.AuthMate.Core
 {
     public static class GoogleServiceExtensions
     {
 
         public static IServiceCollection AddGoogleAuth(this IServiceCollection s, Func<OAuthCreatingTicketContext, Task> onCreatingTicket)
         {
-            return AddGoogleAuth(s, new GoogleOAuthConfiguration() { OnCreatingTicket = onCreatingTicket });
+            return s.AddGoogleAuth(new GoogleOAuthConfiguration() { OnCreatingTicket = onCreatingTicket });
         }
 
         public static IServiceCollection AddGoogleAuth(this IServiceCollection s, GoogleOAuthConfiguration config)

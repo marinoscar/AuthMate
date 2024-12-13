@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Luval.AuthMate.OAuth
+namespace Luval.AuthMate.Infrastructure.Configuration
 {
     public class GoogleOAuthConfiguration : OAuthConfiguration
     {

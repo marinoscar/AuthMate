@@ -1,7 +1,7 @@
-﻿using Luval.AuthMate.Entities;
+﻿using Luval.AuthMate.Core.Entities;
 using System.Security.Claims;
 
-namespace Luval.AuthMate
+namespace Luval.AuthMate.Core.Interfaces
 {
 
     /// <summary>

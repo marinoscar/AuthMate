@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace Luval.AuthMate.Postgres
