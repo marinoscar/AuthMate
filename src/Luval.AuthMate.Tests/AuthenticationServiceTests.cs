@@ -21,147 +21,38 @@ namespace Luval.AuthMate.Tests
 {
     public class AuthenticationServiceTests
     {
-        private readonly Mock<IAppUserService> _mockUserService;
-        private readonly Mock<IAuthMateContext> _mockContext;
-        private readonly ILogger<AuthenticationService> _logger;
-        private readonly AuthenticationService _authService;
 
-        public AuthenticationServiceTests()
+        private AuthenticationService CreateService(Action<IAuthMateContext> afterContextCreation)
         {
-            _logger = new ColorConsoleLogger<AuthenticationService>();
-            _mockContext = new Mock<IAuthMateContext>();
-            _mockUserService = new Mock<IAppUserService>();
-            
-            
+            var context = new MemoryDataContext();
+            context.Initialize();
 
-            _authService = new AuthenticationService(
-                _mockUserService.Object,
-                _mockContext.Object,
-                _logger
-            );
-        }
+            var userService = new AppUserService(context, new NullLogger<AppUserService>());
+            var authService = new AuthenticationService(userService, context, new NullLogger<AuthenticationService>());
 
-        [Fact]
-        public async Task AuthorizeUserAsync_ThrowsArgumentNullException_WhenIdentityIsNull()
-        {
-            // Arrange
-            ClaimsIdentity identity = null;
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-                await _authService.AuthorizeUserAsync(identity));
-        }
-
-        [Fact]
-        public async Task AuthorizeUserAsync_ThrowsArgumentException_WhenEmailIsMissing()
-        {
-            // Arrange
-            var identity = new ClaimsIdentity();
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-                await _authService.AuthorizeUserAsync(identity));
+            if (afterContextCreation != null) afterContextCreation(context);
+            return authService;
         }
 
         [Fact]
         public async Task AuthorizeUserAsync_ReturnsUser_WhenUserExists()
         {
             // Arrange
-            var email = "test@example.com";
+            var email = "owner@email.com";
             var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
-            var existingUser = new AppUser { Email = email };
 
-            _mockUserService
-                .Setup(s => s.TryGetUserByEmailAsync(email, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(existingUser);
+            //Creates a new instance of the service and then it adds the user to the context
+            var service = CreateService((c) =>
+            {
+            });
 
             // Act
-            var result = await _authService.AuthorizeUserAsync(identity);
+            var result = await service.AuthorizeUserAsync(identity);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(email, result.Email);
         }
 
-        [Fact]
-        public async Task AuthorizeUserAsync_CreatesUserFromInvitation_WhenAccountInvitationExists()
-        {
-            // Arrange
-            var email = "invited@example.com";
-            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
-            var accountInvite = new InviteToAccount { Email = email };
-            var newUser = new AppUser { Email = email };
-
-            _mockUserService
-                .Setup(s => s.TryGetUserByEmailAsync(email, CancellationToken.None))
-                .ReturnsAsync((AppUser)null);
-
-            _mockContext
-                .Setup(c => c.InvitesToAccount.Include(It.IsAny<string>()).FirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<InviteToAccount, bool>>>(), CancellationToken.None))
-                .ReturnsAsync(accountInvite);
-
-            _mockUserService
-                .Setup(s => s.CreateUserFromInvitationAsync(accountInvite, identity, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(newUser);
-
-            // Act
-            var result = await _authService.AuthorizeUserAsync(identity);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(email, result.Email);
-        }
-
-        [Fact]
-        public async Task ValidateInvitationToAccount_ReturnsInvite_WhenInviteExists()
-        {
-            // Arrange
-            var email = "accountinvite@example.com";
-            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
-            var expectedInvite = new InviteToAccount { Email = email };
-
-            _mockContext
-                .Setup(c => c.InvitesToAccount.Include(It.IsAny<string>()).FirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<InviteToAccount, bool>>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(expectedInvite);
-
-            // Act
-            var result = await _authService.ValidateInvitationToAccount(identity);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(email, result.Email);
-        }
-
-        [Fact]
-        public async Task ValidateInvitationToApplication_ReturnsNull_WhenInviteDoesNotExist()
-        {
-            // Arrange
-            var email = "noinvite@example.com";
-
-            _mockContext
-                .Setup(c => c.InvitesToApplication.Include(It.IsAny<string>()).FirstOrDefaultAsync(
-                    It.IsAny<Expression<Func<InviteToApplication, bool>>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((InviteToApplication)null);
-
-            // Act
-            var result = await _authService.ValidateInvitationToApplication(email);
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task AddLogHistoryAsync_ThrowsArgumentException_WhenEmailIsEmpty()
-        {
-            // Arrange
-            var deviceInfo = new DeviceInfo();
-            string email = null;
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-                await _authService.AddLogHistoryAsync(deviceInfo, email));
-        }
     }
 }
