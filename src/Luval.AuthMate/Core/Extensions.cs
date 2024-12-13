@@ -1,10 +1,13 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core.Services;
+using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -38,7 +41,7 @@ namespace Luval.AuthMate.Core
             }
             return new AppUser()
             {
-                ProviderType = identity.GetValue("AppUserProviderType"),
+                ProviderType = identity.AuthenticationType,
                 ProviderKey = identity.GetValue(ClaimTypes.NameIdentifier),
                 DisplayName = identity.GetValue(ClaimTypes.Name),
                 Email = identity.GetValue(ClaimTypes.Email),
@@ -81,6 +84,9 @@ namespace Luval.AuthMate.Core
         /// </summary>
         public static IServiceCollection AddAuthMateServices(this IServiceCollection s, Func<IServiceProvider, IAuthMateContext> authMateDbContextFactory)
         {
+            if (Debugger.IsAttached)
+                s.AddSingleton(typeof(ILogger<>), typeof(ColorConsoleLogger<>));
+
             s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
             s.AddScoped<AppUserService>();
             s.AddScoped<RoleService>();
