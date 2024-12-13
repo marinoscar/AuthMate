@@ -1,9 +1,11 @@
-﻿using Luval.AuthMate.Infrastructure.Configuration;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,6 +52,17 @@ namespace Luval.AuthMate.Core
                     opt.CallbackPath = config.CallbackPath;
 
                     //Event that is triggered after the use is authenticated
+                    if(config.OnCreatingTicket == null)
+                    {
+                        config.OnCreatingTicket = async context =>
+                        {
+                            var authService = s.BuildServiceProvider().GetRequiredService<AuthMate.Core.Services.AuthenticationService>();
+
+                            await authService.AuthorizeUserAsync(context.Identity, DeviceInfo.Create(context.Properties), CancellationToken.None);
+
+
+                        };
+                    }
                     opt.Events.OnCreatingTicket = config.OnCreatingTicket;
                 });
             return s;
