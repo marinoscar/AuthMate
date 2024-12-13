@@ -17,7 +17,7 @@ namespace Luval.AuthMate.Core.Services
     /// </summary>
     public class AuthenticationService
     {
-        private readonly AppUserService _userService;
+        private readonly IAppUserService _userService;
         private readonly IAuthMateContext _context;
         private readonly ILogger<AuthenticationService> _logger;
 
@@ -27,7 +27,7 @@ namespace Luval.AuthMate.Core.Services
         /// <param name="userService">The app user service instance.</param>
         /// <param name="context">The database context interface.</param>
         /// <param name="logger">The logger instance.</param>
-        public AuthenticationService(AppUserService userService, IAuthMateContext context, ILogger<AuthenticationService> logger)
+        public AuthenticationService(IAppUserService userService, IAuthMateContext context, ILogger<AuthenticationService> logger)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _context = context ?? throw new ArgumentNullException(nameof(context));

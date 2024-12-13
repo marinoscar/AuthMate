@@ -88,7 +88,7 @@ namespace Luval.AuthMate.Core
                 s.AddSingleton(typeof(ILogger<>), typeof(ColorConsoleLogger<>));
 
             s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
-            s.AddScoped<AppUserService>();
+            s.AddScoped<IAppUserService, AppUserService>();
             s.AddScoped<RoleService>();
             s.AddScoped<AccountService>();
             s.AddScoped<AuthenticationService>();

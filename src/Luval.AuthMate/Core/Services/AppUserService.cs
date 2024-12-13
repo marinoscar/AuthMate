@@ -20,7 +20,7 @@ namespace Luval.AuthMate.Core.Services
     /// <summary>
     /// Service for managing app user-related operations.
     /// </summary>
-    public class AppUserService
+    public class AppUserService : IAppUserService
     {
         private readonly IAuthMateContext _context;
         private readonly ILogger<AppUserService> _logger;
