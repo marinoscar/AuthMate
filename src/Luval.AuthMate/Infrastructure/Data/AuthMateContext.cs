@@ -142,6 +142,11 @@ namespace Luval.AuthMate.Infrastructure.Data
 
 
         }
+
+        public AuthMateContext() : base() { }
+
+        public AuthMateContext(DbContextOptions options) : base(options) { }
+
     }
 
 
