@@ -44,12 +44,12 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// <summary>
         /// Gets or sets the DbSet for PreAuthorizedAppUser entities.
         /// </summary>
-        public DbSet<InviteToApplication> PreAuthorizedAppUsers { get; set; }
+        public DbSet<InviteToApplication> InvitesToApplication { get; set; }
 
         /// <summary>
         /// Gets or sets the DbSet for AccountInvite entities
         /// </summary>
-        public DbSet<InviteToAccount> AccountInvites { get; set; }
+        public DbSet<InviteToAccount> InvitesToAccount { get; set; }
 
         /// <summary>
         /// Gets or sets the DBSet for AppUserLoginHistory entities

@@ -34,14 +34,14 @@ namespace Luval.AuthMate.Core.Interfaces
         DbSet<Role> Roles { get; }
 
         /// <summary>
-        /// Gets or sets the DbSet for PreAuthorizedAppUser entities.
+        /// Gets or sets the DbSet for InviteToApplication entities.
         /// </summary>
-        public DbSet<InviteToApplication> PreAuthorizedAppUsers { get; set; }
+        public DbSet<InviteToApplication> InvitesToApplication { get; set; }
 
         /// <summary>
-        /// Gets or sets the DbSet for AccountInvite entities
+        /// Gets or sets the DbSet for InviteToAccount entities
         /// </summary>
-        public DbSet<InviteToAccount> AccountInvites { get; set; }
+        public DbSet<InviteToAccount> InvitesToAccount { get; set; }
 
         /// <summary>
         /// Gets or sets the DBSet for AppUserLoginHistory entities

@@ -20,6 +20,7 @@ namespace Luval.AuthMate.Core
 
         public static IServiceCollection AddGoogleAuth(this IServiceCollection s, GoogleOAuthConfiguration config)
         {
+
             s.AddAuthentication("Cookies")
 
                 .AddCookie(opt =>

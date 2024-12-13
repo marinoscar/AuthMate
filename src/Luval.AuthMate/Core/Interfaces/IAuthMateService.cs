@@ -109,7 +109,7 @@ namespace Luval.AuthMate.Core.Interfaces
         /// <param name="accountType">The name of the <see cref="AccountType"/> for the user's account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created AppUser entity.</returns>
-        Task<AppUser> RegisterUserInAdminRoleAsync(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default);
+        Task<AppUser> CreateUserFromInvitation(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves a pre-authorized user by their email.
@@ -117,7 +117,7 @@ namespace Luval.AuthMate.Core.Interfaces
         /// <param name="email">The email of the pre-authorized user to retrieve.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The PreAuthorizedAppUser entity if found; otherwise, null.</returns>
-        Task<InviteToApplication> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<InviteToApplication> ValidateInvitationToApplication(string email, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Handles the authorization process for a user based on their identity, associated claims, and other contextual information.
@@ -162,7 +162,7 @@ namespace Luval.AuthMate.Core.Interfaces
         /// </list>
         /// If all checks fail, an <see cref="AuthMateException"/> is thrown, indicating that the user could not be authenticated.
         /// </remarks>
-        Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default);
+        Task<AppUser> AuthorizeUserAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Adds a login history record to the database asynchronously using device information and user email.

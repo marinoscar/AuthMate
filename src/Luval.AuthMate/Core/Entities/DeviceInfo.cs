@@ -90,5 +90,16 @@ namespace Luval.AuthMate.Core.Entities
 
             return new DeviceInfo(ipAddress, os, browser);
         }
+
+        /// <summary>
+        /// Creates an empty instance of the class
+        /// </summary>
+        /// <returns>A new instance</returns>
+        public static DeviceInfo CreateEmpty()
+        {
+            return new DeviceInfo() { 
+               
+            };
+        }
     }
 }

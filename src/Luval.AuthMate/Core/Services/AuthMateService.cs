@@ -234,7 +234,7 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// <param name="accountType">The name of the <see cref="AccountType"/> for the user's account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created AppUser entity.</returns>
-        public async Task<AppUser> RegisterUserInAdminRoleAsync(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default)
+        public async Task<AppUser> CreateUserFromInvitation(AppUser appUser, AccountType accountType, CancellationToken cancellationToken = default)
         {
             if (appUser == null) throw new ArgumentNullException(nameof(appUser));
             if (string.IsNullOrWhiteSpace(appUser.Email)) throw new ArgumentException("Email is required for the AppUser.", nameof(appUser.Email));
@@ -294,12 +294,12 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// <param name="email">The email of the pre-authorized user to retrieve.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The PreAuthorizedAppUser entity if found; otherwise, null.</returns>
-        public async Task<InviteToApplication> GetPreAuthorizedAppUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<InviteToApplication> ValidateInvitationToApplication(string email, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email is required.", nameof(email));
 
-            return await _context.PreAuthorizedAppUsers
+            return await _context.InvitesToApplication
                 .Include(p => p.AccountType) // Include AccountType for additional details
                 .FirstOrDefaultAsync(p => p.Email == email, cancellationToken);
         }
@@ -418,7 +418,7 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// </list>
         /// If all checks fail, an <see cref="AuthMateException"/> is thrown, indicating that the user could not be authenticated.
         /// </remarks>
-        public async Task<AppUser> UserAuthorizationProcessAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default)
+        public async Task<AppUser> AuthorizeUserAsync(ClaimsIdentity identity, Action<AppUser, ClaimsIdentity> additionalValidation, DeviceInfo? deviceInfo = default, CancellationToken cancellationToken = default)
         {
             if (identity == null) throw new AuthMateException("Unable to retrive Identity object from the session context");
 
@@ -449,14 +449,14 @@ namespace Luval.AuthMate.Infrastructure.Data
                 return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken);
 
             // if no user is found, we look in the preauthorized list
-            preAuthorizedUser = await GetPreAuthorizedAppUserByEmailAsync(contextUser.Email, cancellationToken);
+            preAuthorizedUser = await ValidateInvitationToApplication(contextUser.Email, cancellationToken);
 
             //If there is no user and nothing on the super user list, then throw an exception
             if (user == null && preAuthorizedUser == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
 
             //If the user is null and it is a power user it creates a new account
             if (preAuthorizedUser != null)
-                user = await RegisterUserInAdminRoleAsync(contextUser, preAuthorizedUser.AccountType);
+                user = await CreateUserFromInvitation(contextUser, preAuthorizedUser.AccountType);
 
             //If the RegisterUserInAdminRoleAsync method returns null then we cannot continue
             if (user == null) throw new AuthMateException($"Unable to authenticate user {contextUser.Email}");
@@ -505,7 +505,7 @@ namespace Luval.AuthMate.Infrastructure.Data
             if (identity == null) throw new ArgumentNullException(nameof(identity));
             var user = identity.ToUser();
 
-            var invitation = await _context.AccountInvites.Include(i => i.Account).Include(i => i.Role)
+            var invitation = await _context.InvitesToAccount.Include(i => i.Account).Include(i => i.Role)
                 .FirstOrDefaultAsync(i => i.Email == user.Email);
 
             // If there is no invitation, return null
