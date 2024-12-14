@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -59,25 +60,41 @@ namespace Luval.AuthMate.Core.Services
         /// <summary>
         /// Updates a role.
         /// </summary>
-        /// <param name="role">The updated role entity.</param>
+        /// <param name="roleId">The ID of the role to update.</param>
+        /// <param name="name">The new name of the role.</param>
+        /// <param name="description">The new description of the role.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The updated role entity.</returns>
-        public async Task<Role> UpdateRoleAsync(Role role, CancellationToken cancellationToken = default)
+        public async Task<Role> UpdateRoleAsync(ulong roleId, string name, string description, CancellationToken cancellationToken = default)
         {
             try
             {
+                if (roleId == 0)
+                    throw new ArgumentException("Role ID is required.", nameof(roleId));
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new ArgumentException("Role name is required.", nameof(name));
+
+                var role = await _context.Roles.SingleAsync(i => i.Id == roleId, cancellationToken).ConfigureAwait(false);
                 if (role == null)
-                    throw new ArgumentNullException(nameof(role));
+                {
+                    _logger.LogWarning("Role with ID {RoleId} not found.", roleId);
+                    throw new InvalidOperationException($"Role with ID '{roleId}' not found.");
+                }
+
+                role.Name = name;
+                role.Description = description;
+                role.UtcUpdatedOn = DateTime.UtcNow;
+                role.Version++;
 
                 _context.Roles.Update(role);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Role with ID {RoleId} updated successfully.", role.Id);
+                _logger.LogInformation("Role with ID {RoleId} updated successfully.", roleId);
                 return role;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating role with ID {RoleId}.", role?.Id);
+                _logger.LogError(ex, "Error updating role with ID {RoleId}.", roleId);
                 throw;
             }
         }
