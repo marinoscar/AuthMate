@@ -44,29 +44,14 @@ namespace Luval.AuthMate.Core.Services
         /// <returns>The user entity.</returns>
         public async Task<AppUser> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            try
+            var user = await TryGetUserByEmailAsync(email, cancellationToken).ConfigureAwait(false);
+            if (user == null)
             {
-                if (string.IsNullOrWhiteSpace(email))
-                    throw new ArgumentException("Email is required.", nameof(email));
+                _logger.LogWarning("User with email {Email} not found.", email);
+                throw new ArgumentException($"User with email '{email}' not found.", nameof(email));
 
-                // Query the user by email in the database
-                var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == email, cancellationToken).ConfigureAwait(false);
-
-                if (user == null)
-                {
-                    _logger.LogWarning("User with email {Email} not found.", email);
-                    throw new AuthMateException($"User with email '{email}' not found.");
-                }
-
-                _logger.LogInformation("Successfully retrieved user with email {Email}.", email);
-                return user;
             }
-            catch (Exception ex)
-            {
-                // Log the error and rethrow to the caller
-                _logger.LogError(ex, "Error retrieving user with email {Email}.", email);
-                throw;
-            }
+            return user;
         }
 
         /// <summary>
