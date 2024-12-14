@@ -58,6 +58,10 @@ namespace Luval.AuthMate.Tests
             AppUsers.Add(user);
             SaveChanges();
 
+            var userRole = new AppUserRole() { AppUserId = user.Id, RoleId = adminRole.Id };
+            AppUserRoles.Add(userRole); 
+            SaveChanges();
+
         }
 
         public override void Dispose()
