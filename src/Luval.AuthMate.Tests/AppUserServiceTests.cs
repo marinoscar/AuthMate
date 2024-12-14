@@ -42,9 +42,12 @@ namespace Luval.AuthMate.Tests
             var email = "testuser@example.com";
             var service = CreateService((c) =>
             {
+                var r = c.Roles.First();
                 var a = c.Accounts.First();
                 var u = new AppUser { Email = email, ProviderKey = "radomkey", ProviderType = "Google", AccountId = a.Id };
                 c.AppUsers.Add(u);
+                c.SaveChanges();
+                c.AppUserRoles.Add(new AppUserRole { AppUserId = u.Id, RoleId = r.Id });
                 c.SaveChanges();
             });
 
@@ -53,6 +56,8 @@ namespace Luval.AuthMate.Tests
 
             // Assert
             Assert.NotNull(result);
+            Assert.NotNull(result.Account);
+            Assert.True(result.UserRoles.Count >= 1);
             Assert.Equal(email, result.Email);
         }
 
