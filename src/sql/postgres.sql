@@ -39,6 +39,7 @@ CREATE TABLE "Account" (
     "Owner" VARCHAR(255) NOT NULL UNIQUE,
     "Name" VARCHAR NULL UNIQUE,
     "Description" TEXT NULL,
+	"UtcExpirationDate" TIMESTAMP NULL,
     "UtcCreatedOn" TIMESTAMP NOT NULL,
     "CreatedBy" VARCHAR NULL,
     "UtcUpdatedOn" TIMESTAMP NOT NULL,
@@ -54,6 +55,7 @@ COMMENT ON COLUMN "Account"."AccountTypeId" IS 'The foreign key referencing the 
 COMMENT ON COLUMN "Account"."Owner" IS 'The owner of the account (typically the user who created it).';
 COMMENT ON COLUMN "Account"."Name" IS 'The name of the account.';
 COMMENT ON COLUMN "Account"."Description" IS 'A description of the account.';
+COMMENT ON COLUMN "Account"."UtcExpirationDate" IS 'The UTC timestamp when account will expire.';
 COMMENT ON COLUMN "Account"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
 COMMENT ON COLUMN "Account"."CreatedBy" IS 'The user who created the record.';
 COMMENT ON COLUMN "Account"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
