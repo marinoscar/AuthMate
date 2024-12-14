@@ -58,15 +58,16 @@ namespace Luval.AuthMate.Core
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.DisplayName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.ProviderKey),
-                new Claim("urn:google:image", user.ProfilePictureUrl)
+                new Claim(ClaimTypes.Name, user.DisplayName ?? string.Empty),
+                new Claim(ClaimTypes.Email, user.Email  ?? string.Empty),
+                new Claim(ClaimTypes.NameIdentifier, user.ProviderKey  ?? string.Empty),
+                new Claim("urn:google:image", user.ProfilePictureUrl  ?? string.Empty),
+                new Claim("ProfilePictureUrl", user.ProfilePictureUrl  ?? string.Empty)
             };
             var identity = new ClaimsIdentity(claims, user.ProviderType);
             foreach (var role in user.UserRoles)
             {
-                identity.AddClaim(new Claim(ClaimTypes.Role, role.Role.Name));
+                identity.AddClaim(new Claim(ClaimTypes.Role, role.Role.Name ?? string.Empty));
             }
             return identity;
         }
