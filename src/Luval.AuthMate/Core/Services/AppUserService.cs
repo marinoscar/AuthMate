@@ -368,6 +368,9 @@ namespace Luval.AuthMate.Core.Services
                 await _context.AppUserRoles.AddAsync(userRole, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
+                //add the role to the user's role collection
+                user.UserRoles.Add(userRole);
+
                 _logger.LogInformation("Administrator role assigned to user '{UserEmail}'.", user.Email);
 
                 return user;

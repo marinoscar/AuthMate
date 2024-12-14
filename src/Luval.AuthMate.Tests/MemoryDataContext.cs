@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace Luval.AuthMate.Tests
         {
             var options = new DbContextOptionsBuilder<MemoryDataContext>()
                         .UseSqlite("Filename=:memory:") // Use in-memory SQLite database
+                        .LogTo((s) => Debug.WriteLine(s))
+                        .EnableSensitiveDataLogging()
                         .Options;
             return options;
         }
@@ -57,7 +60,11 @@ namespace Luval.AuthMate.Tests
 
         }
 
-
+        public override void Dispose()
+        {
+            Database.EnsureDeleted();
+            base.Dispose();
+        }
 
 
     }

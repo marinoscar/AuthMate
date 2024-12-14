@@ -114,7 +114,7 @@ namespace Luval.AuthMate.Infrastructure.Data
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
 
-            // Configure PreAuthorizedAppUser entity
+            // Configure InviteToApplication entity
             modelBuilder.Entity<InviteToApplication>()
                 .HasKey(au => au.Id);
             modelBuilder.Entity<InviteToApplication>()
