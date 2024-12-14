@@ -157,6 +157,9 @@ namespace Luval.AuthMate.Core.Services
         {
             try
             {
+                //Check for the user account to be active
+                ValidateAccountIsActive(user);
+
                 _logger.LogInformation("Updating login information for user '{UserEmail}'.", user.Email);
 
                 identity.AddClaim(new Claim("AppUserJson", user.ToString()));
@@ -172,6 +175,16 @@ namespace Luval.AuthMate.Core.Services
             {
                 _logger.LogError(ex, "Error updating login information for user '{UserEmail}'.", user.Email);
                 throw;
+            }
+        }
+
+        private void ValidateAccountIsActive(AppUser appUser)
+        {
+            var isValid = appUser.Account != null && (appUser.Account.UtcExpirationDate == null  || appUser.Account.UtcExpirationDate > DateTime.UtcNow);
+            if (!isValid)
+            {
+                _logger.LogError("Account {0} expired on {1} UTC", appUser.Account.Owner, appUser.Account.UtcExpirationDate);
+                throw new AuthMateException($"User account is not active.");
             }
         }
 
