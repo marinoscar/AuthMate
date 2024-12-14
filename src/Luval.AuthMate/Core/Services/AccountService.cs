@@ -144,17 +144,17 @@ namespace Luval.AuthMate.Core.Services
         /// <summary>
         /// Creates a new account.
         /// </summary>
-        /// <param name="name">The name of the account.</param>
+        /// <param name="accountOwner">The owner of the account.</param>
         /// <param name="accountTypeName">The name of the account type.</param>
         /// <param name="createdBy">The user who created the account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created account entity.</returns>
-        public async Task<Account> CreateAccountAsync(string name, string accountTypeName, string? createdBy, CancellationToken cancellationToken = default)
+        public async Task<Account> CreateAccountAsync(string accountOwner, string accountTypeName, string? createdBy, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(name))
-                    throw new ArgumentException("Account name is required.", nameof(name));
+                if (string.IsNullOrWhiteSpace(accountOwner))
+                    throw new ArgumentException("Account owner is required.", nameof(accountOwner));
                 if (string.IsNullOrWhiteSpace(accountTypeName))
                     throw new ArgumentException("Account type name is required.", nameof(accountTypeName));
 
@@ -165,16 +165,26 @@ namespace Luval.AuthMate.Core.Services
                     throw new InvalidOperationException($"Account type '{accountTypeName}' not found.");
                 }
 
-                var account = new Account { Name = name, AccountTypeId = accountType.Id, CreatedBy = createdBy, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
+                var account = new Account
+                {
+                    Name = accountOwner,
+                    Owner = accountOwner,
+                    AccountTypeId = accountType.Id,
+                    CreatedBy = createdBy,
+                    UpdatedBy = createdBy,
+                    UtcCreatedOn = DateTime.UtcNow,
+                    UtcUpdatedOn = DateTime.UtcNow,
+                    Version = 1
+                };
                 await _context.Accounts.AddAsync(account, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account '{AccountName}' created successfully by '{CreatedBy}'.", name, createdBy);
+                _logger.LogInformation("Account '{AccountName}' created successfully by '{CreatedBy}'.", accountOwner, createdBy);
                 return account;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating account '{AccountName}' by '{CreatedBy}'.", name, createdBy);
+                _logger.LogError(ex, "Error creating account '{AccountName}' by '{CreatedBy}'.", accountOwner, createdBy);
                 throw;
             }
         }
