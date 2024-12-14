@@ -93,43 +93,6 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
-        /// <summary>
-        /// Creates a new app user and associates it with an existing account.
-        /// </summary>
-        /// <param name="appUser">The app user entity to be created.</param>
-        /// <param name="owner">The owner to retrieve the account for association.</param>
-        /// <param name="cancellationToken">The cancellation token for the operation.</param>
-        /// <returns>The created app user entity.</returns>
-        public async Task<AppUser> CreateAppUserAsync(AppUser appUser, string owner, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                if (appUser == null)
-                    throw new ArgumentNullException(nameof(appUser));
-                if (string.IsNullOrWhiteSpace(owner))
-                    throw new ArgumentException("Owner is required to find the account.", nameof(owner));
-
-                var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Owner == owner, cancellationToken).ConfigureAwait(false);
-                if (account == null)
-                {
-                    _logger.LogWarning("No account found for owner '{Owner}'.", owner);
-                    throw new InvalidOperationException($"No account found for the owner '{owner}'.");
-                }
-
-                appUser.AccountId = account.Id;
-                appUser.Account = account;
-
-                await _context.AppUsers.AddAsync(appUser, cancellationToken).ConfigureAwait(false);
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-                _logger.LogInformation("App user '{UserEmail}' created successfully for account '{AccountName}'.", appUser.Email, account.Name);
-                return appUser;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating app user '{UserEmail}'.", appUser?.Email);
-                throw;
-            }
-        }
+        
     }
 }
