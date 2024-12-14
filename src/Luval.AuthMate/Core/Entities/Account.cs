@@ -56,6 +56,12 @@ namespace Luval.AuthMate.Core.Entities
         public string? Name { get; set; }
 
         /// <summary>
+        /// Gets or sets and expiration date for the account.
+        /// </summary>
+        [Column("UtcExpirationDate")]
+        public DateTime? UtcExpirationDate { get; set; }
+
+        /// <summary>
         /// A description of the account.
         /// </summary>
         [Column("Description")]
