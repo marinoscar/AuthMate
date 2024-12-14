@@ -455,6 +455,38 @@ namespace Luval.AuthMate.Tests
             Assert.NotNull(exception); // Ensure exceptions are thrown
         }
 
+        [Fact]
+        public async Task AuthorizeUserAsync_ThrowsException_WhenUserUtcActiveUntilHasExpired()
+        {
+            // Arrange
+            var email = "expireduser@example.com";
+            var identity = new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.Email, email)
+            }, "Google");
+
+            var service = CreateService((c) =>
+            {
+                var a = c.Accounts.First();
+                c.SaveChanges();
+                c.AppUsers.Add(new AppUser
+                {
+                    ProviderKey = "newkey",
+                    ProviderType = "Google",
+                    Email = email,
+                    UtcActiveUntil = DateTime.UtcNow.AddDays(-1),
+                    AccountId = a.Id,
+                    Account = a
+                });
+                c.SaveChanges();
+            });
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<AuthMateException>(() => service.AuthorizeUserAsync(identity));
+            Assert.NotNull(exception);
+            Assert.NotEmpty(exception.Message);
+        }
+
 
     }
 }
