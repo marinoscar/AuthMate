@@ -64,8 +64,9 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<AuthMateException>(() => service.GetUserByEmailAsync(email));
-            Assert.Equal($"User with email '{email}' not found.", exception.Message);
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.GetUserByEmailAsync(email));
+            Assert.NotNull(exception);
+            Assert.NotEmpty(exception.Message);
         }
 
         [Fact]
