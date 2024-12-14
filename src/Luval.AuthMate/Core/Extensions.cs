@@ -50,6 +50,28 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>
+        /// Converts an <see cref="AppUser"/> instance to a <see cref="ClaimsIdentity"/> instance.
+        /// </summary>
+        /// <param name="user">The <see cref="AppUser"/> instance containing the user's data.</param>
+        /// <returns>A <see cref="ClaimsIdentity"/> populated with claims from the <see cref="AppUser"/> instance.</returns>
+        public static ClaimsIdentity ToIdentity(this AppUser user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.ProviderKey),
+                new Claim("urn:google:image", user.ProfilePictureUrl)
+            };
+            var identity = new ClaimsIdentity(claims, user.ProviderType);
+            foreach (var role in user.UserRoles)
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Role, role.Role.Name));
+            }
+            return identity;
+        }
+
+        /// <summary>
         /// Retrieves the value of a specific claim type from a <see cref="ClaimsIdentity"/>.
         /// </summary>
         /// <param name="c">The <see cref="ClaimsIdentity"/> instance containing the claims.</param>
