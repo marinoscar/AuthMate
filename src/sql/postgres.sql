@@ -74,6 +74,10 @@ CREATE TABLE "AppUser" (
     "ProviderKey" VARCHAR(255) NOT NULL,
     "ProviderType" VARCHAR(50) NOT NULL,
     "ProfilePictureUrl" VARCHAR(500),
+	"OAuthAccessToken" VARCHAR(500) NULL,
+	"OAuthTokenType" VARCHAR(500) NULL,
+	"OAuthRefreshToken" VARCHAR(500) NULL,
+	"OAuthTokenUtcExpiresIn" TIMESTAMP NULL,
     "UtcActiveUntil" TIMESTAMP,
 	"UtcLastLogin" TIMESTAMP,
 	"Timezone" VARCHAR(100),
@@ -94,6 +98,10 @@ COMMENT ON COLUMN "AppUser"."DisplayName" IS 'The name of the application user.'
 COMMENT ON COLUMN "AppUser"."Email" IS 'The email address of the user.';
 COMMENT ON COLUMN "AppUser"."ProviderKey" IS 'The unique key provided by the authentication provider (e.g., Google, Microsoft).';
 COMMENT ON COLUMN "AppUser"."ProviderType" IS 'The type of the authentication provider (e.g., Google, Microsoft, Facebook).';
+COMMENT ON COLUMN "AppUser"."OAuthAccessToken" IS 'The access token issued by the OAuth provider.';
+COMMENT ON COLUMN "AppUser"."OAuthTokenType" IS 'OAuth provider token type, for example bearing';
+COMMENT ON COLUMN "AppUser"."OAuthRefreshToken" IS 'OAuth refresh token that applications can use to obtain another access token if tokens can expire.';
+COMMENT ON COLUMN "AppUser"."OAuthTokenUtcExpiresIn" IS 'OAuth validatity lifetime of the token.';
 COMMENT ON COLUMN "AppUser"."ProfilePictureUrl" IS 'The URL of the user''s profile picture.';
 COMMENT ON COLUMN "AppUser"."UtcActiveUntil" IS 'Indicates the UTC date until which the user is active in the system.';
 COMMENT ON COLUMN "AppUser"."UtcLastLogin" IS 'Indicates the UTC date and time that the user was authenticated.';
