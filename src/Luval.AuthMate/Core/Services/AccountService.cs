@@ -33,25 +33,110 @@ namespace Luval.AuthMate.Core.Services
         /// Creates a new account type.
         /// </summary>
         /// <param name="name">The name of the account type.</param>
+        /// <param name="createdBy">The user who created the account type.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created account type entity.</returns>
-        public async Task<AccountType> CreateAccountTypeAsync(string name, CancellationToken cancellationToken = default)
+        public async Task<AccountType> CreateAccountTypeAsync(string name, string? createdBy, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(name))
                     throw new ArgumentException("Account type name is required.", nameof(name));
 
-                var accountType = new AccountType { Name = name };
+                var accountType = new AccountType { Name = name, CreatedBy = createdBy, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
                 await _context.AccountTypes.AddAsync(accountType, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account type '{AccountTypeName}' created successfully.", name);
+                _logger.LogInformation("Account type '{AccountTypeName}' created successfully by '{CreatedBy}'.", name, createdBy);
                 return accountType;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating account type '{AccountTypeName}'.", name);
+                _logger.LogError(ex, "Error creating account type '{AccountTypeName}' by '{CreatedBy}'.", name, createdBy);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing account type.
+        /// </summary>
+        /// <param name="accountTypeId">The ID of the account type to update.</param>
+        /// <param name="newName">The new name for the account type.</param>
+        /// <param name="updatedBy">The user who updated the account type.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated account type entity.</returns>
+        /// <exception cref="ArgumentException">Thrown when the account type ID or new name is null or whitespace.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the account type with the specified ID is not found.</exception>
+        public async Task<AccountType> UpdateAccountTypeAsync(ulong accountTypeId, string newName, string? updatedBy, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (accountTypeId == 0)
+                    throw new ArgumentException("Account type ID is required.", nameof(accountTypeId));
+                if (string.IsNullOrWhiteSpace(newName))
+                    throw new ArgumentException("New name is required.", nameof(newName));
+
+                var accountType = await _context.AccountTypes.FirstOrDefaultAsync(at => at.Id == accountTypeId, cancellationToken).ConfigureAwait(false);
+                if (accountType == null)
+                {
+                    _logger.LogWarning("Account type with ID '{AccountTypeId}' not found.", accountTypeId);
+                    throw new InvalidOperationException($"Account type with ID '{accountTypeId}' not found.");
+                }
+
+                accountType.Name = newName;
+                accountType.UtcUpdatedOn = DateTime.UtcNow;
+                accountType.UpdatedBy = updatedBy;
+                accountType.Version++;
+
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Account type with ID '{AccountTypeId}' updated successfully by '{UpdatedBy}'.", accountTypeId, updatedBy);
+                return accountType;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating account type with ID '{AccountTypeId}' by '{UpdatedBy}'.", accountTypeId, updatedBy);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deletes an account type by its ID.
+        /// </summary>
+        /// <param name="accountTypeId">The ID of the account type to delete.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="ArgumentException">Thrown when the account type ID is zero.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the account type with the specified ID is not found or is in use.</exception>
+        public async Task DeleteAccountTypeAsync(ulong accountTypeId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (accountTypeId == 0)
+                    throw new ArgumentException("Account type ID is required.", nameof(accountTypeId));
+
+                var accountType = await _context.AccountTypes.FirstOrDefaultAsync(at => at.Id == accountTypeId, cancellationToken).ConfigureAwait(false);
+                if (accountType == null)
+                {
+                    _logger.LogWarning("Account type with ID '{AccountTypeId}' not found.", accountTypeId);
+                    throw new InvalidOperationException($"Account type with ID '{accountTypeId}' not found.");
+                }
+
+                var isAccountTypeInUse = await _context.Accounts.AnyAsync(a => a.AccountTypeId == accountTypeId, cancellationToken).ConfigureAwait(false);
+                if (isAccountTypeInUse)
+                {
+                    _logger.LogWarning("Account type with ID '{AccountTypeId}' is in use and cannot be deleted.", accountTypeId);
+                    throw new InvalidOperationException($"Account type with ID '{accountTypeId}' is in use and cannot be deleted.");
+                }
+
+                _context.AccountTypes.Remove(accountType);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Account type with ID '{AccountTypeId}' deleted successfully.", accountTypeId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting account type with ID '{AccountTypeId}'.", accountTypeId);
                 throw;
             }
         }
@@ -61,9 +146,10 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="name">The name of the account.</param>
         /// <param name="accountTypeName">The name of the account type.</param>
+        /// <param name="createdBy">The user who created the account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created account entity.</returns>
-        public async Task<Account> CreateAccountAsync(string name, string accountTypeName, CancellationToken cancellationToken = default)
+        public async Task<Account> CreateAccountAsync(string name, string accountTypeName, string? createdBy, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -79,16 +165,16 @@ namespace Luval.AuthMate.Core.Services
                     throw new InvalidOperationException($"Account type '{accountTypeName}' not found.");
                 }
 
-                var account = new Account { Name = name, AccountTypeId = accountType.Id };
+                var account = new Account { Name = name, AccountTypeId = accountType.Id, CreatedBy = createdBy, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
                 await _context.Accounts.AddAsync(account, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account '{AccountName}' created successfully.", name);
+                _logger.LogInformation("Account '{AccountName}' created successfully by '{CreatedBy}'.", name, createdBy);
                 return account;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating account '{AccountName}'.", name);
+                _logger.LogError(ex, "Error creating account '{AccountName}' by '{CreatedBy}'.", name, createdBy);
                 throw;
             }
         }
@@ -98,9 +184,10 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="owner">The owner of the account to update.</param>
         /// <param name="utcNewExpirationDate">The new expiration date for the account.</param>
+        /// <param name="updatedBy">The user who updated the account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The updated account entity.</returns>
-        public async Task<Account> UpdateAccountExpirationDateByOwnerAsync(string owner, DateTime utcNewExpirationDate, CancellationToken cancellationToken = default)
+        public async Task<Account> UpdateAccountExpirationDateByOwnerAsync(string owner, DateTime utcNewExpirationDate, string? updatedBy, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -108,7 +195,6 @@ namespace Luval.AuthMate.Core.Services
                     throw new ArgumentException("Account owner is required.", nameof(owner));
                 if (utcNewExpirationDate.Kind != DateTimeKind.Utc)
                     throw new ArgumentException("Expiration date must be in UTC.", nameof(utcNewExpirationDate));
-
 
                 var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Owner == owner, cancellationToken).ConfigureAwait(false);
                 if (account == null)
@@ -119,16 +205,51 @@ namespace Luval.AuthMate.Core.Services
 
                 account.UtcExpirationDate = utcNewExpirationDate;
                 account.UtcUpdatedOn = DateTime.UtcNow;
+                account.UpdatedBy = updatedBy;
                 account.Version++;
 
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account with owner '{Owner}' expiration date updated successfully.", owner);
+                _logger.LogInformation("Account with owner '{Owner}' expiration date updated successfully by '{UpdatedBy}'.", owner, updatedBy);
                 return account;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating expiration date for account with owner '{Owner}'.", owner);
+                _logger.LogError(ex, "Error updating expiration date for account with owner '{Owner}' by '{UpdatedBy}'.", owner, updatedBy);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deletes an account by the account owner.
+        /// </summary>
+        /// <param name="owner">The owner of the account to delete.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="ArgumentException">Thrown when the owner is null or whitespace.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the account with the specified owner is not found.</exception>
+        public async Task DeleteAccountByOwnerAsync(string owner, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(owner))
+                    throw new ArgumentException("Account owner is required.", nameof(owner));
+
+                var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Owner == owner, cancellationToken).ConfigureAwait(false);
+                if (account == null)
+                {
+                    _logger.LogWarning("Account with owner '{Owner}' not found.", owner);
+                    throw new InvalidOperationException($"Account with owner '{owner}' not found.");
+                }
+
+                _context.Accounts.Remove(account);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Account with owner '{Owner}' deleted successfully.", owner);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting account with owner '{Owner}'.", owner);
                 throw;
             }
         }
