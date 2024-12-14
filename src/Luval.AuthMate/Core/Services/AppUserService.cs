@@ -88,7 +88,7 @@ namespace Luval.AuthMate.Core.Services
                 appUser.Version++;
 
                 // Update the app user entity in the database
-                _context.AppUsers.Update(appUser);
+                var ent = _context.AppUsers.Update(appUser);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation("Successfully updated app user with email {Email}.", appUser.Email);
