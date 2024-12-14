@@ -61,7 +61,14 @@ namespace Luval.AuthMate.Core.Services
                 var user = await _userService.TryGetUserByEmailAsync(email, cancellationToken).ConfigureAwait(false);
 
                 if (user != null)
+                {
+                    if(user.UtcActiveUntil != null && user.UtcActiveUntil < DateTime.UtcNow)
+                    {
+                        _logger.LogError("Account {0} expired on {1} UTC", user.Account.Owner, user.UtcActiveUntil);
+                        throw new AuthMateException($"User account is not active.");
+                    }
                     return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken).ConfigureAwait(false);
+                }
 
                 // Check for account invitations
                 var accountInvite = await ValidateInvitationToAccount(identity, cancellationToken).ConfigureAwait(false);
