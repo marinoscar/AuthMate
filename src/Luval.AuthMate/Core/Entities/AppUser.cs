@@ -69,6 +69,33 @@ namespace Luval.AuthMate.Core.Entities
         public string? ProfilePictureUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the access token issued by the OAuth provider.
+        /// </summary>
+        [Column("OAuthAccessToken")]
+        public string OAuthAccessToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the token type.
+        /// </summary>
+        /// <remarks>
+        /// Typically the string “bearer”.
+        /// </remarks>
+        [Column("OAuthTokenType")]
+        public string? OAuthTokenType { get; set; }
+
+        /// <summary>
+        /// Gets or sets a refresh token that applications can use to obtain another access token if tokens can expire.
+        /// </summary>
+        [Column("OAuthRefreshToken")]
+        public string? OAuthRefreshToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the validatity lifetime of the token in seconds.
+        /// </summary>
+        [Column("OAuthTokenUtcExpiresIn")]
+        public DateTime? OAuthTokenUtcExpiresIn { get; set; }
+
+        /// <summary>
         /// Indicates the UTC date until which the user is active in the system.
         /// </summary>
         [Column("UtcActiveUntil")]
