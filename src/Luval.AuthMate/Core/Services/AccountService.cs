@@ -93,6 +93,44 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
-        
+        /// <summary>
+        /// Updates the expiration date of an account by the account owner.
+        /// </summary>
+        /// <param name="owner">The owner of the account to update.</param>
+        /// <param name="utcNewExpirationDate">The new expiration date for the account.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The updated account entity.</returns>
+        public async Task<Account> UpdateAccountExpirationDateByOwnerAsync(string owner, DateTime utcNewExpirationDate, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(owner))
+                    throw new ArgumentException("Account owner is required.", nameof(owner));
+                if (utcNewExpirationDate.Kind != DateTimeKind.Utc)
+                    throw new ArgumentException("Expiration date must be in UTC.", nameof(utcNewExpirationDate));
+
+
+                var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Owner == owner, cancellationToken).ConfigureAwait(false);
+                if (account == null)
+                {
+                    _logger.LogWarning("Account with owner '{Owner}' not found.", owner);
+                    throw new InvalidOperationException($"Account with owner '{owner}' not found.");
+                }
+
+                account.UtcExpirationDate = utcNewExpirationDate;
+                account.UtcUpdatedOn = DateTime.UtcNow;
+                account.Version++;
+
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Account with owner '{Owner}' expiration date updated successfully.", owner);
+                return account;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating expiration date for account with owner '{Owner}'.", owner);
+                throw;
+            }
+        }
     }
 }
