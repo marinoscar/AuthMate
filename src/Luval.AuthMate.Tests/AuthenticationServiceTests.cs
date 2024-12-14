@@ -373,5 +373,88 @@ namespace Luval.AuthMate.Tests
             Assert.True(result.UtcCreatedOn > DateTime.UtcNow.AddMinutes(-3)); // Ensure UtcCreatedOn is recent
             Assert.True(result.UtcUpdatedOn > DateTime.UtcNow.AddMinutes(-3)); // Ensure UtcUpdatedOn is recent
         }
+
+        /// <summary>
+        /// Tests that <see cref="AuthenticationService.AuthorizeUserAsync(ClaimsIdentity, DeviceInfo, CancellationToken)"/> does not throw any exceptions for a valid user where the <see cref="Account.UtcExpirationDate"/> value is null.
+        /// </summary>
+        [Fact]
+        public async Task AuthorizeUserAsync_DoesNotThrowException_WhenAccountExpirationDateIsNull()
+        {
+            // Arrange
+            var email = "validuser@email.com";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
+
+            var service = CreateService((c) =>
+            {
+                var account = new Account
+                {
+                    Owner = email,
+                    AccountTypeId = c.AccountTypes.First().Id,
+                    UtcExpirationDate = null // Set expiration date to null
+                };
+                c.Accounts.Add(account);
+
+                var user = new AppUser
+                {
+                    ProviderKey = "randomkey",
+                    ProviderType = "randomtype",
+                    Email = email,
+                    AccountId = account.Id,
+                    Account = account,
+                    UtcLastLogin = DateTime.UtcNow.AddDays(-1), // Set to a past date
+                    Version = 1u
+                };
+                c.AppUsers.Add(user);
+                c.SaveChanges();
+            });
+
+            // Act
+            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity));
+
+            // Assert
+            Assert.Null(exception); // Ensure no exceptions are thrown
+        }
+
+        /// <summary>
+        /// Tests that <see cref="AuthenticationService.AuthorizeUserAsync(ClaimsIdentity, DeviceInfo, CancellationToken)"/> throws an <see cref="AuthMateException"/> when the <see cref="Account.UtcExpirationDate"/> has expired.
+        /// </summary>
+        [Fact]
+        public async Task AuthorizeUserAsync_ThrowsException_WhenAccountExpirationDateHasExpired()
+        {
+            // Arrange
+            var email = "expireduser@email.com";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
+
+            var service = CreateService((c) =>
+            {
+                var account = new Account
+                {
+                    Owner = email,
+                    AccountTypeId = c.AccountTypes.First().Id,
+                    UtcExpirationDate = DateTime.UtcNow.AddDays(-1) // Set expiration date to a past date
+                };
+                c.Accounts.Add(account);
+
+                var user = new AppUser
+                {
+                    ProviderKey = "randomkey",
+                    ProviderType = "randomtype",
+                    Email = email,
+                    AccountId = account.Id,
+                    Account = account,
+                    UtcLastLogin = DateTime.UtcNow.AddDays(-1), // Set to a past date
+                    Version = 1u
+                };
+                c.AppUsers.Add(user);
+                c.SaveChanges();
+            });
+
+            // Act & Assert
+            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity));
+
+            Assert.NotNull(exception); // Ensure exceptions are thrown
+        }
+
+
     }
 }
