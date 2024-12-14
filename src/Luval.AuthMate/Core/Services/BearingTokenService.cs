@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Core.Interfaces;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -45,29 +46,49 @@ namespace Luval.AuthMate.Core.Services
             if (string.IsNullOrWhiteSpace(userEmail))
                 throw new ArgumentException("User email cannot be null or empty.", nameof(userEmail));
 
-            if (tokenDuration <= TimeSpan.Zero)
-                throw new ArgumentException("Token duration must be greater than zero.", nameof(tokenDuration));
-
             var user = await _userService.GetUserByEmailAsync(userEmail, cancellationToken);
             if (user == null)
                 throw new InvalidOperationException($"User with email {userEmail} not found.");
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            return await GenerateTokenForUserAsync(user, tokenDuration, cancellationToken);
+        }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+
+        ///<summary>
+        /// Generates a JWT token for a user.
+        /// </summary>
+        /// <param name="user">The user entity for which the token is generated.</param>
+        /// <param name="tokenDuration">The duration for which the token is valid.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the generated JWT token.</returns>
+        /// <exception cref="ArgumentException">Thrown when the user is null or the token duration is less than or equal to zero.</exception>
+        public Task<string> GenerateTokenForUserAsync(AppUser user, TimeSpan tokenDuration, CancellationToken cancellationToken = default)
+        {
+            return Task.Run(() =>
             {
-                Subject = user.ToIdentity(),
-                Expires = DateTime.UtcNow.Add(tokenDuration),
-                SigningCredentials = credentials,
-                IssuedAt = DateTime.UtcNow,
-                Issuer = "Luval.AuthMate",
-                Audience = "Luval.AuthMate",
-            };
+                if (user == null)
+                    throw new ArgumentException("User user cannot be null..", nameof(user));
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+                if (tokenDuration <= TimeSpan.Zero)
+                    throw new ArgumentException("Token duration must be greater than zero.", nameof(tokenDuration));
+
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = user.ToIdentity(),
+                    Expires = DateTime.UtcNow.Add(tokenDuration),
+                    SigningCredentials = credentials,
+                    IssuedAt = DateTime.UtcNow,
+                    Issuer = "Luval.AuthMate",
+                    Audience = "Luval.AuthMate",
+                };
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return tokenHandler.WriteToken(token);
+            }, cancellationToken);
         }
 
         /// <summary>
