@@ -31,6 +31,7 @@ namespace Luval.AuthMate.Core
                     //Google credentials for OAuth
                     opt.ClientId = config.ClientId;
                     opt.ClientSecret = config.ClientSecret;
+                    opt.SaveTokens = true;
 
                     //Maps the information coming from Google into the correct claims
                     opt.ClaimActions.MapJsonKey("urn:google:profile", "link");
