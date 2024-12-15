@@ -88,7 +88,7 @@ namespace Luval.AuthMate.Core.Services
                     if (user == null)
                     {
                         _logger.LogWarning("Authorization failed for user with email '{Email}'.", email);
-                        throw new AuthMateException($"Unable to authenticate user: {email}");
+                        throw new AuthMateException($"Unable to authorize user: {email}");
                     }
                 }
 
