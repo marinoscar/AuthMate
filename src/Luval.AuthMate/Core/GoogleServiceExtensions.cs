@@ -58,7 +58,7 @@ namespace Luval.AuthMate.Core
                         {
                             var authService = s.BuildServiceProvider().GetRequiredService<AuthMate.Core.Services.AuthenticationService>();
 
-                            await authService.AuthorizeUserAsync(context.Identity, DeviceInfo.Create(context.Properties), CancellationToken.None);
+                            await authService.AuthorizeUserAsync(context.Identity, TokenResponse.Create(context.TokenResponse), DeviceInfo.Create(context.Properties), CancellationToken.None);
 
 
                         };

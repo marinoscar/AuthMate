@@ -38,18 +38,22 @@ namespace Luval.AuthMate.Core.Services
         /// Authorizes a user based on their identity and invitation information.
         /// </summary>
         /// <param name="identity">The claims identity of the user to authorize.</param>
+        /// <param name="tokenResponse">The <see cref="TokenResponse"/> coming from the user OAuth context.</param>
         /// <param name="deviceInfo">Optional device information for the login event.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The authorized app user entity.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="identity"/> is null.</exception>
         /// <exception cref="ArgumentException">Thrown when required identity information is missing.</exception>
         /// <exception cref="AuthMateException">Thrown when the user cannot be authenticated.</exception>
-        public async Task<AppUser> AuthorizeUserAsync(ClaimsIdentity identity, DeviceInfo deviceInfo = default, CancellationToken cancellationToken = default)
+        public async Task<AppUser> AuthorizeUserAsync(ClaimsIdentity identity, TokenResponse tokenResponse, DeviceInfo deviceInfo = default, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (identity == null)
                     throw new ArgumentNullException(nameof(identity), "Identity cannot be null.");
+
+                if (tokenResponse == null)
+                    throw new ArgumentNullException(nameof(tokenResponse), "Token response cannot be null.");
 
                 var email = identity.GetValue(ClaimTypes.Email);
                 if (string.IsNullOrWhiteSpace(email))
@@ -67,7 +71,7 @@ namespace Luval.AuthMate.Core.Services
                         _logger.LogError("Account {0} expired on {1} UTC", user.Account.Owner, user.UtcActiveUntil);
                         throw new AuthMateException($"User account is not active.");
                     }
-                    return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken).ConfigureAwait(false);
+                    return await UpdateUserAndLoginInformationAsync(identity, tokenResponse, user, deviceInfo, cancellationToken).ConfigureAwait(false);
                 }
 
                 // Check for account invitations
@@ -88,7 +92,7 @@ namespace Luval.AuthMate.Core.Services
                     }
                 }
 
-                return await UpdateUserLoginInformationAsync(identity, user, deviceInfo, cancellationToken).ConfigureAwait(false);
+                return await UpdateUserAndLoginInformationAsync(identity, tokenResponse, user, deviceInfo, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -160,7 +164,7 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
-        private async Task<AppUser> UpdateUserLoginInformationAsync(ClaimsIdentity identity, AppUser user, DeviceInfo deviceInfo, CancellationToken cancellationToken = default)
+        private async Task<AppUser> UpdateUserAndLoginInformationAsync(ClaimsIdentity identity, TokenResponse tokenResponse, AppUser user, DeviceInfo deviceInfo, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -169,10 +173,15 @@ namespace Luval.AuthMate.Core.Services
 
                 _logger.LogInformation("Updating login information for user '{UserEmail}'.", user.Email);
 
-                identity.AddClaim(new Claim("AppUserJson", user.ToString()));
                 user.UtcLastLogin = DateTime.UtcNow;
+                user.OAuthAccessToken = tokenResponse.AccessToken;
+                user.OAuthRefreshToken = tokenResponse.RefreshToken;
+                user.OAuthTokenUtcExpiresAt = tokenResponse.UtcExpiresAt;
+                user.OAuthTokenType = tokenResponse.TokenType;
 
                 await _userService.UpdateAppUserAsync(user, cancellationToken).ConfigureAwait(false);
+
+                identity.AddClaim(new Claim("AppUserJson", user.ToString()));
 
                 await AddLogHistoryAsync(deviceInfo, user.Email, cancellationToken).ConfigureAwait(false);
 

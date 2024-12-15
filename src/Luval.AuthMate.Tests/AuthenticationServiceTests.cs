@@ -42,6 +42,18 @@ namespace Luval.AuthMate.Tests
             return authService;
         }
 
+        private TokenResponse CreateTokenResponse()
+        {
+            return new TokenResponse
+            {
+                AccessToken = Guid.NewGuid().ToString(),
+                ExpiresIn = 3600,
+                TokenType = "Bearer",
+                RefreshToken = default,
+                UtcExpiresAt = DateTime.UtcNow.AddSeconds(3600)
+            };
+        }
+
         /// <summary>
         /// Tests that <see cref="AuthenticationService.AuthorizeUserAsync(ClaimsIdentity, DeviceInfo, CancellationToken)"/> returns a user when the user exists.
         /// </summary>
@@ -58,7 +70,7 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act
-            var result = await service.AuthorizeUserAsync(identity);
+            var result = await service.AuthorizeUserAsync(identity, CreateTokenResponse());
 
             // Assert
             Assert.NotNull(result);
@@ -75,7 +87,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => service.AuthorizeUserAsync(null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.AuthorizeUserAsync(null, CreateTokenResponse()));
         }
 
         /// <summary>
@@ -91,7 +103,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<AuthMateException>(() => service.AuthorizeUserAsync(identity));
+            await Assert.ThrowsAsync<AuthMateException>(() => service.AuthorizeUserAsync(identity, CreateTokenResponse()));
         }
 
         /// <summary>
@@ -196,7 +208,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => service.AuthorizeUserAsync(identity));
+            await Assert.ThrowsAsync<ArgumentException>(() => service.AuthorizeUserAsync(identity, CreateTokenResponse()));
         }
 
         /// <summary>
@@ -228,7 +240,7 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act
-            var result = await service.AuthorizeUserAsync(identity);
+            var result = await service.AuthorizeUserAsync(identity, CreateTokenResponse());
 
             // Assert
             Assert.NotNull(result);
@@ -268,7 +280,7 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act
-            var result = await service.AuthorizeUserAsync(identity, deviceInfo);
+            var result = await service.AuthorizeUserAsync(identity, CreateTokenResponse(), deviceInfo);
 
             // Assert
             Assert.NotNull(result);
@@ -313,11 +325,16 @@ namespace Luval.AuthMate.Tests
                 c.SaveChanges();
             });
 
+            var tr = CreateTokenResponse();
+
             // Act
-            var result = await service.AuthorizeUserAsync(identity);
+            var result = await service.AuthorizeUserAsync(identity, tr);
 
             // Assert
             Assert.NotNull(result);
+            Assert.Equal(tr.AccessToken, result.OAuthAccessToken);
+            Assert.Equal(tr.RefreshToken, result.OAuthRefreshToken);
+            Assert.Equal(tr.UtcExpiresAt, result.OAuthTokenUtcExpiresAt);
             Assert.Equal(email, result.Email);
             Assert.Equal(at.Id, result.Account.AccountTypeId);
             Assert.True(result.UserRoles.Count >= 1);
@@ -359,12 +376,17 @@ namespace Luval.AuthMate.Tests
                 });
                 c.SaveChanges();
             });
+            var tr = CreateTokenResponse();
 
             // Act
-            var result = await service.AuthorizeUserAsync(identity);
+            var result = await service.AuthorizeUserAsync(identity, tr);
 
             // Assert
             Assert.NotNull(result);
+            Assert.Equal(tr.AccessToken, result.OAuthAccessToken); // Ensure OAuthAccessToken is updated
+            Assert.Equal(tr.AccessToken, result.OAuthAccessToken);
+            Assert.Equal(tr.RefreshToken, result.OAuthRefreshToken);
+            Assert.Equal(tr.UtcExpiresAt, result.OAuthTokenUtcExpiresAt);
             Assert.Equal(email, result.Email);
             Assert.Equal(account.Id, result.AccountId);
             Assert.Equal(role.Id, result.UserRoles.First().RoleId);
@@ -409,7 +431,7 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act
-            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity));
+            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity, CreateTokenResponse()));
 
             // Assert
             Assert.Null(exception); // Ensure no exceptions are thrown
@@ -450,7 +472,7 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act & Assert
-            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity));
+            var exception = await Record.ExceptionAsync(() => service.AuthorizeUserAsync(identity, CreateTokenResponse()));
 
             Assert.NotNull(exception); // Ensure exceptions are thrown
         }
@@ -482,10 +504,61 @@ namespace Luval.AuthMate.Tests
             });
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<AuthMateException>(() => service.AuthorizeUserAsync(identity));
+            var exception = await Assert.ThrowsAsync<AuthMateException>(() => service.AuthorizeUserAsync(identity, CreateTokenResponse()));
             Assert.NotNull(exception);
             Assert.NotEmpty(exception.Message);
         }
+
+        [Fact]
+        public async Task AuthorizeUserAsync_ThrowsArgumentNullException_WhenTokenResponseIsNull()
+        {
+            // Arrange
+            var email = "testuser@example.com";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
+            var service = CreateService(null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => service.AuthorizeUserAsync(identity, null));
+            Assert.NotNull(exception);
+            Assert.NotEmpty(exception.Message);
+        }
+
+        [Fact]
+        public async Task AuthorizeUserAsync_UpdatesUserOAuthAccessToken_WhenUserIsValid()
+        {
+            // Arrange
+            var email = "validuser@example.com";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
+
+            var tokenResponse = CreateTokenResponse();
+
+            var service = CreateService((c) =>
+            {
+                var a = c.Accounts.FirstOrDefault();
+                var user = new AppUser
+                {
+                    ProviderKey = "randomkey",
+                    ProviderType = "randomtype",
+                    Email = email,
+                    AccountId = a.Id,
+                    Account = a,
+                    UtcLastLogin = DateTime.UtcNow.AddDays(-1), // Set to a past date
+                    Version = 1u
+                };
+                c.AppUsers.Add(user);
+                c.SaveChanges();
+            });
+
+            // Act
+            var result = await service.AuthorizeUserAsync(identity, tokenResponse);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(email, result.Email);
+            Assert.Equal(tokenResponse.AccessToken, result.OAuthAccessToken); // Ensure OAuthAccessToken is updated
+        }
+
+
 
 
     }
