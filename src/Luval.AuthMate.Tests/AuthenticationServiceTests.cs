@@ -54,9 +54,6 @@ namespace Luval.AuthMate.Tests
             };
         }
 
-        /// <summary>
-        /// Tests that <see cref="AuthenticationService.AuthorizeUserAsync(ClaimsIdentity, DeviceInfo, CancellationToken)"/> returns a user when the user exists.
-        /// </summary>
         [Fact]
         public async Task AuthorizeUserAsync_ReturnsUser_WhenUserExists()
         {
@@ -75,6 +72,30 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(email, result.Email);
+        }
+
+        [Fact]
+        public async Task AuthorizeUserAsync_ReturnsUser_WhenUserExists_Role_And_Account_Are_Provided()
+        {
+            // Arrange
+            var email = "owner@email.com";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) });
+
+            // Creates a new instance of the service and then it adds the user to the context
+            var service = CreateService((c) =>
+            {
+            });
+
+            // Act
+            var result = await service.AuthorizeUserAsync(identity, CreateTokenResponse());
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(email, result.Email);
+            Assert.NotNull(result.Account);
+            Assert.Equal("Free", result.Account.AccountType.Name);
+            Assert.Equal(email, result.Account.Owner);
+            Assert.NotNull(result.UserRoles.FirstOrDefault());
         }
 
         /// <summary>
