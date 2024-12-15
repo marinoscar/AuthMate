@@ -1,15 +1,8 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
-using Luval.AuthMate.Core.Entities;
+﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core.Services;
-using Microsoft.EntityFrameworkCore;
 using Luval.AuthMate.Infrastructure.Logging;
-using Luval.AuthMate.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace Luval.AuthMate.Tests
 {
