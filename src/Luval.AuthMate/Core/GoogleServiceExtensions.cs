@@ -49,7 +49,7 @@ namespace Luval.AuthMate.Core
                     //Event that is triggered after the use is authenticated
                     if(config.OnCreatingTicket == null)
                     {
-                        config.OnCreatingTicket = async context =>
+                        opt.Events.OnCreatingTicket = async context =>
                         {
                             var authService = s.BuildServiceProvider().GetRequiredService<AuthMate.Core.Services.AuthenticationService>();
 
@@ -58,7 +58,10 @@ namespace Luval.AuthMate.Core
 
                         };
                     }
-                    opt.Events.OnCreatingTicket = config.OnCreatingTicket;
+                    else
+                    {
+                        opt.Events.OnCreatingTicket = config.OnCreatingTicket;
+                    }
                 });
             return s;
         }

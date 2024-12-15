@@ -10,6 +10,6 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         public string ClientSecret { get; set; } = string.Empty;
         public string CallbackPath { get; set; } = string.Empty;
 
-        public Func<OAuthCreatingTicketContext, Task>? OnCreatingTicket { get; set; } = context => Task.CompletedTask;
+        public Func<OAuthCreatingTicketContext, Task>? OnCreatingTicket { get; set; } = default;
     }
 }
