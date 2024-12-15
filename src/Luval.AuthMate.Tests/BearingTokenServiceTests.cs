@@ -77,7 +77,7 @@ namespace Luval.AuthMate.Tests
             var tokenDuration = TimeSpan.FromHours(1);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.GenerateTokenForUserAsync(null, tokenDuration));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.GenerateTokenForUserAsync(default(string), tokenDuration));
             Assert.NotNull(exception);
             Assert.NotEmpty(exception.Message);
         }
