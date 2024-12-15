@@ -77,7 +77,7 @@ CREATE TABLE "AppUser" (
 	"OAuthAccessToken" VARCHAR(1000) NULL,
 	"OAuthTokenType" VARCHAR(50) NULL,
 	"OAuthRefreshToken" VARCHAR(255) NULL,
-	"OAuthTokenUtcExpiresIn" TIMESTAMP NULL,
+	"OAuthTokenUtcExpiresAt" TIMESTAMP NULL,
     "UtcActiveUntil" TIMESTAMP,
 	"UtcLastLogin" TIMESTAMP,
 	"Timezone" VARCHAR(100),
@@ -101,7 +101,7 @@ COMMENT ON COLUMN "AppUser"."ProviderType" IS 'The type of the authentication pr
 COMMENT ON COLUMN "AppUser"."OAuthAccessToken" IS 'The access token issued by the OAuth provider.';
 COMMENT ON COLUMN "AppUser"."OAuthTokenType" IS 'OAuth provider token type, for example bearing';
 COMMENT ON COLUMN "AppUser"."OAuthRefreshToken" IS 'OAuth refresh token that applications can use to obtain another access token if tokens can expire.';
-COMMENT ON COLUMN "AppUser"."OAuthTokenUtcExpiresIn" IS 'OAuth validatity lifetime of the token.';
+COMMENT ON COLUMN "AppUser"."OAuthTokenUtcExpiresAt" IS 'OAuth validatity lifetime of the token.';
 COMMENT ON COLUMN "AppUser"."ProfilePictureUrl" IS 'The URL of the user''s profile picture.';
 COMMENT ON COLUMN "AppUser"."UtcActiveUntil" IS 'Indicates the UTC date until which the user is active in the system.';
 COMMENT ON COLUMN "AppUser"."UtcLastLogin" IS 'Indicates the UTC date and time that the user was authenticated.';

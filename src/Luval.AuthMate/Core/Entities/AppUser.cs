@@ -72,7 +72,7 @@ namespace Luval.AuthMate.Core.Entities
         /// Gets or sets the access token issued by the OAuth provider.
         /// </summary>
         [Column("OAuthAccessToken")]
-        public string OAuthAccessToken { get; set; }
+        public string? OAuthAccessToken { get; set; }
 
         /// <summary>
         /// Gets or sets the token type.
@@ -92,8 +92,8 @@ namespace Luval.AuthMate.Core.Entities
         /// <summary>
         /// Gets or sets the validatity lifetime of the token in seconds.
         /// </summary>
-        [Column("OAuthTokenUtcExpiresIn")]
-        public DateTime? OAuthTokenUtcExpiresIn { get; set; }
+        [Column("OAuthTokenUtcExpiresAt")]
+        public DateTime? OAuthTokenUtcExpiresAt { get; set; }
 
         /// <summary>
         /// Indicates the UTC date until which the user is active in the system.
