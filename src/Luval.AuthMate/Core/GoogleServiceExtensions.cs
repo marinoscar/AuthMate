@@ -3,6 +3,8 @@ using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System.Formats.Tar;
 
 namespace Luval.AuthMate.Core
 {
@@ -31,7 +33,12 @@ namespace Luval.AuthMate.Core
                     //Google credentials for OAuth
                     opt.ClientId = config.ClientId;
                     opt.ClientSecret = config.ClientSecret;
-                    opt.SaveTokens = true;
+                    opt.SaveTokens = config.SaveTokens;
+
+                    if (config.Scope != null && config.Scope.Any())
+                        config.Scope.ForEach(s => opt.Scope.Add(s));
+
+                    opt.AccessType = config.AccessType;
 
                     //Maps the information coming from Google into the correct claims
                     opt.ClaimActions.MapJsonKey("urn:google:profile", "link");
