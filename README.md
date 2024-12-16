@@ -143,7 +143,7 @@ public class AuthController : ControllerBase
 The database has been implemented in postgres but can be very easily implemented in any other database engine that supports Entity framework, all you need to do is to extend this class https://github.com/marinoscar/AuthMate/blob/main/src/Luval.AuthMate/AuthMateContext.cs
 
 ## ERD Model
-![ERD Model](https://raw.githubusercontent.com/marinoscar/AuthMate/refs/heads/main/media/erd.png)
+![ERD Model](https://raw.githubusercontent.com/marinoscar/AuthMate/refs/heads/main/media/erd.svg)
 
 ---
 
