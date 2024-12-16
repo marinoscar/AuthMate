@@ -1,6 +1,6 @@
 # AuthMate: Simplify Authentication and Authorization for Your Apps
 
-AuthMate is a powerful yet easy-to-use NuGet package designed to streamline user authentication and authorization for web and mobile applications. Whether you're building an app from scratch or integrating advanced user management features, AuthMate has you covered.
+AuthMate is a comprehensive authentication and authorization system designed to manage user accounts, roles, and permissions within a Blazor application. It provides a robust and flexible framework for handling user authentication, including support for OAuth providers, user roles, and login history tracking.
 
 ## Key Features
 * Social Login Integration: Quickly enable login via Google, Microsoft, and Facebook with minimal setup.
@@ -40,85 +40,64 @@ public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
 To configure the OAuth you need to get the information from google follow the steps in this article https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-8.0
 
 ## Configuring your application
-Here is an example code of how to configure your application to use Google Authentication
+To configure the Program.cs file for the AuthMate project, follow these steps:
+1.	Add Required Services: Register the necessary services for the DbContext and authentication.
+2.	Configure the DbContext: Set up the DbContext with the appropriate connection string.
+3.	Configure Authentication: Set up authentication schemes and options.
+Here is an example configuration for Program.cs:
 
 ``` csharp
-public static void Main(string[] args)
-{
-    var builder = WebApplication.CreateBuilder(args);
+using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-builder.Services.AddFluentUIComponents();
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
 
-// AuthMate: Add support for controllers
-builder.Services.AddControllers();
-builder.Services.AddHttpClient();
-builder.Services.AddHttpContextAccessor();
+// Configure DbContext
+builder.Services.AddDbContext<IAuthMateContext, AuthMateContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthMateConnection")));
 
-// AuthMate: Configure the database implementation
-var dbContext = 
-    new PostgresAuthMateContext(ConfigHelper.GetValueAsString("ConnectionString:Authorization")); //postgres implementaion
-
-// AuthMate: Creates an instance of the service
-var authService = new AuthMateService(
-        dbContext //provides the database context
-    );
-
-// AuthMate: Function to be called after the user is authorized by Google
-Func<OAuthCreatingTicketContext, Task> onTicket = async context =>
+// Configure authentication
+builder.Services.AddAuthentication(options =>
 {
-
-    //Checks for the user in the database and performs other validations, see the implementation here
-    //https://github.com/marinoscar/AuthMate/blob/64b55c66f8bcd2534b5f8d8e02d1c3d1a439a9ef/src/Luval.AuthMate/AuthMateService.cs#L306
-    await authService.UserAuthorizationProcessAsync(context.Identity, (u, c) =>
-    {
-        if (Debugger.IsAttached)
-            Console.WriteLine($"User Id: {u.Id} Email {u.Email} Provider Key: {u.ProviderKey}");
-
-    }, CancellationToken.None);
-
-
-};
-// AuthMate: Add Google Authentication configuration
-builder.Services.AddGoogleAuth(new GoogleOAuthConfiguration()
+    options.DefaultAuthenticateScheme = "Cookies";
+    options.DefaultChallengeScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
 {
-    // client id from your config file
-    ClientId = ConfigHelper.GetValueAsString("Authentication:Google:ClientID"),
-    // the client secret from your config file
-    ClientSecret = ConfigHelper.GetValueAsString("Authentication:Google:ClientSecret"),
-    OnCreatingTicket = onTicket // function call
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
 });
 
+// Add other necessary services
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
-/*** AuthMate: Additional configuration  ****/
-app.MapControllers();
-app.UseRouting();
-app.UseAuthorization();
-app.UseAuthentication();
-/*** AuthMate:                           ****/
-
 app.UseStaticFiles();
-app.UseAntiforgery();
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();
-}
+
 ```
 ## Create a Controller in your Web Application
 In order to handle the authentication request you will need to create a controller. here is a simple working code
@@ -164,104 +143,7 @@ public class AuthController : ControllerBase
 The database has been implemented in postgres but can be very easily implemented in any other database engine that supports Entity framework, all you need to do is to extend this class https://github.com/marinoscar/AuthMate/blob/main/src/Luval.AuthMate/AuthMateContext.cs
 
 ## ERD Model
-![ERD Model](https://raw.githubusercontent.com/marinoscar/AuthMate/refs/heads/main/media/database_erd.svg)
-
-## Semantic Model
-
-### 1. `AccountType`
-- Represents the type of an account (e.g., Free, Tier1, Tier2).
-- **Primary Key**: `Id`
-- **Attributes**:
-  - `Name`: The name of the account type.
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-- **Default Values**:
-  - A default row for the "Free" account type.
-
-### 2. `Account`
-- Represents an account with reference to its type and owner information.
-- **Primary Key**: `Id`
-- **Foreign Key**: `AccountTypeId` (references `AccountType.Id`)
-- **Attributes**:
-  - `Owner`: Owner of the account.
-  - `Name`: Account name.
-  - `Description`: Description of the account.
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-
-### 3. `AppUser`
-- Represents a user with authentication and profile information.
-- **Primary Key**: `Id`
-- **Foreign Key**: `AccountId` (references `Account.Id`)
-- **Attributes**:
-  - `DisplayName`: Display name of the user.
-  - `Email`: Email address (unique).
-  - `ProviderKey`: Authentication provider key.
-  - `ProviderType`: Type of authentication provider (e.g., Google, Microsoft).
-  - `ProfilePictureUrl`: URL for the user's profile picture.
-  - `UtcActiveUntil`: Date until which the user is active.
-  - `Metadata`: Additional metadata in JSON format.
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-
-### 4. `Role`
-- Represents roles in the system (e.g., Admin, User).
-- **Primary Key**: `Id`
-- **Attributes**:
-  - `Name`: Role name.
-  - `Description`: Description of the role's responsibilities.
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-- **Default Values**:
-  - Predefined roles include Administrator, Owner, Member, and Visitor.
-
-### 5. `AppUserRole`
-- Represents the relationship between users and roles.
-- **Primary Key**: `Id`
-- **Foreign Keys**:
-  - `AppUserId` (references `AppUser.Id`)
-  - `RoleId` (references `Role.Id`)
-- **Attributes**:
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-
-### 6. `PreAuthorizedAppUser`
-- Represents pre-authorized users who can create accounts in the system.
-- **Primary Key**: `Id`
-- **Foreign Key**: `AccountTypeId` (references `AccountType.Id`)
-- **Attributes**:
-  - `Email`: Email address of the pre-authorized user.
-  - `UtcCreatedOn`: Timestamp of record creation.
-  - `CreatedBy`: Creator of the record.
-  - `UtcUpdatedOn`: Timestamp of the last update.
-  - `UpdatedBy`: Last updater of the record.
-  - `Version`: Version control for the record.
-
-## Relationships
-1. `AccountType` has a **one-to-many** relationship with `Account`.
-2. `Account` has a **one-to-many** relationship with `AppUser`.
-3. `Role` has a **many-to-many** relationship with `AppUser` via `AppUserRole`.
-4. `AccountType` has a **one-to-many** relationship with `PreAuthorizedAppUser`.
-
----
-
-### Diagram
-Consider using tools like [dbdiagram.io](https://dbdiagram.io) or [draw.io](https://drawio.com) to create a visual representation of this model.
+![ERD Model](https://raw.githubusercontent.com/marinoscar/AuthMate/refs/heads/main/media/erd.png)
 
 ---
 
