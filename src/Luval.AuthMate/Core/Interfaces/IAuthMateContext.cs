@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Luval.AuthMate.Core.Interfaces
 {
@@ -47,6 +48,11 @@ namespace Luval.AuthMate.Core.Interfaces
         /// Gets or sets the DBSet for AppUserLoginHistory entities
         /// </summary>
         public DbSet<AppUserLoginHistory> AppUserLoginHistories { get; set; }
+
+        /// <summary>
+        /// Gets the DatabaseFacade used to manage the database.
+        /// </summary>
+        public DatabaseFacade Database { get; }
 
         /// <summary>
         /// Saves changes made in this context to the database.
