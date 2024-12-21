@@ -21,7 +21,7 @@ namespace Luval.AuthMate.Tests
             context.Initialize();
 
             var logger = new NullLogger<RoleService>();
-            var service = new RoleService(context, logger);
+            var service = new RoleService(context, new NullUserResolver(), logger);
 
             afterContextCreation?.Invoke(context);
             return service;
@@ -41,6 +41,8 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(name, result.Name);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.CreatedBy);
             Assert.Equal(description, result.Description);
         }
 
@@ -51,7 +53,7 @@ namespace Luval.AuthMate.Tests
             // Arrange
             var service = CreateService((c) =>
             {
-                r = new Role { Name = "OldName", Description = "Old description", UtcCreatedOn = DateTime.UtcNow.AddDays(-1), Version = 1 };
+                r = new Role { Name = "OldName", Description = "Old description", CreatedBy = "user@email.com", UtcCreatedOn = DateTime.UtcNow.AddDays(-1), Version = 1 };
                 c.Roles.Add(r);
                 c.SaveChanges();
             });
@@ -67,6 +69,8 @@ namespace Luval.AuthMate.Tests
             Assert.Equal(newName, result.Name);
             Assert.Equal(newDescription, result.Description);
             Assert.Equal(2u, result.Version);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
+            Assert.Equal("user@email.com", result.CreatedBy);
             Assert.True(result.UtcUpdatedOn > r.UtcCreatedOn);
         }
 
