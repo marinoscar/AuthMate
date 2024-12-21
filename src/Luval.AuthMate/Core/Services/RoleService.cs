@@ -17,16 +17,21 @@ namespace Luval.AuthMate.Core.Services
     {
         private readonly IAuthMateContext _context;
         private readonly ILogger<RoleService> _logger;
+        private readonly IUserResolver _userResolver;
+        private readonly string _userEmail;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RoleService"/> class.
         /// </summary>
         /// <param name="context">The database context interface.</param>
+        /// <param name="userResolver">The user resolver instance.</param>
         /// <param name="logger">The logger instance.</param>
-        public RoleService(IAuthMateContext context, ILogger<RoleService> logger)
+        public RoleService(IAuthMateContext context, IUserResolver userResolver, ILogger<RoleService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
+            _userEmail = _userResolver.GetUserEmail();
         }
 
         /// <summary>
@@ -43,7 +48,7 @@ namespace Luval.AuthMate.Core.Services
                 if (string.IsNullOrWhiteSpace(name))
                     throw new ArgumentException("Role name is required.", nameof(name));
 
-                var role = new Role { Name = name, Description = description };
+                var role = new Role { Name = name, Description = description, CreatedBy = _userEmail, UpdatedBy = _userEmail };
                 await _context.Roles.AddAsync(role, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -84,6 +89,7 @@ namespace Luval.AuthMate.Core.Services
                 role.Name = name;
                 role.Description = description;
                 role.UtcUpdatedOn = DateTime.UtcNow;
+                role.UpdatedBy = _userEmail;
                 role.Version++;
 
                 _context.Roles.Update(role);
