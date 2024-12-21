@@ -47,7 +47,7 @@ namespace Luval.AuthMate.Core.Services
                 if (string.IsNullOrWhiteSpace(name))
                     throw new ArgumentException("Account type name is required.", nameof(name));
 
-                var accountType = new AccountType { Name = name, CreatedBy = _userEmail, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
+                var accountType = new AccountType { Name = name, CreatedBy = _userEmail, UpdatedBy = _userEmail, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
                 await _context.AccountTypes.AddAsync(accountType, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
