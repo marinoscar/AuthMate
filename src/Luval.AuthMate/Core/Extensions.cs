@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Core.Resolver;
 using Luval.AuthMate.Core.Services;
 using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -110,6 +111,7 @@ namespace Luval.AuthMate.Core
             if (Debugger.IsAttached)
                 s.AddSingleton(typeof(ILogger<>), typeof(ColorConsoleLogger<>));
 
+            s.AddScoped<IUserResolver, WebUserResolver>();
             s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
             s.AddScoped<IAppUserService, AppUserService>();
             s.AddScoped<RoleService>();
