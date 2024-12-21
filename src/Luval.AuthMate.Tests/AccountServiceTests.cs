@@ -20,9 +20,9 @@ namespace Luval.AuthMate.Tests
         {
             var context = new MemoryDataContext();
             context.Initialize();
-
+            var userResolver = new NullUserResolver();
             var logger = new NullLogger<AccountService>();
-            var service = new AccountService(context, logger);
+            var service = new AccountService(context, userResolver, logger);
 
             afterContextCreation?.Invoke(context);
             return service;
@@ -34,15 +34,14 @@ namespace Luval.AuthMate.Tests
             // Arrange
             var service = CreateService(null);
             var name = "TestAccountType";
-            var createdBy = "testuser";
 
             // Act
-            var result = await service.CreateAccountTypeAsync(name, createdBy);
+            var result = await service.CreateAccountTypeAsync(name);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(name, result.Name);
-            Assert.Equal(createdBy, result.CreatedBy);
+            Assert.NotNull(result.CreatedBy);
         }
 
         [Fact]
@@ -59,12 +58,12 @@ namespace Luval.AuthMate.Tests
             var updatedBy = "testuser";
 
             // Act
-            var result = await service.UpdateAccountTypeAsync(accountTypeId, newName, updatedBy);
+            var result = await service.UpdateAccountTypeAsync(accountTypeId, newName);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(newName, result.Name);
-            Assert.Equal(updatedBy, result.UpdatedBy);
+            Assert.NotNull(result.UpdatedBy);
         }
 
         [Fact]
@@ -126,23 +125,21 @@ namespace Luval.AuthMate.Tests
             });
             var name = "TestAccount";
             var accountTypeName = "TestAccountType";
-            var createdBy = "testuser";
 
             // Act
-            var result = await service.CreateAccountAsync(name, accountTypeName, createdBy);
+            var result = await service.CreateAccountAsync(name, accountTypeName);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(name, result.Name);
-            Assert.Equal(createdBy, result.CreatedBy);
-            Assert.Equal(createdBy, result.UpdatedBy);
+            Assert.NotNull(result.CreatedBy);
+            Assert.NotNull(result.UpdatedBy);
             Assert.Equal(1u, result.Version);
         }
 
         [Fact]
         public async Task UpdateAccountExpirationDateByOwnerAsync_UpdatesExpirationDateSuccessfully()
         {
-            var createdBy = "someone";
             var createdOn = DateTime.UtcNow.AddDays(-5);
             // Arrange
             var service = CreateService((c) =>
@@ -150,21 +147,20 @@ namespace Luval.AuthMate.Tests
                 var at = new AccountType { Name = "TestAccountType", UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
                 c.AccountTypes.Add(at);
                 c.SaveChanges();
-                c.Accounts.Add(new Account { Name = "testowner", Owner = "testowner", AccountTypeId = at.Id, Version = 1u, CreatedBy = createdBy, UtcCreatedOn = createdOn });
+                c.Accounts.Add(new Account { Name = "testowner", Owner = "testowner", AccountTypeId = at.Id, Version = 1u, CreatedBy = "user@email.com", UtcCreatedOn = createdOn });
                 c.SaveChanges();
             });
             var owner = "testowner";
             var newExpirationDate = DateTime.UtcNow.AddYears(1);
-            var updatedBy = "testuser";
 
             // Act
-            var result = await service.UpdateAccountExpirationDateByOwnerAsync(owner, newExpirationDate, updatedBy);
+            var result = await service.UpdateAccountExpirationDateByOwnerAsync(owner, newExpirationDate);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(newExpirationDate, result.UtcExpirationDate);
-            Assert.Equal(updatedBy, result.UpdatedBy);
-            Assert.Equal(createdBy, result.CreatedBy);
+            Assert.NotNull(result.UpdatedBy);
+            Assert.NotNull(result.CreatedBy);
             Assert.Equal(createdOn, result.UtcCreatedOn);
             Assert.Equal(2u, result.Version);
         }
