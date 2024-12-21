@@ -1,0 +1,29 @@
+﻿using Luval.AuthMate.Core.Interfaces;
+
+namespace Luval.AuthMate.Tests
+{
+    public class NullUserResolver : IUserResolver
+    {
+
+        public string DefaultResult { get; set; } = "NullValue";
+
+        public NullUserResolver()
+        {
+        }
+
+        public NullUserResolver(string defaultValue)
+        {
+            DefaultResult = defaultValue;
+        }
+
+        public string GetUserEmail()
+        {
+            return DefaultResult;
+        }
+
+        public string GetUserName()
+        {
+            return DefaultResult;
+        }
+    }
+}
