@@ -24,16 +24,20 @@ namespace Luval.AuthMate.Core.Services
     {
         private readonly IAuthMateContext _context;
         private readonly ILogger<AppUserService> _logger;
+        private readonly IUserResolver _userResolver;
+        private readonly string _userEmail;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AppUserService"/> class.
         /// </summary>
         /// <param name="context">The database context interface.</param>
         /// <param name="logger">The logger instance.</param>
-        public AppUserService(IAuthMateContext context, ILogger<AppUserService> logger)
+        public AppUserService(IAuthMateContext context, IUserResolver userResolver, ILogger<AppUserService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
+            _userEmail = _userResolver.GetUserEmail();
         }
 
         /// <summary>
@@ -69,7 +73,7 @@ namespace Luval.AuthMate.Core.Services
                 // Ensure dates are in UTC and update metadata
                 appUser.UtcCreatedOn = new DateTime(appUser.UtcCreatedOn.Ticks, DateTimeKind.Utc);
                 appUser.UtcUpdatedOn = DateTime.UtcNow;
-                appUser.UpdatedBy = appUser.Email;
+                appUser.UpdatedBy = _userEmail;
                 appUser.Version++;
 
                 // Update the app user entity in the database
@@ -107,7 +111,7 @@ namespace Luval.AuthMate.Core.Services
                 if (role == null) throw new InvalidOperationException($"Role '{roleName}' not found.");
 
                 // Create a new AppUserRole relationship
-                var userRole = new AppUserRole { AppUserId = user.Id, RoleId = role.Id };
+                var userRole = new AppUserRole { AppUserId = user.Id, RoleId = role.Id, UpdatedBy = _userEmail, CreatedBy = _userEmail };
                 await _context.AppUserRoles.AddAsync(userRole, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -221,8 +225,8 @@ namespace Luval.AuthMate.Core.Services
                 // Populate user fields with invitation data
                 user.AccountId = invite.AccountId;
                 user.Account = invite.Account;
-                user.CreatedBy = user.Email;
-                user.UpdatedBy = user.Email;
+                user.CreatedBy = _userEmail;
+                user.UpdatedBy = _userEmail;
                 user.UtcCreatedOn = DateTime.UtcNow;
                 user.UtcUpdatedOn = user.UtcCreatedOn;
 
@@ -238,7 +242,9 @@ namespace Luval.AuthMate.Core.Services
                     AppUserId = user.Id,
                     RoleId = invite.RoleId,
                     User = user,
-                    Role = invite.Role
+                    Role = invite.Role,
+                    CreatedBy = _userEmail,
+                    UpdatedBy = _userEmail
                 };
 
                 await _context.AppUserRoles.AddAsync(userRole, cancellationToken).ConfigureAwait(false);
@@ -302,8 +308,8 @@ namespace Luval.AuthMate.Core.Services
                     Owner = user.Email,
                     AccountTypeId = accountType.Id,
                     AccountType = accountType,
-                    CreatedBy = user.Email,
-                    UpdatedBy = user.Email,
+                    CreatedBy = _userEmail,
+                    UpdatedBy = _userEmail,
                     Version = 1
                 };
 
@@ -332,7 +338,9 @@ namespace Luval.AuthMate.Core.Services
                     adminRole = new Role
                     {
                         Name = "Administrator",
-                        Description = "Administrator role with full permissions."
+                        Description = "Administrator role with full permissions.",
+                        UpdatedBy = _userEmail,
+                        CreatedBy = _userEmail
                     };
 
                     await _context.Roles.AddAsync(adminRole, cancellationToken).ConfigureAwait(false);
@@ -347,7 +355,9 @@ namespace Luval.AuthMate.Core.Services
                     AppUserId = user.Id,
                     RoleId = adminRole.Id,
                     User = user,
-                    Role = adminRole
+                    Role = adminRole,
+                    CreatedBy = _userEmail,
+                    UpdatedBy = _userEmail
                 };
 
                 await _context.AppUserRoles.AddAsync(userRole, cancellationToken).ConfigureAwait(false);
