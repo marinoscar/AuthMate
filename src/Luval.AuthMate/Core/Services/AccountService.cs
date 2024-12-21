@@ -17,42 +17,46 @@ namespace Luval.AuthMate.Core.Services
     {
         private readonly IAuthMateContext _context;
         private readonly ILogger<AccountService> _logger;
+        private readonly IUserResolver _userResolver;
+        private readonly string _userEmail = "Anonymous";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccountService"/> class.
         /// </summary>
         /// <param name="context">The database context interface.</param>
         /// <param name="logger">The logger instance.</param>
-        public AccountService(IAuthMateContext context, ILogger<AccountService> logger)
+        /// <param name="userResolver">The user resolver instance.</param>
+        public AccountService(IAuthMateContext context, IUserResolver userResolver,  ILogger<AccountService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
+            _userEmail = _userResolver.GetUserEmail();
         }
 
         /// <summary>
         /// Creates a new account type.
         /// </summary>
         /// <param name="name">The name of the account type.</param>
-        /// <param name="createdBy">The user who created the account type.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created account type entity.</returns>
-        public async Task<AccountType> CreateAccountTypeAsync(string name, string? createdBy, CancellationToken cancellationToken = default)
+        public async Task<AccountType> CreateAccountTypeAsync(string name, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(name))
                     throw new ArgumentException("Account type name is required.", nameof(name));
 
-                var accountType = new AccountType { Name = name, CreatedBy = createdBy, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
+                var accountType = new AccountType { Name = name, CreatedBy = _userEmail, UtcCreatedOn = DateTime.UtcNow, UtcUpdatedOn = DateTime.UtcNow };
                 await _context.AccountTypes.AddAsync(accountType, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account type '{AccountTypeName}' created successfully by '{CreatedBy}'.", name, createdBy);
+                _logger.LogInformation("Account type '{AccountTypeName}' created successfully by '{CreatedBy}'.", name, _userEmail);
                 return accountType;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating account type '{AccountTypeName}' by '{CreatedBy}'.", name, createdBy);
+                _logger.LogError(ex, "Error creating account type '{AccountTypeName}' by '{CreatedBy}'.", name, _userEmail);
                 throw;
             }
         }
@@ -62,12 +66,11 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="accountTypeId">The ID of the account type to update.</param>
         /// <param name="newName">The new name for the account type.</param>
-        /// <param name="updatedBy">The user who updated the account type.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The updated account type entity.</returns>
         /// <exception cref="ArgumentException">Thrown when the account type ID or new name is null or whitespace.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the account type with the specified ID is not found.</exception>
-        public async Task<AccountType> UpdateAccountTypeAsync(ulong accountTypeId, string newName, string? updatedBy, CancellationToken cancellationToken = default)
+        public async Task<AccountType> UpdateAccountTypeAsync(ulong accountTypeId, string newName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -85,17 +88,17 @@ namespace Luval.AuthMate.Core.Services
 
                 accountType.Name = newName;
                 accountType.UtcUpdatedOn = DateTime.UtcNow;
-                accountType.UpdatedBy = updatedBy;
+                accountType.UpdatedBy = _userEmail;
                 accountType.Version++;
 
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account type with ID '{AccountTypeId}' updated successfully by '{UpdatedBy}'.", accountTypeId, updatedBy);
+                _logger.LogInformation("Account type with ID '{AccountTypeId}' updated successfully by '{UpdatedBy}'.", accountTypeId, _userEmail);
                 return accountType;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating account type with ID '{AccountTypeId}' by '{UpdatedBy}'.", accountTypeId, updatedBy);
+                _logger.LogError(ex, "Error updating account type with ID '{AccountTypeId}' by '{UpdatedBy}'.", accountTypeId, _userEmail);
                 throw;
             }
         }
@@ -146,10 +149,9 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="accountOwner">The owner of the account.</param>
         /// <param name="accountTypeName">The name of the account type.</param>
-        /// <param name="createdBy">The user who created the account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The created account entity.</returns>
-        public async Task<Account> CreateAccountAsync(string accountOwner, string accountTypeName, string? createdBy, CancellationToken cancellationToken = default)
+        public async Task<Account> CreateAccountAsync(string accountOwner, string accountTypeName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -170,8 +172,8 @@ namespace Luval.AuthMate.Core.Services
                     Name = accountOwner,
                     Owner = accountOwner,
                     AccountTypeId = accountType.Id,
-                    CreatedBy = createdBy,
-                    UpdatedBy = createdBy,
+                    CreatedBy = _userEmail,
+                    UpdatedBy = _userEmail,
                     UtcCreatedOn = DateTime.UtcNow,
                     UtcUpdatedOn = DateTime.UtcNow,
                     Version = 1
@@ -179,12 +181,12 @@ namespace Luval.AuthMate.Core.Services
                 await _context.Accounts.AddAsync(account, cancellationToken).ConfigureAwait(false);
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account '{AccountName}' created successfully by '{CreatedBy}'.", accountOwner, createdBy);
+                _logger.LogInformation("Account '{AccountName}' created successfully by '{CreatedBy}'.", accountOwner, _userEmail);
                 return account;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating account '{AccountName}' by '{CreatedBy}'.", accountOwner, createdBy);
+                _logger.LogError(ex, "Error creating account '{AccountName}' by '{CreatedBy}'.", accountOwner, _userEmail);
                 throw;
             }
         }
@@ -194,10 +196,9 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="owner">The owner of the account to update.</param>
         /// <param name="utcNewExpirationDate">The new expiration date for the account.</param>
-        /// <param name="updatedBy">The user who updated the account.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>The updated account entity.</returns>
-        public async Task<Account> UpdateAccountExpirationDateByOwnerAsync(string owner, DateTime utcNewExpirationDate, string? updatedBy, CancellationToken cancellationToken = default)
+        public async Task<Account> UpdateAccountExpirationDateByOwnerAsync(string owner, DateTime utcNewExpirationDate, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -215,17 +216,17 @@ namespace Luval.AuthMate.Core.Services
 
                 account.UtcExpirationDate = utcNewExpirationDate;
                 account.UtcUpdatedOn = DateTime.UtcNow;
-                account.UpdatedBy = updatedBy;
+                account.UpdatedBy = _userEmail;
                 account.Version++;
 
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Account with owner '{Owner}' expiration date updated successfully by '{UpdatedBy}'.", owner, updatedBy);
+                _logger.LogInformation("Account with owner '{Owner}' expiration date updated successfully by '{UpdatedBy}'.", owner, _userEmail);
                 return account;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating expiration date for account with owner '{Owner}' by '{UpdatedBy}'.", owner, updatedBy);
+                _logger.LogError(ex, "Error updating expiration date for account with owner '{Owner}' by '{UpdatedBy}'.", owner, _userEmail);
                 throw;
             }
         }
