@@ -41,7 +41,8 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(name, result.Name);
-            Assert.NotNull(result.CreatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.CreatedBy);
         }
 
         [Fact]
@@ -63,7 +64,7 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(newName, result.Name);
-            Assert.NotNull(result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
         }
 
         [Fact]
@@ -132,8 +133,8 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(name, result.Name);
-            Assert.NotNull(result.CreatedBy);
-            Assert.NotNull(result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.CreatedBy);
             Assert.Equal(1u, result.Version);
         }
 
@@ -159,8 +160,8 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(newExpirationDate, result.UtcExpirationDate);
-            Assert.NotNull(result.UpdatedBy);
-            Assert.NotNull(result.CreatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
+            Assert.Equal("user@email.com", result.CreatedBy);
             Assert.Equal(createdOn, result.UtcCreatedOn);
             Assert.Equal(2u, result.Version);
         }
