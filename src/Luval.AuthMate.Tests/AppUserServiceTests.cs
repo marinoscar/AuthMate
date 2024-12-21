@@ -22,7 +22,7 @@ namespace Luval.AuthMate.Tests
             context.Initialize();
 
             var logger = new NullLogger<AppUserService>();
-            var service = new AppUserService(context, logger);
+            var service = new AppUserService(context, new NullUserResolver(), logger);
 
             afterContextCreation?.Invoke(context);
             return service;
@@ -97,7 +97,7 @@ namespace Luval.AuthMate.Tests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(email, result.Email);
-            Assert.Equal(email, result.UpdatedBy);
+            Assert.Equal(NullUserResolver.DefaultResult, result.UpdatedBy);
             Assert.True(result.UtcUpdatedOn > result.UtcCreatedOn);
             Assert.Equal("newkey", result.ProviderKey);
             Assert.Equal(2u, result.Version);

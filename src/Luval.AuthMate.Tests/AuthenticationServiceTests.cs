@@ -22,7 +22,7 @@ namespace Luval.AuthMate.Tests
             var context = new MemoryDataContext();
             context.Initialize();
 
-            var userService = new AppUserService(context, new NullLogger<AppUserService>());
+            var userService = new AppUserService(context, new NullUserResolver(), new NullLogger<AppUserService>());
             var authService = new AuthenticationService(userService, context, new NullLogger<AuthenticationService>());
 
             if (afterContextCreation != null) afterContextCreation(context);

@@ -5,7 +5,7 @@ namespace Luval.AuthMate.Tests
     public class NullUserResolver : IUserResolver
     {
 
-        public string DefaultResult { get; set; } = "NullValue";
+        public static string DefaultResult { get; set; } = "NullValue";
 
         public NullUserResolver()
         {

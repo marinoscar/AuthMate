@@ -30,7 +30,7 @@ namespace Luval.AuthMate.Tests
             var context = new MemoryDataContext();
             context.Initialize();
 
-            var userService = new AppUserService(context, new DebugLogger<AppUserService>());
+            var userService = new AppUserService(context, new NullUserResolver(), new DebugLogger<AppUserService>());
             var service = new BearingTokenService(SecretKey, userService);
 
             afterContextCreation?.Invoke(context);
