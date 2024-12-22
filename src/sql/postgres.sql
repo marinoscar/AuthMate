@@ -308,3 +308,37 @@ COMMENT ON COLUMN "InviteToAccount"."CreatedBy" IS 'The identifier of the user w
 COMMENT ON COLUMN "InviteToAccount"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
 COMMENT ON COLUMN "InviteToAccount"."UpdatedBy" IS 'The identifier of the user who last updated the record.';
 COMMENT ON COLUMN "InviteToAccount"."Version" IS 'The version of the record for concurrency handling.';
+
+-- Drop the table if it exists
+DROP TABLE IF EXISTS "RefreshToken" CASCADE;
+
+-- Create the table
+CREATE TABLE "RefreshToken" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "AppUserId" BIGINT NOT NULL,
+    "Token" VARCHAR(1000) NOT NULL,
+    "DurationInSeconds" BIGINT NOT NULL,
+    "UtcExpiresOn" TIMESTAMP NOT NULL,
+    "IsValid" BOOLEAN NOT NULL,
+    "UtcCreatedOn" TIMESTAMP NOT NULL,
+    "CreatedBy" VARCHAR,
+    "UtcUpdatedOn" TIMESTAMP NOT NULL,
+    "UpdatedBy" VARCHAR,
+    "Version" INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT FK_AppUser_RefreshToken FOREIGN KEY ("AppUserId") REFERENCES "AppUser" ("Id") ON DELETE CASCADE
+);
+
+-- Add comments for the table and columns
+COMMENT ON TABLE "RefreshToken" IS 'Represents a refresh token entity.';
+COMMENT ON COLUMN "RefreshToken"."Id" IS 'The unique identifier for the refresh token.';
+COMMENT ON COLUMN "RefreshToken"."AppUserId" IS 'The user ID associated with the refresh token.';
+COMMENT ON COLUMN "RefreshToken"."Token" IS 'The refresh token.';
+COMMENT ON COLUMN "RefreshToken"."DurationInSeconds" IS 'The duration in seconds for which the token is valid.';
+COMMENT ON COLUMN "RefreshToken"."UtcExpiresOn" IS 'The UTC date and time when the token expires.';
+COMMENT ON COLUMN "RefreshToken"."IsValid" IS 'Indicates whether the token is valid.';
+COMMENT ON COLUMN "RefreshToken"."UtcCreatedOn" IS 'The UTC timestamp when the record was created.';
+COMMENT ON COLUMN "RefreshToken"."CreatedBy" IS 'The user who created the record.';
+COMMENT ON COLUMN "RefreshToken"."UtcUpdatedOn" IS 'The UTC timestamp when the record was last updated.';
+COMMENT ON COLUMN "RefreshToken"."UpdatedBy" IS 'The user who last updated the record.';
+COMMENT ON COLUMN "RefreshToken"."Version" IS 'The version of the record, incremented on updates.';
+
