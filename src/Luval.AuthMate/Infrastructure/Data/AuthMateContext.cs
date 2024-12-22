@@ -153,6 +153,8 @@ namespace Luval.AuthMate.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<RefreshToken>()
+               .HasIndex(a => a.Token).IsUnique();
 
 
         }
