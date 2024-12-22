@@ -22,7 +22,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required]
         [Column("UserId")]
-        public string UserId { get; set; } = default!;
+        public ulong UserId { get; set; } = default!;
 
         /// <summary>
         /// Navigation property for the associated user.
@@ -43,7 +43,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required]
         [Column("DurationInSeconds")]
-        public int DurationInSeconds { get; set; }
+        public ulong DurationInSeconds { get; set; }
 
         /// <summary>
         /// Gets or sets the UTC date and time when the token expires.
