@@ -12,7 +12,8 @@ AuthMate is a comprehensive authentication and authorization system designed to 
 ** Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
 
 ## Configuring the Sql Database
-The project uses EntityFramework, if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
+The project uses EntityFramework, there is a SQL script for a Postgresql database [here](https://github.com/marinoscar/AuthMate/blob/main/src/sql/postgres.sql)
+if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
 
 ``` csharp
 public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
@@ -36,6 +37,8 @@ public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
     }
 }
 ```
+
+
 ## Getting Google Client Id and Client Secret
 To configure the OAuth you need to get the information from google follow the steps in this article https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-8.0
 
