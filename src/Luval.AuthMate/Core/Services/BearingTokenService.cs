@@ -23,7 +23,12 @@ namespace Luval.AuthMate.Core.Services
         private readonly IAppUserService _userService;
         private readonly IAuthMateContext _context;
         private readonly ILogger<BearingTokenService> _logger;
-        private readonly IUserResolver _userResolver;   
+        private readonly IUserResolver _userResolver;
+
+        /// <summary>
+        /// <see langword="short"/> representing the maximum number of active tokens per user.
+        /// </summary>
+        public short MaxActiveTokensPerUser { get; private set; } = 10;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BearingTokenService"/> class.
@@ -139,6 +144,7 @@ namespace Luval.AuthMate.Core.Services
         /// <returns>The created refresh token.</returns>
         /// <exception cref="ArgumentException">Thrown when userEmail is null or empty, or duration is less than or equal to zero.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the user with the specified email is not found.</exception>
+        /// <exception cref="AuthMateException">Thrown when the user has more than 10 active tokens</exception>
         public async Task<RefreshToken> CreateRefreshTokenAsync(string userEmail, TimeSpan duration, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(userEmail))
@@ -160,6 +166,18 @@ namespace Luval.AuthMate.Core.Services
                 {
                     _logger.LogError($"User with email {userEmail} not found.");
                     throw new InvalidOperationException($"User with email {userEmail} not found.");
+                }
+
+                ///checks how many active tokens the user have, the max allowed per user is 10
+                var activeTokens = await _context.RefreshTokens
+                    .Where(t => t.UserId == user.Id && t.IsValid)
+                    .CountAsync(cancellationToken)
+                    .ConfigureAwait(true);
+
+                if (activeTokens >= MaxActiveTokensPerUser)
+                {
+                    _logger.LogError($"User with email {userEmail} has {activeTokens} which is the max allowed");
+                    throw new AuthMateException($"User with email {userEmail} has {activeTokens} which is the max allowed");
                 }
 
                 var token = new RefreshToken
@@ -196,7 +214,7 @@ namespace Luval.AuthMate.Core.Services
         /// <exception cref="ArgumentException">Thrown when refreshToken is null or empty.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the refresh token is not found.</exception>
         /// <exception cref="AuthMateException">Thrown when the refresh token is no longer valid or has expired.</exception>
-        public async Task<string> GenerateTokenForUserFromRefreshAsync(string refreshToken, CancellationToken cancellationToken)
+        public async Task<string> GenerateTokenForUserFromRefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
@@ -207,7 +225,7 @@ namespace Luval.AuthMate.Core.Services
             try
             {
                 var token = await _context.RefreshTokens
-                    .Include(p => p.User)
+                    .Include(x => x.User)
                     .SingleOrDefaultAsync(t => t.Token == refreshToken, cancellationToken)
                     .ConfigureAwait(true);
 
@@ -226,6 +244,10 @@ namespace Luval.AuthMate.Core.Services
                     _logger.LogError($"Refresh token {refreshToken} has expired");
                     throw new AuthMateException($"Refresh token {refreshToken} has expired");
                 }
+
+                //Get user from the token, to include roles and other information
+                var user = await _userService.GetUserByEmailAsync(token.User.Email, cancellationToken).ConfigureAwait(true);
+                token.User = user;
 
                 var result = await GenerateTokenForUserAsync(token.User, TimeSpan.FromMinutes(15), cancellationToken).ConfigureAwait(true);
 
