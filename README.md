@@ -3,13 +3,13 @@
 AuthMate is a comprehensive authentication and authorization system designed to manage user accounts, roles, and permissions within a Blazor application. It provides a robust and flexible framework for handling user authentication, including support for OAuth providers, user roles, and login history tracking.
 
 ## Key Features
-* Social Login Integration: Quickly enable login via Google, Microsoft, and Facebook with minimal setup.
-* SQL Backend Support: Manage users, roles, and permissions seamlessly using your existing SQL database.
-* Account Management:
-** Assign users to one or multiple accounts.
-** Support for account types to accommodate different use cases.
-** Role-Based Access Control (RBAC): Define roles and permissions for users at the account level.
-** Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
+- Social Login Integration: Quickly enable login via Google, Microsoft, and Facebook with minimal setup.
+- SQL Backend Support: Manage users, roles, and permissions seamlessly using your existing SQL database.
+- Account Management:
+    - Assign users to one or multiple accounts.
+    - Support for account types to accommodate different use cases.
+    - Role-Based Access Control (RBAC): Define roles and permissions for users at the account level.
+    - Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
 
 ## Configuring the Sql Database
 The project uses EntityFramework, there is a SQL script for a Postgresql database [here](https://github.com/marinoscar/AuthMate/blob/main/src/sql/postgres.sql)
