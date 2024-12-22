@@ -56,6 +56,11 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// </summary>
         public DbSet<AppUserLoginHistory> AppUserLoginHistories { get; set; }
 
+        /// <summary>
+        /// Gets or sets the DbSet for RefreshToken entities
+        /// </summary>
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
         /// <summary>
         /// Configures the model and relationships between entities.
@@ -139,6 +144,15 @@ namespace Luval.AuthMate.Infrastructure.Data
             // Configure AppUserLoginHistory entity
             modelBuilder.Entity<AppUserLoginHistory>()
                 .HasKey(au => au.Id);
+
+            // Configure RefreshToken entity
+            modelBuilder.Entity<RefreshToken>()
+                .HasKey(rt => rt.Id);
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany()
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
 
         }
