@@ -316,7 +316,7 @@ DROP TABLE IF EXISTS "RefreshToken" CASCADE;
 CREATE TABLE "RefreshToken" (
     "Id" BIGSERIAL PRIMARY KEY,
     "AppUserId" BIGINT NOT NULL,
-    "Token" VARCHAR(1000) NOT NULL,
+    "Token" VARCHAR(1000) NOT NULL UNIQUE,
     "DurationInSeconds" BIGINT NOT NULL,
     "UtcExpiresOn" TIMESTAMP NOT NULL,
     "IsValid" BOOLEAN NOT NULL,
