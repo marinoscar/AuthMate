@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -19,17 +20,23 @@ namespace Luval.AuthMate.Core.Services
     {
         private readonly string _secretKey;
         private readonly IAppUserService _userService;
+        private readonly IAuthMateContext _context;
+        private readonly ILogger<BearingTokenService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BearingTokenService"/> class.
         /// </summary>
         /// <param name="secretKey">The secret key used for signing tokens.</param>
         /// <param name="userService">The user service for retrieving user information.</param>
+        /// <param name="context">The context for managing authentication-related entities.</param>
+        /// <param name="logger">The logger for the service.</param>
         /// <exception cref="ArgumentNullException">Thrown when secretKey or userService is null.</exception>
-        public BearingTokenService(string secretKey, IAppUserService userService)
+        public BearingTokenService(string secretKey, IAppUserService userService, IAuthMateContext context, ILogger<BearingTokenService> logger)
         {
             _secretKey = secretKey ?? throw new ArgumentNullException(nameof(secretKey));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -44,15 +51,21 @@ namespace Luval.AuthMate.Core.Services
         public async Task<string> GenerateTokenForUserAsync(string userEmail, TimeSpan tokenDuration, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                _logger.LogError("User email cannot be null or empty.");
                 throw new ArgumentException("User email cannot be null or empty.", nameof(userEmail));
+            }
 
             var user = await _userService.GetUserByEmailAsync(userEmail, cancellationToken);
             if (user == null)
+            {
+                _logger.LogError($"User with email {userEmail} not found.");
                 throw new InvalidOperationException($"User with email {userEmail} not found.");
+            }
 
+            _logger.LogInformation($"Generating token for user with email {userEmail}.");
             return await GenerateTokenForUserAsync(user, tokenDuration, cancellationToken);
         }
-
 
         ///<summary>
         /// Generates a JWT token for a user.
@@ -67,10 +80,16 @@ namespace Luval.AuthMate.Core.Services
             return Task.Run(() =>
             {
                 if (user == null)
-                    throw new ArgumentException("User user cannot be null..", nameof(user));
+                {
+                    _logger.LogError("User cannot be null.");
+                    throw new ArgumentException("User cannot be null.", nameof(user));
+                }
 
                 if (tokenDuration <= TimeSpan.Zero)
+                {
+                    _logger.LogError("Token duration must be greater than zero.");
                     throw new ArgumentException("Token duration must be greater than zero.", nameof(tokenDuration));
+                }
 
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -87,7 +106,10 @@ namespace Luval.AuthMate.Core.Services
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var token = tokenHandler.CreateToken(tokenDescriptor);
-                return tokenHandler.WriteToken(token);
+                var tokenString = tokenHandler.WriteToken(token);
+
+                _logger.LogInformation($"Token generated for user {user.Email}.");
+                return tokenString;
             }, cancellationToken);
         }
 
