@@ -16,6 +16,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryType>git</RepositoryType>
     <Version>1.0.4</Version>
+    <PackageReleaseNotes>- Upgraded to Framework 9.0
+- Added support for refresh tokens</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="authmate_icon.ico" />
