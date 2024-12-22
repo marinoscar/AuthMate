@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -22,6 +23,7 @@ namespace Luval.AuthMate.Core.Services
         private readonly IAppUserService _userService;
         private readonly IAuthMateContext _context;
         private readonly ILogger<BearingTokenService> _logger;
+        private readonly IUserResolver _userResolver;   
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BearingTokenService"/> class.
@@ -31,12 +33,13 @@ namespace Luval.AuthMate.Core.Services
         /// <param name="context">The context for managing authentication-related entities.</param>
         /// <param name="logger">The logger for the service.</param>
         /// <exception cref="ArgumentNullException">Thrown when secretKey or userService is null.</exception>
-        public BearingTokenService(string secretKey, IAppUserService userService, IAuthMateContext context, ILogger<BearingTokenService> logger)
+        public BearingTokenService(string secretKey, IAppUserService userService, IAuthMateContext context, IUserResolver userResolver, ILogger<BearingTokenService> logger)
         {
             _secretKey = secretKey ?? throw new ArgumentNullException(nameof(secretKey));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
         }
 
         /// <summary>
@@ -119,12 +122,131 @@ namespace Luval.AuthMate.Core.Services
         /// <returns>The generated refresh token.</returns>
         public static string GenerateRefreshToken()
         {
-            var bytes = new byte[32];
+            var bytes = new byte[64];
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(bytes);
             }
             return Convert.ToBase64String(bytes);
         }
+
+        /// <summary>
+        /// Creates a refresh token for a user.
+        /// </summary>
+        /// <param name="userEmail">The email of the user.</param>
+        /// <param name="duration">The duration for which the refresh token is valid.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The created refresh token.</returns>
+        /// <exception cref="ArgumentException">Thrown when userEmail is null or empty, or duration is less than or equal to zero.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the user with the specified email is not found.</exception>
+        public async Task<RefreshToken> CreateRefreshTokenAsync(string userEmail, TimeSpan duration, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                _logger.LogError("User email cannot be null or empty.");
+                throw new ArgumentException("User email cannot be null or empty.", nameof(userEmail));
+            }
+
+            if (duration <= TimeSpan.Zero)
+            {
+                _logger.LogError("Duration must be greater than zero.");
+                throw new ArgumentException("Duration must be greater than zero.", nameof(duration));
+            }
+
+            try
+            {
+                var user = await _userService.TryGetUserByEmailAsync(userEmail, cancellationToken).ConfigureAwait(true);
+                if (user == null)
+                {
+                    _logger.LogError($"User with email {userEmail} not found.");
+                    throw new InvalidOperationException($"User with email {userEmail} not found.");
+                }
+
+                var token = new RefreshToken
+                {
+                    UserId = user.Id,
+                    Token = GenerateRefreshToken(),
+                    DurationInSeconds = (ulong)duration.TotalSeconds,
+                    UtcExpiresOn = DateTime.UtcNow.Add(duration).ForceUtc(),
+                    IsValid = true,
+                    CreatedBy = _userResolver.GetUserEmail(),
+                    UpdatedBy = _userResolver.GetUserEmail(),
+                    Version = 1
+                };
+
+                _context.RefreshTokens.Add(token);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
+
+                _logger.LogInformation($"Refresh token created for user {userEmail}.");
+                return token;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating a refresh token.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Generates a JWT token for a user from a refresh token.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>The generated JWT token.</returns>
+        /// <exception cref="ArgumentException">Thrown when refreshToken is null or empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the refresh token is not found.</exception>
+        /// <exception cref="AuthMateException">Thrown when the refresh token is no longer valid or has expired.</exception>
+        public async Task<string> GenerateTokenForUserFromRefreshAsync(string refreshToken, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                _logger.LogError("Refresh token cannot be null or empty.");
+                throw new ArgumentException("Refresh token cannot be null or empty.", nameof(refreshToken));
+            }
+
+            try
+            {
+                var token = await _context.RefreshTokens
+                    .Include(p => p.User)
+                    .SingleOrDefaultAsync(t => t.Token == refreshToken, cancellationToken)
+                    .ConfigureAwait(true);
+
+                if (token == null)
+                {
+                    _logger.LogError($"Refresh token {refreshToken} not found.");
+                    throw new InvalidOperationException($"Refresh token {refreshToken} not found.");
+                }
+                if (!token.IsValid)
+                {
+                    _logger.LogError($"Refresh token {refreshToken} is no longer valid.");
+                    throw new AuthMateException($"Refresh token {refreshToken} is no longer valid.");
+                }
+                if (token.UtcExpiresOn < DateTime.UtcNow)
+                {
+                    _logger.LogError($"Refresh token {refreshToken} has expired");
+                    throw new AuthMateException($"Refresh token {refreshToken} has expired");
+                }
+
+                var result = await GenerateTokenForUserAsync(token.User, TimeSpan.FromMinutes(15), cancellationToken).ConfigureAwait(true);
+
+                //updates the token to be invalid
+                token.IsValid = false;
+                token.UpdatedBy = _userResolver.GetUserEmail();
+                token.UtcUpdatedOn = DateTime.UtcNow;
+                token.Version++;
+
+                _context.RefreshTokens.Update(token);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
+
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while generating a token from the refresh token.");
+                throw;
+            }
+        }
+
     }
 }
