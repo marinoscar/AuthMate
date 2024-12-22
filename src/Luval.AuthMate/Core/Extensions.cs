@@ -66,7 +66,8 @@ namespace Luval.AuthMate.Core
                 new Claim("ProfilePictureUrl", user.ProfilePictureUrl  ?? string.Empty)
             };
             var roleClaims = user.UserRoles.Where(i => i.Role != null && !string.IsNullOrEmpty(i.Role.Name))
-                .Select(i => new Claim(ClaimTypes.Role, i.Role.Name));
+                .Select(i => new Claim(ClaimTypes.Role, i.Role.Name)).ToList();
+
             claims.AddRange(roleClaims);
 
             return new ClaimsIdentity(claims, user.ProviderType);
