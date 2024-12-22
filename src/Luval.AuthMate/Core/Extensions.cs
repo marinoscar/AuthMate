@@ -65,12 +65,11 @@ namespace Luval.AuthMate.Core
                 new Claim("urn:google:image", user.ProfilePictureUrl  ?? string.Empty),
                 new Claim("ProfilePictureUrl", user.ProfilePictureUrl  ?? string.Empty)
             };
-            var identity = new ClaimsIdentity(claims, user.ProviderType);
-            foreach (var role in user.UserRoles)
-            {
-                identity.AddClaim(new Claim(ClaimTypes.Role, role.Role.Name ?? string.Empty));
-            }
-            return identity;
+            var roleClaims = user.UserRoles.Where(i => i.Role != null && !string.IsNullOrEmpty(i.Role.Name))
+                .Select(i => new Claim(ClaimTypes.Role, i.Role.Name));
+            claims.AddRange(roleClaims);
+
+            return new ClaimsIdentity(claims, user.ProviderType);
         }
 
         /// <summary>
