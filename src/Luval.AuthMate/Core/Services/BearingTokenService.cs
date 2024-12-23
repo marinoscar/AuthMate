@@ -182,7 +182,7 @@ namespace Luval.AuthMate.Core.Services
                 var token = new RefreshToken
                 {
                     AppUserId = user.Id,
-                    Token = GenerateRandomToken(),
+                    Token = BearingTokenConfig.GenerateRandomToken(),
                     DurationInSeconds = (ulong)duration.TotalSeconds,
                     UtcExpiresOn = DateTime.UtcNow.Add(duration).ForceUtc(),
                     IsValid = true,

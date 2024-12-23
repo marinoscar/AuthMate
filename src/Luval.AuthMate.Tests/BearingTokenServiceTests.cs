@@ -12,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Luval.AuthMate.Infrastructure.Logging;
 using Luval.AuthMate.Core;
 using System.Security.Claims;
+using Luval.AuthMate.Infrastructure.Configuration;
 
 namespace Luval.AuthMate.Tests
 {
@@ -33,7 +34,7 @@ namespace Luval.AuthMate.Tests
             context.Initialize();
 
             var userService = new AppUserService(context, new NullUserResolver(), new DebugLogger<AppUserService>());
-            var service = new BearingTokenService(SecretKey, userService, context, new NullUserResolver(), new DebugLogger<BearingTokenService>());
+            var service = new BearingTokenService(new BearingTokenConfig() { Secret = SecretKey }, userService, context, new NullUserResolver(), new DebugLogger<BearingTokenService>());
 
             afterContextCreation?.Invoke(context);
             return service;
@@ -116,7 +117,7 @@ namespace Luval.AuthMate.Tests
         public void GenerateRefreshToken_GeneratesTokenSuccessfully()
         {
             // Act
-            var refreshToken = BearingTokenService.GenerateRandomToken();
+            var refreshToken = BearingTokenConfig.GenerateRandomToken();
 
             // Assert
             Assert.NotNull(refreshToken);
@@ -293,7 +294,7 @@ namespace Luval.AuthMate.Tests
                 var refreshToken = new RefreshToken
                 {
                     AppUserId = user.Id,
-                    Token = BearingTokenService.GenerateRandomToken(),
+                    Token = BearingTokenConfig.GenerateRandomToken(),
                     UtcExpiresOn = DateTime.UtcNow.AddDays(-1),
                     DurationInSeconds = (ulong)TimeSpan.FromHours(24).TotalSeconds,
                     IsValid = true
