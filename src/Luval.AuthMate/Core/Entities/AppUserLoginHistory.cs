@@ -45,7 +45,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required(ErrorMessage = "OS is required.")]
         [MinLength(2, ErrorMessage = "OS must be at least 2 characters long.")]
-        [MaxLength(128, ErrorMessage = "OS cannot exceed 128 characters.")]
+        [MaxLength(50, ErrorMessage = "OS cannot exceed 128 characters.")]
         [Column("OS")]
         public string OS { get; set; }
 
@@ -54,7 +54,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required(ErrorMessage = "IpAddress is required.")]
         [MinLength(7, ErrorMessage = "IpAddress must be at least 7 characters long.")]
-        [MaxLength(45, ErrorMessage = "IpAddress cannot exceed 45 characters.")]
+        [MaxLength(50, ErrorMessage = "IpAddress cannot exceed 45 characters.")]
         [Column("IpAddress")]
         public string IpAddress { get; set; }
 
@@ -63,7 +63,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required(ErrorMessage = "DeviceName is required.")]
         [MinLength(2, ErrorMessage = "Browser must be at least 2 characters long.")]
-        [MaxLength(128, ErrorMessage = "Browser cannot exceed 128 characters.")]
+        [MaxLength(100, ErrorMessage = "Browser cannot exceed 128 characters.")]
         [Column("Browser")]
         public string Browser { get; set; }
 
