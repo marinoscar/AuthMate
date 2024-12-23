@@ -12,23 +12,44 @@ namespace Luval.AuthMate.Postgres
     {
         private string _connString;
 
+
         /// <summary>
-        /// Creates a new instance of the context
+        /// Initializes a new instance of the <see cref="PostgresAuthMateContext"/> class with the specified options.
         /// </summary>
-        /// <param name="connectionString">A valid postgres connection string</param>
+        /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
+        public PostgresAuthMateContext(DbContextOptions options) : this(options, string.Empty)
+        {
+
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PostgresAuthMateContext"/> class with the specified options and connection string.
+        /// </summary>
+        /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
+        /// <param name="connectionString">The connection string to the PostgreSQL database.</param>
+        public PostgresAuthMateContext(DbContextOptions options, string connectionString) : base(options)
+        {
+            _connString = connectionString;
+        }
+
+        
+        ///<summary>
+        /// Initializes a new instance of the <see cref="PostgresAuthMateContext"/> class with the specified connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string to the PostgreSQL database.</param>
         public PostgresAuthMateContext(string connectionString)
         {
-                _connString = connectionString;
+            _connString = connectionString;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var logger = new ColorConsoleLogger();
-            optionsBuilder.UseNpgsql(_connString);
-            if(Debugger.IsAttached)
-                optionsBuilder.LogTo((msg) => { 
-                    logger.LogDebug(msg); 
-                });
+            //continue with regular implementation
+            base.OnConfiguring(optionsBuilder);
+
+            //add conn string if provided
+            if (!string.IsNullOrEmpty(_connString))
+                optionsBuilder.UseNpgsql(_connString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

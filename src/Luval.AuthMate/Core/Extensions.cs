@@ -104,19 +104,39 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>
-        /// Adds the AuthMater services
+        /// Adds the AuthMate services to the specified <see cref="IServiceCollection"/>.
+        /// This method registers the necessary services for the AuthMate authentication system,
+        /// including user resolution, user management, role management, account management,
+        /// authentication, and token handling services.
+        /// It then registers the provided <paramref name="authMateDbContextFactory"/> as a scoped service for creating <see cref="IAuthMateContext"/> instances.
         /// </summary>
+        /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
+        /// <param name="authMateDbContextFactory">A factory function that creates instances of <see cref="IAuthMateContext"/>.</param>
+        /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services and the <see cref="IAuthMateContext"/> factory added.</returns>
         public static IServiceCollection AddAuthMateServices(this IServiceCollection s, Func<IServiceProvider, IAuthMateContext> authMateDbContextFactory)
         {
-            if (Debugger.IsAttached)
-                s.AddSingleton(typeof(ILogger<>), typeof(ColorConsoleLogger<>));
-
-            s.AddScoped<IUserResolver, WebUserResolver>();
+            s = AddAuthMateServices(s);
             s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
+            return s;
+        }
+
+
+        /// <summary>
+        /// Adds the AuthMate services to the specified <see cref="IServiceCollection"/>.
+        /// This method registers the necessary services for the AuthMate authentication system,
+        /// including user resolution, user management, role management, account management,
+        /// authentication, and token handling services.
+        /// </summary>
+        /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
+        /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services added.</returns>
+        public static IServiceCollection AddAuthMateServices(this IServiceCollection s)
+        {
+            s.AddScoped<IUserResolver, WebUserResolver>();
             s.AddScoped<IAppUserService, AppUserService>();
             s.AddScoped<RoleService>();
             s.AddScoped<AccountService>();
             s.AddScoped<AuthenticationService>();
+            s.AddScoped<BearingTokenService>();
             return s;
         }
 
