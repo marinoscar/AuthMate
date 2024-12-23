@@ -2,6 +2,7 @@
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core.Resolver;
 using Luval.AuthMate.Core.Services;
+using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
@@ -111,11 +112,12 @@ namespace Luval.AuthMate.Core
         /// It then registers the provided <paramref name="authMateDbContextFactory"/> as a scoped service for creating <see cref="IAuthMateContext"/> instances.
         /// </summary>
         /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
+        /// <param name="bearingTokenKey">The key used to sign and verify the bearing token.</param>
         /// <param name="authMateDbContextFactory">A factory function that creates instances of <see cref="IAuthMateContext"/>.</param>
         /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services and the <see cref="IAuthMateContext"/> factory added.</returns>
-        public static IServiceCollection AddAuthMateServices(this IServiceCollection s, Func<IServiceProvider, IAuthMateContext> authMateDbContextFactory)
+        public static IServiceCollection AddAuthMateServices(this IServiceCollection s, string bearingTokenKey, Func<IServiceProvider, IAuthMateContext> authMateDbContextFactory)
         {
-            s = AddAuthMateServices(s);
+            s = AddAuthMateServices(s, bearingTokenKey);
             s.AddScoped<IAuthMateContext>(authMateDbContextFactory);
             return s;
         }
@@ -129,8 +131,13 @@ namespace Luval.AuthMate.Core
         /// </summary>
         /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
         /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services added.</returns>
-        public static IServiceCollection AddAuthMateServices(this IServiceCollection s)
+        public static IServiceCollection AddAuthMateServices(this IServiceCollection s, string bearingTokenKey = default!)
         {
+            if(!string.IsNullOrEmpty(bearingTokenKey))
+                s.AddSingleton(new BearingTokenConfig() { Secret = bearingTokenKey });
+            else
+                s.AddSingleton(new BearingTokenConfig());
+
             s.AddScoped<IUserResolver, WebUserResolver>();
             s.AddScoped<IAppUserService, AppUserService>();
             s.AddScoped<RoleService>();
