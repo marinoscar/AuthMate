@@ -9,14 +9,14 @@ namespace Luval.AuthMate.Core.Resolver
     /// </summary>
     public class WebUserResolver : IUserResolver
     {
-        private HttpContextAccessor _context;
+        private IHttpContextAccessor _context;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebUserResolver"/> class.
         /// </summary>
         /// <param name="context">The HTTP context accessor.</param>
         /// <exception cref="ArgumentNullException">Thrown when the context is null.</exception>
-        public WebUserResolver(HttpContextAccessor context)
+        public WebUserResolver(IHttpContextAccessor context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
