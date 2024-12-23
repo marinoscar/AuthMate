@@ -170,7 +170,7 @@ namespace Luval.AuthMate.Core.Services
 
                 ///checks how many active tokens the user have, the max allowed per user is 10
                 var activeTokens = await _context.RefreshTokens
-                    .Where(t => t.UserId == user.Id && t.IsValid)
+                    .Where(t => t.AppUserId == user.Id && t.IsValid)
                     .CountAsync(cancellationToken)
                     .ConfigureAwait(true);
 
@@ -182,7 +182,7 @@ namespace Luval.AuthMate.Core.Services
 
                 var token = new RefreshToken
                 {
-                    UserId = user.Id,
+                    AppUserId = user.Id,
                     Token = GenerateRefreshToken(),
                     DurationInSeconds = (ulong)duration.TotalSeconds,
                     UtcExpiresOn = DateTime.UtcNow.Add(duration).ForceUtc(),

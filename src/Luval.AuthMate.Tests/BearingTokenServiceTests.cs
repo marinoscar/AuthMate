@@ -292,7 +292,7 @@ namespace Luval.AuthMate.Tests
                 c.SaveChanges();
                 var refreshToken = new RefreshToken
                 {
-                    UserId = user.Id,
+                    AppUserId = user.Id,
                     Token = BearingTokenService.GenerateRefreshToken(),
                     UtcExpiresOn = DateTime.UtcNow.AddDays(-1),
                     DurationInSeconds = (ulong)TimeSpan.FromHours(24).TotalSeconds,

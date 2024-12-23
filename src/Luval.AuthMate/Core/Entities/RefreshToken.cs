@@ -21,13 +21,13 @@ namespace Luval.AuthMate.Core.Entities
         /// Gets or sets the user ID associated with the refresh token.
         /// </summary>
         [Required]
-        [Column("UserId")]
-        public ulong UserId { get; set; } = default!;
+        [Column("AppUserId")]
+        public ulong AppUserId { get; set; } = default!;
 
         /// <summary>
         /// Navigation property for the associated user.
         /// </summary>
-        [ForeignKey(nameof(UserId))]
+        [ForeignKey(nameof(AppUserId))]
         public AppUser User { get; set; } = default!;
 
         /// <summary>
@@ -72,6 +72,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who created the record.
         /// </summary>
         [Column("CreatedBy")]
+        [MaxLength(100)]
         public string? CreatedBy { get; set; }
 
         /// <summary>
@@ -85,6 +86,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
+        [MaxLength(100)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
