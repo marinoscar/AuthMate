@@ -56,6 +56,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who created the record.
         /// </summary>
         [Column("CreatedBy")]
+        [MaxLength(100)]
         public string? CreatedBy { get; set; }
 
         /// <summary>
@@ -69,6 +70,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
+        [MaxLength(100)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
