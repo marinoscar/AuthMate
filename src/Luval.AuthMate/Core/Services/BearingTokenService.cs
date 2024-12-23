@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -19,7 +20,7 @@ namespace Luval.AuthMate.Core.Services
     /// </summary>
     public class BearingTokenService
     {
-        private readonly string _secretKey;
+        private readonly BearingTokenConfig _bearingTokenConfig;
         private readonly IAppUserService _userService;
         private readonly IAuthMateContext _context;
         private readonly ILogger<BearingTokenService> _logger;
@@ -33,14 +34,14 @@ namespace Luval.AuthMate.Core.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="BearingTokenService"/> class.
         /// </summary>
-        /// <param name="secretKey">The secret key used for signing tokens.</param>
+        /// <param name="bearingTokenConfig"><see cref="BearingTokenConfig"/> with the service configuration.</param>
         /// <param name="userService">The user service for retrieving user information.</param>
         /// <param name="context">The context for managing authentication-related entities.</param>
         /// <param name="logger">The logger for the service.</param>
         /// <exception cref="ArgumentNullException">Thrown when secretKey or userService is null.</exception>
-        public BearingTokenService(string secretKey, IAppUserService userService, IAuthMateContext context, IUserResolver userResolver, ILogger<BearingTokenService> logger)
+        public BearingTokenService(BearingTokenConfig bearingTokenConfig, IAppUserService userService, IAuthMateContext context, IUserResolver userResolver, ILogger<BearingTokenService> logger)
         {
-            _secretKey = secretKey ?? throw new ArgumentNullException(nameof(secretKey));
+            _bearingTokenConfig = bearingTokenConfig ?? throw new ArgumentNullException(nameof(bearingTokenConfig));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -79,6 +80,18 @@ namespace Luval.AuthMate.Core.Services
         /// Generates a JWT token for a user.
         /// </summary>
         /// <param name="user">The user entity for which the token is generated.</param>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the generated JWT token.</returns>
+        /// <exception cref="ArgumentException">Thrown when the user is null or the token duration is less than or equal to zero.</exception>
+        public Task<string> GenerateTokenForUserAsync(AppUser user, CancellationToken cancellationToken = default)
+        {
+            return GenerateTokenForUserAsync(user, _bearingTokenConfig.DefaultTokenDuration, cancellationToken);
+        }
+
+        ///<summary>
+        /// Generates a JWT token for a user.
+        /// </summary>
+        /// <param name="user">The user entity for which the token is generated.</param>
         /// <param name="tokenDuration">The duration for which the token is valid.</param>
         /// <param name="cancellationToken">The cancellation token for the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the generated JWT token.</returns>
@@ -99,7 +112,7 @@ namespace Luval.AuthMate.Core.Services
                     throw new ArgumentException("Token duration must be greater than zero.", nameof(tokenDuration));
                 }
 
-                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_bearingTokenConfig.Secret));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -108,8 +121,8 @@ namespace Luval.AuthMate.Core.Services
                     Expires = DateTime.UtcNow.Add(tokenDuration),
                     SigningCredentials = credentials,
                     IssuedAt = DateTime.UtcNow,
-                    Issuer = "Luval.AuthMate",
-                    Audience = "Luval.AuthMate",
+                    Issuer = _bearingTokenConfig.Issuer,
+                    Audience = _bearingTokenConfig.Audience,
                 };
 
                 var tokenHandler = new JwtSecurityTokenHandler();
