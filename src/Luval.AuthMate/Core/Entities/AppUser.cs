@@ -63,6 +63,7 @@ namespace Luval.AuthMate.Core.Entities
         /// <summary>
         /// Gets or sets the access token issued by the OAuth provider.
         /// </summary>
+        [MaxLength(500)]
         [Column("OAuthAccessToken")]
         public string? OAuthAccessToken { get; set; }
 
@@ -73,12 +74,14 @@ namespace Luval.AuthMate.Core.Entities
         /// Typically the string “bearer”.
         /// </remarks>
         [Column("OAuthTokenType")]
+        [MaxLength(50)]
         public string? OAuthTokenType { get; set; }
 
         /// <summary>
         /// Gets or sets a refresh token that applications can use to obtain another access token if tokens can expire.
         /// </summary>
         [Column("OAuthRefreshToken")]
+        [MaxLength(250)]
         public string? OAuthRefreshToken { get; set; }
 
         /// <summary>
@@ -103,6 +106,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The timezone the user has to resolve UTC dates.
         /// </summary>
         [Column("Timezone")]
+        [MaxLength(100)]
         public string? Timezone { get; set; }
 
         /// <summary>
@@ -137,6 +141,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who created the record.
         /// </summary>
         [Column("CreatedBy")]
+        [MaxLength(100)]
         public string? CreatedBy { get; set; }
 
         /// <summary>
@@ -150,6 +155,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
+        [MaxLength(100)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
