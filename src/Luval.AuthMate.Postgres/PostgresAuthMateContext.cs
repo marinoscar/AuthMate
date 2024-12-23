@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Core.Interfaces;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Infrastructure.Data;
 using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,56 @@ namespace Luval.AuthMate.Postgres
                 optionsBuilder.LogTo((msg) => { 
                     logger.LogDebug(msg); 
                 });
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<AccountType>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<Account>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<AppUser>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<AppUserRole>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<InviteToAccount>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<InviteToApplication>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<RefreshToken>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
+            modelBuilder.Entity<Role>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
         }
     }
 }
