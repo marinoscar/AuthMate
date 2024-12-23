@@ -74,15 +74,38 @@ namespace Luval.AuthMate.Infrastructure.Data
             modelBuilder.Entity<AccountType>()
                 .HasKey(at => at.Id);
             modelBuilder.Entity<AccountType>()
-                .HasIndex(a => a.Name).IsUnique();
+                .Property(at => at.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<AccountType>()
+                .Property(at => at.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+            modelBuilder.Entity<AccountType>()
+                .HasIndex(at => at.Name)
+                .IsUnique();
 
             // Configure Account entity
             modelBuilder.Entity<Account>()
                 .HasKey(a => a.Id);
             modelBuilder.Entity<Account>()
-                .HasIndex(a => a.Name).IsUnique();
+                .Property(a => a.Id)
+                .ValueGeneratedOnAdd();
             modelBuilder.Entity<Account>()
-                .HasIndex(a => a.Owner).IsUnique();
+                .Property(a => a.Name)
+                .HasMaxLength(100);
+            modelBuilder.Entity<Account>()
+                .Property(a => a.Owner)
+                .HasMaxLength(100)
+                .IsRequired();
+            modelBuilder.Entity<Account>()
+                .Property(a => a.Description)
+                .HasMaxLength(250);
+            modelBuilder.Entity<Account>()
+                .HasIndex(a => a.Name)
+                .IsUnique();
+            modelBuilder.Entity<Account>()
+                .HasIndex(a => a.Owner)
+                .IsUnique();
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.AccountType)
                 .WithMany()
@@ -93,17 +116,50 @@ namespace Luval.AuthMate.Infrastructure.Data
             modelBuilder.Entity<AppUser>()
                 .HasKey(au => au.Id);
             modelBuilder.Entity<AppUser>()
+                .Property(au => au.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.Email)
+                .HasMaxLength(255)
+                .IsRequired();
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.ProviderKey)
+                .HasMaxLength(255)
+                .IsRequired();
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.ProviderType)
+                .HasMaxLength(50)
+                .IsRequired();
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.ProfilePictureUrl)
+                .HasMaxLength(500);
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.OAuthAccessToken)
+                .HasMaxLength(500);
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.OAuthTokenType)
+                .HasMaxLength(50);
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.OAuthRefreshToken)
+                .HasMaxLength(250);
+            modelBuilder.Entity<AppUser>()
+                .Property(au => au.Timezone)
+                .HasMaxLength(100);
+            modelBuilder.Entity<AppUser>()
+                .HasIndex(au => au.Email)
+                .IsUnique();
+            modelBuilder.Entity<AppUser>()
                 .HasOne(au => au.Account)
                 .WithMany()
                 .HasForeignKey(au => au.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<AppUser>()
-                .HasIndex(a => a.Email).IsUnique();
-
 
             // Configure AppUserRole entity
             modelBuilder.Entity<AppUserRole>()
                 .HasKey(aur => aur.Id);
+            modelBuilder.Entity<AppUserRole>()
+                .Property(aur => aur.Id)
+                .ValueGeneratedOnAdd();
             modelBuilder.Entity<AppUserRole>()
                 .HasOne(aur => aur.User)
                 .WithMany()
@@ -118,45 +174,96 @@ namespace Luval.AuthMate.Infrastructure.Data
             // Configure Role entity
             modelBuilder.Entity<Role>()
                 .HasKey(r => r.Id);
+            modelBuilder.Entity<Role>()
+                .Property(r => r.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<Role>()
+                .Property(r => r.Name)
+                .HasMaxLength(100)
+                .IsRequired();
 
             // Configure InviteToApplication entity
             modelBuilder.Entity<InviteToApplication>()
-                .HasKey(au => au.Id);
+                .HasKey(ita => ita.Id);
             modelBuilder.Entity<InviteToApplication>()
-                .HasOne(au => au.AccountType)
-                .WithMany()
-                .HasForeignKey(au => au.AccountTypeId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .Property(ita => ita.Id)
+                .ValueGeneratedOnAdd();
             modelBuilder.Entity<InviteToApplication>()
-                .HasIndex(a => a.Email).IsUnique();
-
-
-            // Configure AccountInvite entity
-            modelBuilder.Entity<InviteToAccount>()
-                .HasKey(au => au.Id);
-            modelBuilder.Entity<InviteToAccount>()
-                .HasOne(aur => aur.Role)
+                .Property(ita => ita.Email)
+                .HasMaxLength(255)
+                .IsRequired();
+            modelBuilder.Entity<InviteToApplication>()
+                .Property(ita => ita.UserMessage)
+                .HasMaxLength(1024);
+            modelBuilder.Entity<InviteToApplication>()
+                .HasIndex(ita => ita.Email)
+                .IsUnique();
+            modelBuilder.Entity<InviteToApplication>()
+                .HasOne(ita => ita.AccountType)
                 .WithMany()
-                .HasForeignKey(aur => aur.RoleId)
+                .HasForeignKey(ita => ita.AccountTypeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure InviteToAccount entity
+            modelBuilder.Entity<InviteToAccount>()
+                .HasKey(ita => ita.Id);
+            modelBuilder.Entity<InviteToAccount>()
+                .Property(ita => ita.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<InviteToAccount>()
+                .Property(ita => ita.Email)
+                .HasMaxLength(256)
+                .IsRequired();
+            modelBuilder.Entity<InviteToAccount>()
+                .Property(ita => ita.UserMessage)
+                .HasMaxLength(1024);
+            modelBuilder.Entity<InviteToAccount>()
+                .HasOne(ita => ita.Role)
+                .WithMany()
+                .HasForeignKey(ita => ita.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure AppUserLoginHistory entity
             modelBuilder.Entity<AppUserLoginHistory>()
-                .HasKey(au => au.Id);
+                .HasKey(aulh => aulh.Id);
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(aulh => aulh.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(aulh => aulh.Email)
+                .HasMaxLength(256)
+                .IsRequired();
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(aulh => aulh.OS)
+                .HasMaxLength(50)
+                .IsRequired();
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(aulh => aulh.IpAddress)
+                .HasMaxLength(50)
+                .IsRequired();
+            modelBuilder.Entity<AppUserLoginHistory>()
+                .Property(aulh => aulh.Browser)
+                .HasMaxLength(100)
+                .IsRequired();
 
             // Configure RefreshToken entity
             modelBuilder.Entity<RefreshToken>()
                 .HasKey(rt => rt.Id);
             modelBuilder.Entity<RefreshToken>()
+                .Property(rt => rt.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<RefreshToken>()
+                .Property(rt => rt.Token)
+                .HasMaxLength(500)
+                .IsRequired();
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.Token)
+                .IsUnique();
+            modelBuilder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)
                 .WithMany()
                 .HasForeignKey(rt => rt.AppUserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<RefreshToken>()
-               .HasIndex(a => a.Token).IsUnique();
-
-
         }
 
         /// <summary>
@@ -218,6 +325,7 @@ namespace Luval.AuthMate.Infrastructure.Data
                 Version = 1
             };
             AccountTypes.Add(accountType);
+
             await SaveChangesAsync(cancellationToken);
 
             //create the roles
@@ -243,6 +351,7 @@ namespace Luval.AuthMate.Infrastructure.Data
             {
                 Email = ownerEmail,
                 AccountTypeId = accountType.Id,
+                AccountType = accountType,
                 CreatedBy = ownerEmail,
                 UpdatedBy = ownerEmail,
                 UtcCreatedOn = DateTime.UtcNow,
