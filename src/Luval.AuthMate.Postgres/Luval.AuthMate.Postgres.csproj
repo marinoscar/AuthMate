@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -12,14 +11,13 @@
     <RepositoryUrl>https://github.com/marinoscar/AuthMate</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Oscar Marin</Copyright>
-    <PackageId>AuthMate Postgresql</PackageId>
+    <PackageId>AuthMate.Postgresql</PackageId>
     <Authors>Oscar Marin</Authors>
+    <Version>1.0.2</Version>
   </PropertyGroup>
-
   <ItemGroup>
     <Content Include="authmate_icon.ico" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="..\..\media\AuthMate.png">
       <Pack>True</Pack>
@@ -30,13 +28,10 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.1" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Luval.AuthMate\Luval.AuthMate.csproj" />
   </ItemGroup>
-
 </Project>
