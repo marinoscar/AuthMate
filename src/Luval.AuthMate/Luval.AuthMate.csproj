@@ -18,6 +18,8 @@
     <Version>1.0.10</Version>
     <PackageReleaseNotes>- Upgraded to Framework 9.0
 - Added support for refresh tokens</PackageReleaseNotes>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="authmate_icon.ico" />
