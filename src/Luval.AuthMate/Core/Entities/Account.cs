@@ -44,7 +44,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The owner of the account (typically the user who created it).
         /// </summary>
         [Required(ErrorMessage = "Owner is required.")]
-        [MaxLength(255, ErrorMessage = "Owner must not exceed 255 characters.")]
+        [MaxLength(100, ErrorMessage = "Owner must not exceed 255 characters.")]
         [MinLength(1, ErrorMessage = "Owner must be at least 1 character long.")]
         [Column("Owner")]
         public string Owner { get; set; }
@@ -53,6 +53,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The name of the account.
         /// </summary>
         [Column("Name")]
+        [MaxLength(100)]
         public string? Name { get; set; }
 
         /// <summary>
@@ -65,6 +66,7 @@ namespace Luval.AuthMate.Core.Entities
         /// A description of the account.
         /// </summary>
         [Column("Description")]
+        [MaxLength(250)]
         public string? Description { get; set; }
 
         #region Control Fields
@@ -80,6 +82,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who created the record.
         /// </summary>
         [Column("CreatedBy")]
+        [MaxLength(100)]
         public string? CreatedBy { get; set; }
 
         /// <summary>
@@ -93,6 +96,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
+        [MaxLength(100)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
