@@ -12,8 +12,9 @@ AuthMate is a comprehensive authentication and authorization system designed to 
     - Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
 
 ## Configuring the Sql Database
-The project uses EntityFramework, there is a SQL script for a Postgresql database [here](https://github.com/marinoscar/AuthMate/blob/main/src/sql/postgres.sql)
-if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
+The project uses EntityFramework, if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
+
+Addiotnally in your application you can run the method `InitializeDbAsync` in the `AuthMateContext` class or implementation to create the database and add the required records
 
 ``` csharp
 public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
