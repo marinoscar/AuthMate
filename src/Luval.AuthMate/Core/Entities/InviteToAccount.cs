@@ -103,6 +103,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The identifier of the user who created the record.
         /// </summary>
         [Column("CreatedBy")]
+        [MaxLength(100)]
         public string? CreatedBy { get; set; }
 
         /// <summary>
@@ -115,6 +116,7 @@ namespace Luval.AuthMate.Core.Entities
         /// The identifier of the user who last updated the record.
         /// </summary>
         [Column("UpdatedBy")]
+        [MaxLength(100)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
@@ -122,6 +124,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required(ErrorMessage = "Version is required.")]
         [Column("Version")]
+        [ConcurrencyCheck]
         public uint Version { get; set; }
 
         /// <summary>
