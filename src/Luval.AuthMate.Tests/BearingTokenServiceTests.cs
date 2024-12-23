@@ -116,7 +116,7 @@ namespace Luval.AuthMate.Tests
         public void GenerateRefreshToken_GeneratesTokenSuccessfully()
         {
             // Act
-            var refreshToken = BearingTokenService.GenerateRefreshToken();
+            var refreshToken = BearingTokenService.GenerateRandomToken();
 
             // Assert
             Assert.NotNull(refreshToken);
@@ -293,7 +293,7 @@ namespace Luval.AuthMate.Tests
                 var refreshToken = new RefreshToken
                 {
                     AppUserId = user.Id,
-                    Token = BearingTokenService.GenerateRefreshToken(),
+                    Token = BearingTokenService.GenerateRandomToken(),
                     UtcExpiresOn = DateTime.UtcNow.AddDays(-1),
                     DurationInSeconds = (ulong)TimeSpan.FromHours(24).TotalSeconds,
                     IsValid = true

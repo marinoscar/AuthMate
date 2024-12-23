@@ -122,20 +122,6 @@ namespace Luval.AuthMate.Core.Services
         }
 
         /// <summary>
-        /// Generates a refresh token.
-        /// </summary>
-        /// <returns>The generated refresh token.</returns>
-        public static string GenerateRefreshToken()
-        {
-            var bytes = new byte[64];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(bytes);
-            }
-            return Convert.ToBase64String(bytes);
-        }
-
-        /// <summary>
         /// Creates a refresh token for a user.
         /// </summary>
         /// <param name="userEmail">The email of the user.</param>
@@ -183,7 +169,7 @@ namespace Luval.AuthMate.Core.Services
                 var token = new RefreshToken
                 {
                     AppUserId = user.Id,
-                    Token = GenerateRefreshToken(),
+                    Token = GenerateRandomToken(),
                     DurationInSeconds = (ulong)duration.TotalSeconds,
                     UtcExpiresOn = DateTime.UtcNow.Add(duration).ForceUtc(),
                     IsValid = true,
