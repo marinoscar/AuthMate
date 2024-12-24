@@ -13,7 +13,7 @@
     <Copyright>Oscar Marin</Copyright>
     <PackageId>$(AssemblyName)</PackageId>
     <Authors>Oscar Marin</Authors>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <IncludeSymbols>True</IncludeSymbols>
