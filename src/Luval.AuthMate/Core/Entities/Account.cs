@@ -118,7 +118,7 @@ namespace Luval.AuthMate.Core.Entities
         }
 
         /// <summary>
-        /// Returns a string representation of the Account object.
+        /// Returns a string representation of the object.
         /// </summary>
         /// <returns>A JSON-formatted string representing the object.</returns>
         public override string ToString()

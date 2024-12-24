@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Luval.AuthMate.Core.Entities
 {
@@ -105,6 +107,19 @@ namespace Luval.AuthMate.Core.Entities
         {
             UtcCreatedOn = DateTime.UtcNow;
             UtcUpdatedOn = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the PreAuthorizedAppUser object.
+        /// </summary>
+        /// <returns>A JSON-formatted string representing the object.</returns>
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.OAuth;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Luval.AuthMate.Core.Entities
 {
@@ -50,6 +52,19 @@ namespace Luval.AuthMate.Core.Entities
                 ExpiresIn = response.ExpiresIn != null ? int.Parse(response.ExpiresIn) : (int?)null,
                 UtcExpiresAt = response.ExpiresIn != null ? DateTime.UtcNow.AddSeconds(int.Parse(response.ExpiresIn)) : (DateTime?)null
             };
+        }
+
+        /// <summary>
+        /// Returns a string representation of the object.
+        /// </summary>
+        /// <returns>A JSON-formatted string representing the object.</returns>
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
         }
     }
 }
