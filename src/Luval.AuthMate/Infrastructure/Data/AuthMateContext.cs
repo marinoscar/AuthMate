@@ -352,6 +352,7 @@ namespace Luval.AuthMate.Infrastructure.Data
                 Email = ownerEmail,
                 AccountTypeId = accountType.Id,
                 AccountType = accountType,
+                UtcExpiration = DateTime.UtcNow.AddYears(5),
                 CreatedBy = ownerEmail,
                 UpdatedBy = ownerEmail,
                 UtcCreatedOn = DateTime.UtcNow,
