@@ -55,6 +55,26 @@ namespace Luval.AuthMate.Core.Entities
         }
 
         /// <summary>
+        /// Creates a new instance of <see cref="TokenResponse"/> from a <see cref="JsonDocument"/>.
+        /// </summary>
+        /// <param name="json">The JSON document containing the token response data.</param>
+        /// <returns>A new instance of <see cref="TokenResponse"/>.</returns>
+        public static TokenResponse Create(JsonDocument json)
+        {
+            return Create(OAuthTokenResponse.Success(json));
+        }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="TokenResponse"/> from a JSON string.
+        /// </summary>
+        /// <param name="json">The JSON string containing the token response data.</param>
+        /// <returns>A new instance of <see cref="TokenResponse"/>.</returns>
+        public static TokenResponse Create(string json)
+        {
+            return Create(JsonDocument.Parse(json));
+        }
+
+        /// <summary>
         /// Returns a string representation of the object.
         /// </summary>
         /// <returns>A JSON-formatted string representing the object.</returns>

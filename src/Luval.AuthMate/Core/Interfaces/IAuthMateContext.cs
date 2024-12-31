@@ -55,6 +55,11 @@ namespace Luval.AuthMate.Core.Interfaces
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         /// <summary>
+        /// Gets or sets the DbSet for AppConnection entities
+        /// </summary>
+        DbSet<AppConnection> AppConnections { get; set; }
+
+        /// <summary>
         /// Gets the DatabaseFacade used to manage the database.
         /// </summary>
         public DatabaseFacade Database { get; }

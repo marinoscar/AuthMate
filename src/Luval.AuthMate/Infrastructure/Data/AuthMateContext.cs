@@ -61,6 +61,11 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// </summary>
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        /// <summary>
+        /// Gets or sets the DbSet for AppConnection entities
+        /// </summary>
+        public DbSet<AppConnection> AppConnections { get; set; }
+
 
         /// <summary>
         /// Configures the model and relationships between entities.
