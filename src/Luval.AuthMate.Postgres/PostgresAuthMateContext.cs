@@ -8,6 +8,9 @@ using System.Diagnostics;
 
 namespace Luval.AuthMate.Postgres
 {
+    /// <summary>
+    /// Represents a PostgreSQL implementation of the <see cref="IAuthMateContext"/> interface.
+    /// </summary>
     public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
     {
         private string _connString;
