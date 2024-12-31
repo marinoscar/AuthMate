@@ -39,8 +39,9 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [MinLength(1, ErrorMessage = "The Email must be at least 1 character long.")]
         [MaxLength(255, ErrorMessage = "The Email cannot exceed 255 characters.")]
+        [Required]
         [Column("Email")]
-        public string? OwnerEmail { get; set; }
+        public string OwnerEmail { get; set; }
 
         /// <summary>
         /// The account identifier of the user.

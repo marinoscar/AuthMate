@@ -100,6 +100,11 @@ namespace Luval.AuthMate.Postgres
                 .UseIdentityColumn()
                 .HasColumnType("BIGINT");
 
+            modelBuilder.Entity<AppConnection>()
+                .Property(at => at.Id)
+                .UseIdentityColumn()
+                .HasColumnType("BIGINT");
+
         }
     }
 }

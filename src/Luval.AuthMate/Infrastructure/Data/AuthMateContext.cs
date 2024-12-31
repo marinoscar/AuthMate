@@ -269,6 +269,16 @@ namespace Luval.AuthMate.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(rt => rt.AppUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure AppConnection entity
+            modelBuilder.Entity<AppConnection>()
+                .HasKey(aulh => aulh.Id);
+            modelBuilder.Entity<AppConnection>()
+                .HasOne(ac => ac.Account);
+            modelBuilder.Entity<AppConnection>()
+                .HasIndex(i => i.ProviderName);
+
+
         }
 
         public AuthMateContext() : base() { }
