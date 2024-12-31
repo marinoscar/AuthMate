@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Tests", "Luv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Sqlite", "Luval.AuthMate.Sqlite\Luval.AuthMate.Sqlite.csproj", "{67A83216-D0A1-408F-A4E9-B0244BB9F373}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Luval.AuthMate.Sample", "Luval.AuthMate.Sample\Luval.AuthMate.Sample.csproj", "{63E0A978-4607-4875-9F49-694FB304D4F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{67A83216-D0A1-408F-A4E9-B0244BB9F373}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{67A83216-D0A1-408F-A4E9-B0244BB9F373}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{67A83216-D0A1-408F-A4E9-B0244BB9F373}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63E0A978-4607-4875-9F49-694FB304D4F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63E0A978-4607-4875-9F49-694FB304D4F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63E0A978-4607-4875-9F49-694FB304D4F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63E0A978-4607-4875-9F49-694FB304D4F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
