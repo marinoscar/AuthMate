@@ -1,4 +1,7 @@
+using Luval.AuthMate.Infrastructure.Data;
+using Luval.AuthMate.Infrastructure.Logging;
 using Luval.AuthMate.Sample.Components;
+using Luval.AuthMate.Sqlite;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace Luval.AuthMate.Sample
@@ -7,9 +10,21 @@ namespace Luval.AuthMate.Sample
     {
         public static void Main(string[] args)
         {
-            //TODO: Add config settings for the the Client ID and ClientSecret in the appsettings.json file and secrets.json
-
             var builder = WebApplication.CreateBuilder(args);
+
+            //TODO: Add config settings
+            /*
+            "OAuthProviders": {
+            "Google": {
+                "ClientID": "your-client-id",
+                "OwnerEmail": "your-email"
+            }
+            */
+            //TODO: Add the configuration secret
+            /*
+             "OAuthProviders:Google:ClientSecret": "your-secret"
+             */
+            var config = builder.Configuration;
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -52,6 +67,17 @@ namespace Luval.AuthMate.Sample
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
+
+            //Inialize the app database using Sqlite
+            var contextHelper = new AuthMateContextHelper(
+                new SqliteAuthMateContext(),
+                new ColorConsoleLogger<AuthMateContextHelper>());
+            //Makes sure the db is created, then initializes the db with the owner email
+            //and required initial records
+            contextHelper.InitializeDbAsync(config["OAuthProviders:Google:OwnerEmail"] ?? "")
+                .GetAwaiter()
+                .GetResult();
+
 
             app.Run();
         }
