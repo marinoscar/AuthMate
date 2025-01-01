@@ -92,7 +92,7 @@ namespace Luval.AuthMate.Tests
             {
                 var account = c.Accounts.First();
                 accountId = account.Id;
-                c.AppConnections.Add(new AppConnection { AccountId = account.Id, OwnerEmail = email, ProviderName = provName });
+                c.AppConnections.Add(new AppConnection { AccountId = account.Id, OwnerEmail = email, ProviderName = provName, AccessToken = "new token" });
                 c.SaveChanges();
             });
 
@@ -118,7 +118,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService((c) =>
             {
                 var account = c.Accounts.First();
-                connection = new AppConnection { AccountId = account.Id, OwnerEmail = email, ProviderName = provName };
+                connection = new AppConnection { AccountId = account.Id, OwnerEmail = email, ProviderName = provName, AccessToken = "new token", Version = 1 };
                 c.AppConnections.Add(connection);
                 c.SaveChanges();
             });
