@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 /src/Luval.SnapBite.Fluent/private.debug.json
 /src/Luval.AuthMate.Blazor/private.debug.json
+/src/Luval.AuthMate.Sample/app.db
+/src/Luval.AuthMate.Sample/app.db-shm
