@@ -1,6 +1,7 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core.Services;
+using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Logging;
 using Moq;
 using System;
@@ -24,18 +25,16 @@ namespace Luval.AuthMate.Tests
             var context = new MemoryDataContext();
             context.Initialize();
 
-            var httpFactoryMock = new Mock<IHttpClientFactory>();
-            var httpClientMock = new Mock<HttpClient>();
+            var authCodeServiceMock = new Mock<IAuthorizationCodeFlowService>();
 
-            httpClientMock.Setup(i => i.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>())).ReturnsAsync(new HttpResponseMessage
+            authCodeServiceMock.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("")
+                Content = new StringContent(SampleHttpResponse())
             });
-            httpFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClientMock.Object);
             
 
-            var appConnectionService = new AppConnectionService(context, httpFactoryMock.Object, new NullUserResolver(), new NullLogger<AppConnectionService>());
+            var appConnectionService = new AppConnectionService(context, authCodeServiceMock.Object, new NullUserResolver(), new NullLogger<AppConnectionService>());
 
             if (afterContextCreation != null) afterContextCreation(context);
             return appConnectionService;
@@ -47,7 +46,7 @@ namespace Luval.AuthMate.Tests
             // Arrange
             var accountId = 1UL;
             var tokenId = "token123";
-            var refreshToken = "refreshToken123";
+            var accessToken = "nre-Token";
             IAuthMateContext context = default!;
             var service = CreateService((c) =>
             {
@@ -61,7 +60,9 @@ namespace Luval.AuthMate.Tests
             {
                 AccountId = accountId,
                 TokenId = tokenId,
-                RefreshToken = refreshToken
+                AccessToken = accessToken,
+                OwnerEmail = "o@email.com",
+                ProviderName = "My Provider"
             };
 
             // Act
@@ -71,7 +72,7 @@ namespace Luval.AuthMate.Tests
             Assert.True(appConnection.Id > 0);
             Assert.Equal(accountId, appConnection.AccountId);
             Assert.Equal(tokenId, appConnection.TokenId);
-            Assert.Equal(refreshToken, appConnection.RefreshToken);
+            Assert.Equal(accessToken, appConnection.AccessToken);
             Assert.NotNull(appConnection.CreatedBy);
             Assert.NotNull(appConnection.UpdatedBy);
             Assert.True(appConnection.UtcCreatedOn > DateTime.UtcNow.AddHours(-1));

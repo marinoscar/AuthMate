@@ -15,7 +15,7 @@ namespace Luval.AuthMate.Core.Services
     public class AppConnectionService
     {
         private readonly IAuthMateContext _context;
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IAuthorizationCodeFlowService _codeFlowService;
         private readonly ILogger<AppConnectionService> _logger;
         private readonly IUserResolver _userResolver;
 
@@ -23,16 +23,16 @@ namespace Luval.AuthMate.Core.Services
         /// Initializes a new instance of the <see cref="AppConnectionService"/> class.
         /// </summary>
         /// <param name="context">The context to interact with the database.</param>
-        /// <param name="clientFactory">The factory to create HTTP clients.</param>
+        /// <param name="codeFlowService">The service to make the authorization code flow request.</param>
         /// <param name="userResolver">The user resolver to get user information.</param>
         /// <param name="logger">The logger to log information.</param>
         /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
-        public AppConnectionService(IAuthMateContext context, IHttpClientFactory clientFactory, IUserResolver userResolver, ILogger<AppConnectionService> logger)
+        public AppConnectionService(IAuthMateContext context, IAuthorizationCodeFlowService codeFlowService, IUserResolver userResolver, ILogger<AppConnectionService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
-            _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
+            _codeFlowService = codeFlowService ?? throw new ArgumentNullException(nameof(codeFlowService));
         }
 
 
@@ -60,15 +60,17 @@ namespace Luval.AuthMate.Core.Services
                 {
                     connection.UtcCreatedOn = DateTime.UtcNow;
                     connection.CreatedBy = _userResolver.GetUserEmail();
+                    connection.UpdatedBy = _userResolver.GetUserEmail();
+                    connection.UtcUpdatedOn = DateTime.UtcNow;
                     _context.AppConnections.Add(connection);
-                    _logger.LogInformation("New AppConnection created by {UserEmail}", connection.CreatedBy);
+                    _logger.LogInformation("New AppConnection created by {CreatedBy}", connection.CreatedBy);
                 }
                 else
                 {
                     connection.UtcUpdatedOn = DateTime.UtcNow;
                     connection.UpdatedBy = _userResolver.GetUserEmail();
                     _context.AppConnections.Update(connection);
-                    _logger.LogInformation("AppConnection updated by {UserEmail}", connection.UpdatedBy);
+                    _logger.LogInformation("AppConnection updated by {UpdatedBy}", connection.UpdatedBy);
                 }
                 await _context.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation("AppConnection persisted successfully with Id {ConnectionId}", connection.Id);
@@ -161,17 +163,7 @@ namespace Luval.AuthMate.Core.Services
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                var tokenRequestBody = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("code", code),
-                    new KeyValuePair<string, string>("client_id", config.ClientId),
-                    new KeyValuePair<string, string>("client_secret", config.ClientSecret),
-                    new KeyValuePair<string, string>("redirect_uri", config.RedirectUri),
-                    new KeyValuePair<string, string>("grant_type", "authorization_code")
-                });
-
-                var tokenResponse = await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
+                var tokenResponse = await _codeFlowService.PostAuthorizationCodeRequestAsync(config, code, cancellationToken);
 
                 if (!tokenResponse.IsSuccessStatusCode)
                 {

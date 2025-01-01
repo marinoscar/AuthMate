@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Infrastructure.Configuration;
+﻿using Luval.AuthMate.Core.Interfaces;
+using Luval.AuthMate.Infrastructure.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Luval.AuthMate.Core.Services
     /// <summary>
     /// Service for handling OAuth 2.0 Authorization Code Flow.
     /// </summary>
-    public class AuthorizationCodeFlowService
+    public class AuthorizationCodeFlowService : IAuthorizationCodeFlowService
     {
         private readonly IHttpClientFactory _clientFactory;
 

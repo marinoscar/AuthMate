@@ -30,8 +30,9 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [MinLength(1, ErrorMessage = "The ProviderName must be at least 1 character long.")]
         [MaxLength(100, ErrorMessage = "The ProviderName cannot exceed 100 characters.")]
+        [Required]
         [Column("ProviderName")]
-        public string? ProviderName { get; set; }
+        public string ProviderName { get; set; } = default!;
 
 
         /// <summary>
@@ -40,8 +41,8 @@ namespace Luval.AuthMate.Core.Entities
         [MinLength(1, ErrorMessage = "The Email must be at least 1 character long.")]
         [MaxLength(255, ErrorMessage = "The Email cannot exceed 255 characters.")]
         [Required]
-        [Column("Email")]
-        public string OwnerEmail { get; set; }
+        [Column("OwnerEmail")]
+        public string OwnerEmail { get; set; } = default!;
 
         /// <summary>
         /// The account identifier of the user.
@@ -61,7 +62,7 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         [Required(ErrorMessage = "The AccessToken field is required.")]
         [Column("AccessToken")]
-        public string AccessToken { get; set; }
+        public string AccessToken { get; set; } = default!;
 
         /// <summary>
         /// The refresh token for the integration.
