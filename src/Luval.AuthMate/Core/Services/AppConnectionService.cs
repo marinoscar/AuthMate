@@ -35,7 +35,6 @@ namespace Luval.AuthMate.Core.Services
             _codeFlowService = codeFlowService ?? throw new ArgumentNullException(nameof(codeFlowService));
         }
 
-
         /// <summary>
         /// Persists the given application connection to the database.
         /// </summary>
@@ -88,8 +87,7 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
-
-        ///<summary>
+        /// <summary>
         /// Retrieves an application connection based on the provider name and owner email.
         /// </summary>
         /// <param name="providerName">The name of the provider.</param>
@@ -227,6 +225,72 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
+        /// <summary>
+        /// Refreshes the OAuth token for the given application connection.
+        /// </summary>
+        /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="connection">The application connection to refresh the token for.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The updated application connection with the refreshed token.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the config or connection is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when the refresh token is empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the token refresh request fails.</exception>
+        /// <remarks>
+        /// This method performs the following steps:
+        /// 1. Validates the input parameters.
+        /// 2. Sends a POST request to the token endpoint to exchange the refresh token for a new access token.
+        /// 3. Parses the token response.
+        /// 4. Updates the connection with the new token information.
+        /// 5. Persists the updated connection to the database.
+        /// </remarks>
+        public async Task<AppConnection> RefreshTokenAsync(OAuthConnectionConfig config, AppConnection connection, CancellationToken cancellationToken = default)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (connection == null) throw new ArgumentException(nameof(connection));
+            if (string.IsNullOrEmpty(connection.RefreshToken)) throw new ArgumentException("Refresh token is empty", nameof(connection.RefreshToken));
 
+            try
+            {
+                var res = await _codeFlowService.PostRefreshTokenRequestAsync(config, connection.RefreshToken, cancellationToken);
+                if (!res.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Failed to get refreshed token. Status code: {StatusCode}", res.StatusCode);
+                    throw new InvalidOperationException("Failed to get token refreshed");
+                }
+
+                var tokenResponseContent = await res.Content.ReadAsStringAsync();
+                var tokenData = OAuthTokenResponse.Success(JsonDocument.Parse(tokenResponseContent));
+
+                if (tokenData == null)
+                {
+                    _logger.LogError("Failed to parse token response");
+                    throw new InvalidOperationException("Failed to parse token response");
+                }
+
+                _logger.LogInformation("Token successfully retrieved and parsed");
+                var newConn = AppConnection.Create(tokenData, config, new AppUser()
+                {
+                    Email = connection.OwnerEmail,
+                    AccountId = connection.AccountId
+                });
+                //updates the token information
+                connection.AccessToken = newConn.AccessToken;
+                connection.RefreshToken = newConn.RefreshToken;
+                connection.DurationInSeconds = newConn.DurationInSeconds;
+                connection.TokenType = newConn.TokenType;
+                connection.TokenId = newConn.TokenId;
+                connection.UtcIssuedOn = newConn.UtcIssuedOn;
+                connection.Scope = newConn.Scope;
+
+                //persists the connection
+                return await PersistConnectionAsync(connection, cancellationToken);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating the authorization code request");
+                throw;
+            }
+        }
     }
 }
