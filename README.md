@@ -6,145 +6,150 @@ AuthMate is a comprehensive authentication and authorization system designed to 
 
 ## Key Features
 - Social Login Integration: Quickly enable login via Google, Microsoft, and Facebook with minimal setup.
-- SQL Backend Support: Manage users, roles, and permissions seamlessly using your existing SQL database.
+- SQL Backend Support: Manage users, roles, and permissions seamlessly using your existing SQL database
+    - Support for Postgres and Sqlite, easily extensible for other providers with minimal code
+- Provides capabilities for multi tenency, if desired using the concept of Accounts, multiple users can be assigned to an Account
 - Account Management:
     - Assign users to one or multiple accounts.
     - Support for account types to accommodate different use cases.
     - Role-Based Access Control (RBAC): Define roles and permissions for users at the account level.
     - Developer-Friendly: Designed for quick implementation and scalability, saving you hours of development time.
 
-## Configuring the Sql Database
-The project uses EntityFramework, if you need to implement the database storage for any database engine here is an example, just extend the `AuthMateContext` class here is an example
-
-Addiotnally in your application you can run the method `InitializeDbAsync` in the `AuthMateContext` class or implementation to create the database and add the required records
-
-``` csharp
-public class PostgresAuthMateContext : AuthMateContext, IAuthMateContext
-{
-    private string _connString;
-
-    /// <summary>
-    /// Creates a new instance of the context
-    /// </summary>
-    /// <param name="connectionString">A valid postgres connection string</param>
-    public PostgresAuthMateContext(string connectionString)
-    {
-            _connString = connectionString;
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql(_connString);
-        if(Debugger.IsAttached)
-            optionsBuilder.LogTo(Console.WriteLine);
-    }
-}
+## Installation
+To install the AuthMate library, add the following NuGet package to your project:
 ```
-
+dotnet add package Luval.AuthMate
+```
 
 ## Getting Google Client Id and Client Secret
 To configure the OAuth you need to get the information from google follow the steps in this article https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-8.0
 
-## Configuring your application
-To configure the Program.cs file for the AuthMate project, follow these steps:
-1.	Add Required Services: Register the necessary services for the DbContext and authentication.
-2.	Configure the DbContext: Set up the DbContext with the appropriate connection string.
-3.	Configure Authentication: Set up authentication schemes and options.
-Here is an example configuration for Program.cs:
+## Getting started with the configuration of the AuthMate Library
+This guide provides the initial configuration steps for setting up the AuthMate library in your .NET application. AuthMate is designed to manage authentication and authorization flows, including OAuth 2.0 integration.
 
-``` csharp
-using Luval.AuthMate.Core.Interfaces;
-using Luval.AuthMate.Infrastructure;
-using Microsoft.EntityFrameworkCore;
+### Configuration Settings
+First, add the necessary configuration settings to your appsettings.json file. These settings include OAuth provider details and AuthMate-specific keys.
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-
-// Configure DbContext
-builder.Services.AddDbContext<IAuthMateContext, AuthMateContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthMateConnection")));
-
-// Configure authentication
-builder.Services.AddAuthentication(options =>
+#### appsettings.json 
+```json
 {
-    options.DefaultAuthenticateScheme = "Cookies";
-    options.DefaultChallengeScheme = "Cookies";
-})
-.AddCookie("Cookies", options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-});
-
-// Add other necessary services
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-
-app.Run();
-
-```
-## Create a Controller in your Web Application
-In order to handle the authentication request you will need to create a controller. here is a simple working code
-
-``` csharp
-[Route("/[controller]")]
-[ApiController]
-public class AuthController : ControllerBase
-{
-    [AllowAnonymous]
-    [HttpGet("google-login")] //This mathches the configuration of the Google Auth
-    public IActionResult GoogleLogin()
-    {
-
-        // Adds the properties ad redirect information
-        // this could be change to include a redirect as part
-        // of a query string if required
-        var prop = new AuthenticationProperties()
-        {
-            RedirectUri = "/"
-        };
-
-        // Creates tthe challange
-        var challange = Challenge(prop, GoogleDefaults.AuthenticationScheme);
-
-        return challange;
+  "OAuthProviders": {
+    "Google": {
+      "ClientID": "your-client-id",
+      "OwnerEmail": "your-email",
+      "AuthorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+      "TokenEndpoint": "https://oauth2.googleapis.com/token",
+      "UserInfoEndpoint": "https://www.googleapis.com/oauth2/v3/userinfo",
+      "CodeFlowRedirectUri": "your-app.com/callback",
+      "Scopes": "https://www.googleapis.com/auth/gmail.readonly"
+      "OwnerEmail": "mainuser@gmail.com" // This is the email of the owner of the project
     }
-
-    [AllowAnonymous]
-    [HttpGet("logout")]
-    public async Task<IActionResult> Logout()
-    {
-        // Signout the user from the OAuth flow
-        await HttpContext.SignOutAsync();
-
-        // Redirect to root so that when logging back in, it takes to home page
-        return Redirect("/");
-    }
-
+  }
 }
 ```
+#### secrets.json
+Update the secrets for the OAuth flows, here is an article on how to handle secrets [Safe storage of app secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-9.0&tabs=windows)
+```json
+{
+    "OAuthProviders:Google:ClientSecret": "your-secret",
+    "AuthMate:BearingTokenKey": "your-key"
+}
+```
+### Program.cs Configuration
+In your Program.cs file, configure the services and middleware required for AuthMate.
+
+1. Create the WebApplication Builder:
+```csharp
+    var builder = WebApplication.CreateBuilder(args);
+```
+2. Add Services to the Container:
+```csharp
+    // Add Razor components and Fluent UI components
+    builder.Services.AddRazorComponents()
+        .AddInteractiveServerComponents();
+    builder.Services.AddFluentUIComponents();
+
+    // Add logging services (required dependency for AuthMate)
+    builder.Services.AddLogging();
+
+    // Add controllers, HTTP client, and context accessor
+    builder.Services.AddControllers();
+    builder.Services.AddHttpClient();
+    builder.Services.AddHttpContextAccessor();
+    
+```
+3. Add AuthMate Services:
+```csharp
+    var config = builder.Configuration;
+
+    builder.Services.AddAuthMateServices(
+        // The key to use for the bearing token implementation
+        config["AuthMate:BearingTokenKey"],
+        (s) => {
+            // Returns a local instance of Sqlite
+            // Replace this with your own implementation of Postgres, MySql, SqlServer, etc.
+            return new SqliteAuthMateContext();
+        }
+    );
+    
+```
+4. Add AuthMate Google OAuth Provider:
+```csharp
+    builder.Services.AddAuthMateGoogleAuth(new GoogleOAuthConfiguration()
+    {
+        // Client ID from your config file
+        ClientId = config["OAuthProviders:Google:ClientId"] ?? throw new ArgumentNullException("The Google client id is required"),
+        // Client secret from your config file
+        ClientSecret = config["OAuthProviders:Google:ClientSecret"] ?? throw new ArgumentNullException("The Google client secret is required"),
+        // Set the login path in the controller and pass the provider name
+        LoginPath = "/api/auth",
+    });
+    
+```
+5. Build the Application:
+```csharp
+    var app = builder.Build();
+```
+
+6. Configure the HTTP Request Pipeline
+```csharp
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseExceptionHandler("/Error");
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+    app.UseAntiforgery();
+    app.UseRouting();
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapRazorComponents<App>()
+        .AddInteractiveServerRenderMode();
+    
+```
+7. Initialize the Database
+```csharp
+    var contextHelper = new AuthMateContextHelper(
+        new SqliteAuthMateContext(),
+        new ColorConsoleLogger<AuthMateContextHelper>()
+    );
+
+    // Ensure the database is created and initialize it with the owner email and required initial records
+    contextHelper.InitializeDbAsync(config["OAuthProviders:Google:OwnerEmail"] ?? "")
+        .GetAwaiter()
+        .GetResult();
+    
+```
+
+## Summary
+By following these steps, you will have configured the AuthMate library in your .NET application, enabling OAuth 2.0 authentication and authorization flows. Make sure to replace placeholder values in the configuration with your actual credentials and settings.
+Here is a complete example of a complete implementation [Program.cs](https://github.com/marinoscar/AuthMate/blob/main/src/Luval.AuthMate.Sample/Program.cs)
+
+
 # Database Information
 The database has been implemented in postgres but can be very easily implemented in any other database engine that supports Entity framework, all you need to do is to extend this class [AuthMateContext.cs](https://github.com/marinoscar/AuthMate/blob/main/src/Luval.AuthMate/Infrastructure/Data/AuthMateContext.cs)
 
