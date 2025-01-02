@@ -276,7 +276,8 @@ namespace Luval.AuthMate.Infrastructure.Data
             modelBuilder.Entity<AppConnection>()
                 .HasOne(ac => ac.Account);
             modelBuilder.Entity<AppConnection>()
-                .HasIndex(i => i.ProviderName);
+                .HasIndex(i => new { i.ProviderName, i.OwnerEmail })
+                .IsUnique();
 
 
         }
