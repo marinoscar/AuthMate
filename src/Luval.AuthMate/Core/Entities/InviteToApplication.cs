@@ -49,7 +49,6 @@ namespace Luval.AuthMate.Core.Entities
         /// <summary>
         /// The UTC timestamp when the invitation expires.
         /// </summary>
-        [Required(ErrorMessage = "UtcExpiration is required.")]
         [Column("UtcExpiration")]
         public DateTime? UtcExpiration { get; set; }
 
