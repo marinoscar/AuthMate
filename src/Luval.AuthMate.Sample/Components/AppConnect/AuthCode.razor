@@ -1,0 +1,70 @@
+﻿
+<h3>Google Access Token</h3>
+
+<FluentButton OnClick="GetGoogleAccessToken">Get Google Access Token</FluentButton>
+@if (GoogleConnection != null)
+{
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Access Token</th>
+                <th scope="col">Utc Expires On</th>
+                <th scope="col">Utc Updated On</th>
+                <th scope="col">Version</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@GoogleConnection?.AccessToken</td>
+                <td>@GoogleConnection?.UtcExpiresOn</td>
+                <td>@GoogleConnection?.UtcUpdatedOn</td>
+                <td>@GoogleConnection?.Version</td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+
+    /// <summary>
+    /// Gets the <see cref="AppConnectionService"/> instance."/>
+    /// </summary>
+    [Inject]
+    public required AppConnectionService ConnectionService { get; set; }
+    /// <summary>
+    /// Gets the <see cref="IConfiguration"/> instance."/>
+    /// </summary>
+    [Inject]
+    public required OAuthConnectionManager ConfigManager { get; set; }
+
+    /// <summary>
+    /// Gets the <see cref="IUserResolver"/> instance.
+    /// </summary>
+    [Inject]
+    public required IUserResolver UserResolver { get; set; }
+
+    /// <summary>
+    /// Gets the <see cref="NavigationManager"/> instance.
+    /// </summary>
+    [Inject]
+    public required NavigationManager Navigation { get; set; }
+
+
+
+    private AppConnection? GoogleConnection { get; set; }
+
+    private async Task GetGoogleAccessToken()
+    {
+        var cofig = ConfigManager.GetConfiguration("Google");
+        var conneciton = await ConnectionService.GetConnectionAsync("Google", UserResolver.GetUserEmail());
+        if (conneciton == null)
+        {
+            //Need to navidate to get one
+            Navigation.NavigateTo("/api/auth/consent?provider=Google");
+            return;
+        }
+        GoogleConnection = conneciton;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}
