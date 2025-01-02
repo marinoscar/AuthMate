@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Luval.AuthMate.Web.Controllers
 {
@@ -30,6 +33,28 @@ namespace Luval.AuthMate.Web.Controllers
             _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
         }
 
+        [AllowAnonymous]
+        [HttpGet("login")]
+        public IActionResult Login(string provider, string deviceInfo, string returnUrl)
+        {
+
+            // Adds the properties ad redirect information
+            // this could be change to include a redirect as part
+            // of a query string if required
+            var prop = new AuthenticationProperties()
+            {
+                RedirectUri = "/"
+            };
+
+            prop.Items.Add("deviceInfo", deviceInfo);
+            prop.Items.Add("returnUrl", returnUrl);
+
+            // Creates tthe challange
+            var challange = Challenge(prop, provider);
+
+            return challange;
+        }
+
         [HttpGet("consent/{provider}")]
         public IActionResult Consent(string provider)
         {
@@ -41,8 +66,8 @@ namespace Luval.AuthMate.Web.Controllers
             return Redirect(consentUrl);
         }
 
-        [HttpGet("callback")]
-        public async Task<IActionResult> Callback([FromQuery] string provider, [FromQuery] string code, [FromQuery] string? error)
+        [HttpGet("codecallback")]
+        public async Task<IActionResult> CodeCallback([FromQuery] string provider, [FromQuery] string code, [FromQuery] string? error)
         {
             if (!string.IsNullOrEmpty(error))
             {
