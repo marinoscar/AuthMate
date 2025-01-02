@@ -6,7 +6,9 @@
             <FluentStack HorizontalAlignment="HorizontalAlignment.End">
                 <AuthorizeView>
                     <Authorized>
-                        <UserProfileMate @rendermode="@InteractiveServer" />
+                        <UserProfileMate 
+                            @rendermode="@InteractiveServer"
+                            SignoutNavigateTo="/api/auth/logout"/>
                     </Authorized>
                 </AuthorizeView>
             </FluentStack>
