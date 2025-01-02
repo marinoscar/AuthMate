@@ -15,23 +15,31 @@ namespace Luval.AuthMate.Sample
             var builder = WebApplication.CreateBuilder(args);
 
             //TODO: Add config settings
+
             /*
-            "OAuthProviders": {
-            "Google": {
-                "ClientID": "your-client-id",
-                "OwnerEmail": "your-email"
-                "AuthorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
-                "TokenEndpoint": "https://oauth2.googleapis.com/token",
-                "UserInfoEndpoint": "https://www.googleapis.com/oauth2/v3/userinfo",
-                "CodeFlowRedirectUri": "",
-                "Scopes": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
-            }
+             * 
+             * "OAuthProviders": {
+             *      "Google": {
+             *        "ClientID": "your-client-id",
+             *        "OwnerEmail": "your-email"
+             *        "AuthorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+             *        "TokenEndpoint": "https://oauth2.googleapis.com/token",
+             *        "UserInfoEndpoint": "https://www.googleapis.com/oauth2/v3/userinfo",
+             *        "CodeFlowRedirectUri": "",
+             *        "Scopes": "https://www.googleapis.com/auth/gmail.readonly"
+             *      }
+             * 
             */
+
             //TODO: Add the configuration secret
+
             /*
-             "OAuthProviders:Google:ClientSecret": "your-secret"
-             "AuthMate:BearingTokenKey": "your-key"
+             *
+             * "OAuthProviders:Google:ClientSecret": "your-secret"
+             * "AuthMate:BearingTokenKey": "your-key"
+             * 
              */
+
             var config = builder.Configuration;
 
             // Add services to the container.
@@ -39,12 +47,8 @@ namespace Luval.AuthMate.Sample
                 .AddInteractiveServerComponents();
             builder.Services.AddFluentUIComponents();
 
-            //Add logging services
-            builder.Services.AddLogging(logging =>
-            {
-                logging.AddConsole();
-                logging.AddDebug();
-            });
+            //Add logging services is a required dependency for AuthMate
+            builder.Services.AddLogging();
 
             //Add the controllers and the http client and context accessor
             builder.Services.AddControllers();
