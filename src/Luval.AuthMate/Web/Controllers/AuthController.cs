@@ -91,7 +91,7 @@ namespace Luval.AuthMate.Web.Controllers
         /// <returns>An <see cref="IActionResult"/> that processes the authorization code and returns user info.</returns>
         [AllowAnonymous]
         [HttpGet("codecallback")]
-        public async Task<IActionResult> CodeCallback([FromQuery] string provider, [FromQuery] string code, [FromQuery] string? error)
+        public async Task<IActionResult> CodeCallback([FromQuery] string? provider, [FromQuery] string code, [FromQuery] string? error)
         {
             if (!string.IsNullOrEmpty(error))
             {
@@ -105,8 +105,10 @@ namespace Luval.AuthMate.Web.Controllers
 
             if (string.IsNullOrEmpty(provider))
             {
-                return BadRequest("Provider name missing.");
+                provider = "Google";
+                //return BadRequest("Provider name missing.");
             }
+
 
             var config = _connectionManager.GetConfiguration(provider);
             if (config == null) return BadRequest("Provider not supported.");
