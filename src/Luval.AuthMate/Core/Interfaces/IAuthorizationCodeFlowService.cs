@@ -28,6 +28,6 @@ namespace Luval.AuthMate.Core.Interfaces
         /// <param name="refreshToken">The refresh token received from the authorization server.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the HTTP response message.</returns>
-        Task<HttpResponseMessage> PostRefreshTokenRequestAsync(OAuthConnectionConfig config, string refreshToken, CancellationToken cancellationToken = default)
+        Task<HttpResponseMessage> PostRefreshTokenRequestAsync(OAuthConnectionConfig config, string refreshToken, CancellationToken cancellationToken = default);
     }
 }
