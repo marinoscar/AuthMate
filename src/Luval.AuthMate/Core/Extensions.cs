@@ -50,6 +50,11 @@ namespace Luval.AuthMate.Core
             return Encoding.UTF8.GetBytes(json);
         }
 
+        /// <summary>
+        /// Converts an object to a Base64 encoded string.
+        /// </summary>
+        /// <param name="obj">The instance to serialize and encode.</param>
+        /// <returns>A Base64 encoded string representing the JSON serialized object.</returns>
         public static string ToBase64(this object obj)
         {
             return Convert.ToBase64String(ToBytes(obj));
