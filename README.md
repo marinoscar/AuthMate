@@ -1,4 +1,4 @@
-![example workflow](https://github.com/marinoscar/AuthMate/blob/main/.github/workflows/dotnet.yml/badge.svg)
+![Actions Status Badge](https://github.com/marinoscar/AuthMate/blob/main/.github/workflows/dotnet.yml/badge.svg)
 
 # AuthMate: Simplify Authentication and Authorization for Your Apps
 
