@@ -138,6 +138,7 @@ namespace Luval.AuthMate.Core
             else
                 s.AddSingleton(new BearingTokenConfig());
 
+            s.AddScoped<OAuthConnectionManager>();
             s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
             s.AddScoped<IUserResolver, WebUserResolver>();
             s.AddScoped<IAppUserService, AppUserService>();

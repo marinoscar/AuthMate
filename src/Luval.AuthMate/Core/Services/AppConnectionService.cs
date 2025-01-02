@@ -53,10 +53,12 @@ namespace Luval.AuthMate.Core.Services
         {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
 
+            var inContext = await GetConnectionAsync(connection.ProviderName, connection.OwnerEmail, cancellationToken);
+
             try
             {
                 connection.Version++;
-                if (connection.Id == 0)
+                if (inContext == null)
                 {
                     connection.UtcCreatedOn = DateTime.UtcNow;
                     connection.CreatedBy = _userResolver.GetUserEmail();
@@ -67,6 +69,9 @@ namespace Luval.AuthMate.Core.Services
                 }
                 else
                 {
+                    connection.Id = inContext.Id;
+                    connection.UtcCreatedOn = inContext.UtcCreatedOn;
+                    connection.CreatedBy = inContext.CreatedBy;
                     connection.UtcUpdatedOn = DateTime.UtcNow;
                     connection.UpdatedBy = _userResolver.GetUserEmail();
                     _context.AppConnections.Update(connection);
@@ -83,20 +88,21 @@ namespace Luval.AuthMate.Core.Services
             }
         }
 
-        /// <summary>
+
+        ///<summary>
         /// Retrieves an application connection based on the provider name and owner email.
         /// </summary>
         /// <param name="providerName">The name of the provider.</param>
         /// <param name="ownerEmail">The email of the owner.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-        /// <returns>The application connection that matches the specified provider name and owner email.</returns>
+        /// <returns>The application connection that matches the specified provider name and owner email, or null if no match is found.</returns>
         /// <exception cref="ArgumentNullException">Thrown when providerName or ownerEmail is null or empty.</exception>
-        public async Task<AppConnection> GetConnectionAsync(string providerName, string ownerEmail, CancellationToken cancellationToken = default)
+        public async Task<AppConnection?> GetConnectionAsync(string providerName, string ownerEmail, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
             if (string.IsNullOrEmpty(ownerEmail)) throw new ArgumentNullException(nameof(ownerEmail));
 
-            return await _context.AppConnections.SingleAsync(c => c.ProviderName == providerName && c.OwnerEmail == ownerEmail, cancellationToken);
+            return await _context.AppConnections.SingleOrDefaultAsync(c => c.ProviderName == providerName && c.OwnerEmail == ownerEmail, cancellationToken);
         }
 
         /// <summary>

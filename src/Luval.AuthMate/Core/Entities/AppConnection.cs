@@ -7,6 +7,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication;
+using Luval.AuthMate.Infrastructure.Configuration;
 
 namespace Luval.AuthMate.Core.Entities
 {
@@ -156,6 +159,40 @@ namespace Luval.AuthMate.Core.Entities
                 WriteIndented = true,
                 ReferenceHandler = ReferenceHandler.IgnoreCycles
             });
+        }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="AppConnection"/> using the provided OAuth token response, connection configuration, and user information.
+        /// </summary>
+        /// <param name="tokenResponse">The OAuth token response containing access and refresh tokens.</param>
+        /// <param name="connectionConfig">The configuration for the OAuth connection.</param>
+        /// <param name="user">The user associated with the OAuth connection.</param>
+        /// <returns>A new instance of <see cref="AppConnection"/> populated with the provided data.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when any of the input parameters are null.</exception>
+        public static AppConnection Create(OAuthTokenResponse tokenResponse, OAuthConnectionConfig connectionConfig, AppUser user)
+        {
+            if (tokenResponse == null) throw new ArgumentNullException(nameof(tokenResponse));
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (connectionConfig == null) throw new ArgumentNullException(nameof(connectionConfig));
+
+            return new AppConnection()
+            {
+                ProviderName = connectionConfig.Name,
+                AccessToken = tokenResponse.AccessToken,
+                RefreshToken = tokenResponse.RefreshToken,
+                DurationInSeconds = Convert.ToInt32(tokenResponse.ExpiresIn),
+                TokenType = tokenResponse.TokenType,
+                OwnerEmail = user.Email,
+                AccountId = user.AccountId,
+                Scope = connectionConfig.Scopes,
+                TokenId = tokenResponse.Response.RootElement.GetString("id_token") ?? "",
+                UtcIssuedOn = DateTime.UtcNow.AddSeconds(-1),
+                CreatedBy = user.Email,
+                UtcCreatedOn = DateTime.UtcNow,
+                UpdatedBy = user.Email,
+                UtcUpdatedOn = DateTime.UtcNow,
+                Version = 1
+            };
         }
     }
 

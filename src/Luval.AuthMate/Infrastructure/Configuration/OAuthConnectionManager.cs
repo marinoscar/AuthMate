@@ -13,7 +13,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
     public class OAuthConnectionManager
     {
         private IEnumerable<OAuthConnectionConfig> _connections;
-        private readonly IConfiguration _configuration;
+        private readonly IConfiguration? _configuration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuthConnectionManager"/> class using the specified configuration.
@@ -29,6 +29,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// </remarks>
         public OAuthConnectionManager(IConfiguration configuration)
         {
+            _connections = [];
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             LoadConfigurations();
         }
@@ -48,15 +49,19 @@ namespace Luval.AuthMate.Infrastructure.Configuration
             _connections = connections ?? throw new ArgumentNullException(nameof(connections));
         }
 
+
         /// <summary>
-        /// Retrieves the OAuth connection configuration for the specified provider.
+        /// Retrieves the configuration for a specific OAuth provider by name.
         /// </summary>
         /// <param name="providerName">The name of the OAuth provider.</param>
-        /// <returns>The <see cref="OAuthConnectionConfig"/> instance for the specified provider.</returns>
-        /// <exception cref="InvalidOperationException">Thrown when no configuration is found for the specified provider.</exception>
-        public OAuthConnectionConfig GetConfiguration(string providerName)
+        /// <returns>The <see cref="OAuthConnectionConfig"/> instance for the specified provider, or null if not found.</returns>
+        /// <remarks>
+        /// This method searches the collection of OAuth connection configurations for a configuration with a name that matches the specified provider name.
+        /// The comparison is case-insensitive.
+        /// </remarks>
+        public OAuthConnectionConfig? GetConfiguration(string providerName)
         {
-            return _connections.Single(c => c.Name.Equals(providerName, StringComparison.OrdinalIgnoreCase));
+            return _connections.SingleOrDefault(c => c.Name.Equals(providerName, StringComparison.OrdinalIgnoreCase));
         }
 
 

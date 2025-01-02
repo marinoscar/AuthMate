@@ -113,7 +113,7 @@ namespace Luval.AuthMate.Tests
             // Arrange
             var provName = "My Provider";
             var email = "user@email.com";
-            var newEmail = "new@mail.com";
+            var newToken = "new acess token";
             AppConnection connection = default!;
 
             var service = CreateService((c) =>
@@ -124,7 +124,7 @@ namespace Luval.AuthMate.Tests
                 c.SaveChanges();
             });
 
-            connection.OwnerEmail = newEmail;
+            connection.AccessToken = newToken;
             // Act
             var result = await service.PersistConnectionAsync(connection);
 
@@ -132,7 +132,7 @@ namespace Luval.AuthMate.Tests
             Assert.NotNull(result);
             Assert.Equal(2ul, connection.Version);
             Assert.Equal(provName, result.ProviderName);
-            Assert.Equal(newEmail, result.OwnerEmail);
+            Assert.Equal(newToken, result.AccessToken);
             Assert.True(connection.UtcUpdatedOn > connection.UtcCreatedOn);
             Assert.NotNull(connection.UpdatedBy);
         }
