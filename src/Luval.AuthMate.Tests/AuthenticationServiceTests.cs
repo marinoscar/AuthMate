@@ -174,7 +174,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService((c) =>
             {
                 var at = c.AccountTypes.First();
-                c.InvitesToApplication.Add(new InviteToApplication { Email = email, AccountTypeId = at.Id });
+                c.InvitesToApplication.Add(new InviteToApplication { Email = email, AccountTypeId = at.Id  });
                 c.SaveChanges();
             });
 
