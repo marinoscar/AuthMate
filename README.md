@@ -1,3 +1,4 @@
+![Actions Status Badge](https://github.com/marinoscar/AuthMate/actions/workflows/dotnet.yml/badge.svg)
 
 # AuthMate: Simplify Authentication and Authorization for Your Apps
 
