@@ -81,7 +81,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
             if (children == null || !children.Any()) throw new InvalidCastException("No OAuthProviders found in configuration.");
             _connections = children.Select(c => new OAuthConnectionConfig
             {
-                Name = section.Key,
+                Name = c.Key,
                 AuthorizationEndpoint = c["AuthorizationEndpoint"] ?? "",
                 ClientId = c["ClientId"] ?? "",
                 ClientSecret = c["ClientSecret"] ?? "",
