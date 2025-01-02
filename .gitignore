@@ -402,3 +402,4 @@ FodyWeavers.xsd
 /src/Luval.AuthMate.Sample/app.db-shm
 src/Luval.AuthMate.Sample/app.db-wal
 src/Luval.AuthMate.Sample/app.db-wal
+src/Luval.AuthMate.Sample/app.db-wal
