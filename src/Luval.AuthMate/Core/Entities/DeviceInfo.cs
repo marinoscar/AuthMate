@@ -66,30 +66,26 @@ namespace Luval.AuthMate.Core.Entities
         /// <returns>A string that represents the device information.</returns>
         public override string ToString()
         {
-            return $"{IpAddress}^{OS}^{Browser}";
+            return this.ToJson();
         }
 
         /// <summary>
         /// Creates a new instance of <see cref="DeviceInfo"/> from a string representation.
         /// </summary>
-        /// <param name="data">The string representation of the device information.</param>
+        /// <param name="base64String">The string representation of the device information.</param>
         /// <returns>A new <see cref="DeviceInfo"/> instance.</returns>
         /// <exception cref="ArgumentException">Thrown if the input string format is invalid.</exception>
-        public static DeviceInfo Create(string data)
+        public static DeviceInfo Create(string base64String)
         {
-            if (string.IsNullOrWhiteSpace(data))
+            if (string.IsNullOrWhiteSpace(base64String))
             {
-                throw new ArgumentException("Input data cannot be null or empty.", nameof(data));
+                throw new ArgumentException("Input data cannot be null or empty.", nameof(base64String));
             }
 
-            var parts = data.Split('^');
+            var bytes = Convert.FromBase64String(base64String);
+            var json = Encoding.UTF8.GetString(bytes);
 
-            // Validate and assign parts with fallback to default values
-            string ipAddress = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? parts[0] : "Unknown";
-            string os = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : "Unknown";
-            string browser = parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2]) ? parts[2] : "Unknown";
-
-            return new DeviceInfo(ipAddress, os, browser);
+            return JsonSerializer.Deserialize<DeviceInfo>(json) ?? throw new ArgumentException("Unable to parse the base64String argument");
         }
 
         /// <summary>
