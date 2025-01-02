@@ -7,7 +7,7 @@
     <ApplicationIcon>authmate_icon.ico</ApplicationIcon>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Title>Auth Mate Sqlite </Title>
-    <Version>1.0.1</Version>
+    <Version>1.1.2</Version>
     <Authors>Oscar Marin</Authors>
     <Copyright>Oscar Marin</Copyright>
     <PackageProjectUrl>https://github.com/marinoscar/authmate/</PackageProjectUrl>
@@ -16,6 +16,8 @@
     <RepositoryUrl>https://github.com/marinoscar/authmate/</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
