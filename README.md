@@ -1,3 +1,4 @@
+
 # AuthMate: Simplify Authentication and Authorization for Your Apps
 
 AuthMate is a comprehensive authentication and authorization system designed to manage user accounts, roles, and permissions within a Blazor application. It provides a robust and flexible framework for handling user authentication, including support for OAuth providers, user roles, and login history tracking.
