@@ -23,10 +23,10 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./src/AuthMate.sln
 
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore ./src/AuthMate.sln
 
     - name: Run tests
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal ./src/AuthMate.sln
