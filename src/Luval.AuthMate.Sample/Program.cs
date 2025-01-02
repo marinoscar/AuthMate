@@ -1,3 +1,4 @@
+using Luval.AuthMate.Core;
 using Luval.AuthMate.Infrastructure.Data;
 using Luval.AuthMate.Infrastructure.Logging;
 using Luval.AuthMate.Sample.Components;
@@ -18,11 +19,17 @@ namespace Luval.AuthMate.Sample
             "Google": {
                 "ClientID": "your-client-id",
                 "OwnerEmail": "your-email"
+                "AuthorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+                "TokenEndpoint": "https://oauth2.googleapis.com/token",
+                "UserInfoEndpoint": "https://www.googleapis.com/oauth2/v3/userinfo",
+                "CodeFlowRedirectUri": "",
+                "Scopes": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
             }
             */
             //TODO: Add the configuration secret
             /*
              "OAuthProviders:Google:ClientSecret": "your-secret"
+             "AuthMate:BearingTokenKey": "your-key"
              */
             var config = builder.Configuration;
 
@@ -42,6 +49,16 @@ namespace Luval.AuthMate.Sample
             builder.Services.AddControllers();
             builder.Services.AddHttpClient();
             builder.Services.AddHttpContextAccessor();
+
+            //Add the AuthMate services
+            builder.Services.AddAuthMateServices(
+                //The key to use for the bearing token implementation
+                config["AuthMate:BearingTokenKey"],
+                (s) => {
+                    //returns a local instance of Sqlite
+                    //replace this with your own implementation of Postgres, MySql, SqlServer, etc
+                    return new SqliteAuthMateContext();
+            });
 
             var app = builder.Build();
 
