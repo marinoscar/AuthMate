@@ -14,12 +14,47 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Luval.AuthMate.Core
 {
+    /// <summary>
+    /// Provides extension methods for the AuthMate library.
+    /// </summary>
     public static class Extensions
     {
+
+        /// <summary>
+        /// Converts an object to a JSON string.
+        /// </summary>
+        /// <param name="obj">The instance to serialize</param>
+        /// <returns>A json serialized string of the target object</returns>
+        public static string ToJson(this object obj)
+        {
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            });
+        }
+
+        /// <summary>
+        /// Converts an object to a byte array.
+        /// </summary>
+        /// <param name="obj">The instance to serialize.</param>
+        /// <returns>A byte array representing the JSON serialized object.</returns>
+        public static byte[] ToBytes(this object obj)
+        {
+            var json = obj.ToJson();
+            return Encoding.UTF8.GetBytes(json);
+        }
+
+        public static string ToBase64(this object obj)
+        {
+            return Convert.ToBase64String(ToBytes(obj));
+        }
+
         /// <summary>
         /// Converts a <see cref="ClaimsPrincipal"/> to an <see cref="AppUser"/> instance.
         /// </summary>
