@@ -282,8 +282,15 @@ namespace Luval.AuthMate.Infrastructure.Data
 
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthMateContext"/> class.
+        /// </summary>
         public AuthMateContext() : base() { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthMateContext"/> class with the specified options.
+        /// </summary>
+        /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
         public AuthMateContext(DbContextOptions options) : base(options) { }
 
     }
