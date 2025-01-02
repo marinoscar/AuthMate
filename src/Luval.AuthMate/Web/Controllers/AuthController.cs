@@ -35,7 +35,7 @@ namespace Luval.AuthMate.Web.Controllers
 
         [AllowAnonymous]
         [HttpGet("login")]
-        public IActionResult Login(string provider, string deviceInfo, string returnUrl)
+        public IActionResult Login(string provider, string? deviceInfo, string? returnUrl)
         {
 
             // Adds the properties ad redirect information

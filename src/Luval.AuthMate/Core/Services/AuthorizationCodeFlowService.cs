@@ -22,7 +22,7 @@ namespace Luval.AuthMate.Core.Services
         /// <exception cref="ArgumentException">Thrown when <paramref name="httpClientFactory"/> is null.</exception>
         public AuthorizationCodeFlowService(IHttpClientFactory httpClientFactory)
         {
-            httpClientFactory = _clientFactory ?? throw new ArgumentException(nameof(httpClientFactory));
+            _clientFactory = httpClientFactory ?? throw new ArgumentException(nameof(httpClientFactory));
         }
 
         /// <summary>

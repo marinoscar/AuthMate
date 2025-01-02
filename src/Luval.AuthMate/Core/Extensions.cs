@@ -5,6 +5,7 @@ using Luval.AuthMate.Core.Services;
 using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -178,14 +179,19 @@ namespace Luval.AuthMate.Core
             else
                 s.AddSingleton(new BearingTokenConfig());
 
-            s.AddScoped<OAuthConnectionManager>();
-            s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
+            s.AddScoped<OAuthConnectionManager>((s) => { 
+                var d = s.GetRequiredService<IConfiguration>();
+                return new OAuthConnectionManager(d);
+            });
+
             s.AddScoped<IUserResolver, WebUserResolver>();
-            s.AddScoped<IAppUserService, AppUserService>();
-            s.AddScoped<RoleService>();
             s.AddScoped<AccountService>();
+            s.AddScoped<AppConnectionService>();
+            s.AddScoped<IAppUserService, AppUserService>();
             s.AddScoped<AuthenticationService>();
+            s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
             s.AddScoped<BearingTokenService>();
+            s.AddScoped<RoleService>();
             return s;
         }
 

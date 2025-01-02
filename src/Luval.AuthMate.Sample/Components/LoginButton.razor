@@ -1,0 +1,28 @@
+﻿@using System.Web
+@using Luval.AuthMate.Core.Entities
+
+
+<FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size16.LockClosed())"
+              Appearance="Appearance.Accent"
+              OnClick="DoLogin">
+    Google Sign In
+</FluentButton>
+
+@code {
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Parameter]
+    public string NavigateTo { get; set; } = "/api/auth/login";
+
+    [Parameter]
+    public string ReturnUrl { get; set; } = "/";
+
+    private void DoLogin()
+    {
+        var info = DeviceInfo.CreateEmpty().ToString();
+        info = HttpUtility.HtmlEncode(info);
+        NavigationManager.NavigateTo($"{NavigateTo}?provider=Google&deviceInfo={info}&returnUrl={HttpUtility.HtmlEncode(ReturnUrl)}");
+    }
+}

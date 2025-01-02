@@ -1,4 +1,5 @@
 using Luval.AuthMate.Core;
+using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Data;
 using Luval.AuthMate.Infrastructure.Logging;
 using Luval.AuthMate.Sample.Components;
@@ -58,6 +59,17 @@ namespace Luval.AuthMate.Sample
                     //returns a local instance of Sqlite
                     //replace this with your own implementation of Postgres, MySql, SqlServer, etc
                     return new SqliteAuthMateContext();
+            });
+
+            //Add the AuthMate Google OAuth provider
+            builder.Services.AddAuthMateGoogleAuth(new GoogleOAuthConfiguration()
+            {
+                // client id from your config file
+                ClientId = config["OAuthProviders:Google:ClientId"] ?? throw new ArgumentNullException("The Google client id is required"),
+                // the client secret from your config file
+                ClientSecret = config["OAuthProviders:Google:ClientSecret"] ?? throw new ArgumentNullException("The Google client secret is required"),
+                // set the login path in the controller and pass the provider name
+                LoginPath = "/api/auth",
             });
 
             var app = builder.Build();
