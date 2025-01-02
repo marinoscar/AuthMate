@@ -24,26 +24,55 @@
 </script>
 
 <FluentButton @onclick="OnClickNavigate">
-    <FluentIcon Value="@(new AuthMateIcons.GoogleLogo())" Color="Color.Error" Slot="start" />
+    <FluentIcon Value="@(new AuthMateIcons.GoogleLogo())" Color="@IconColor" Slot="@IconSlot" />
     @ButtonText
 </FluentButton>
 
 @code {
-    [Parameter]
-    public string ButtonText { get; set; } = "Google Authenticate";
 
+    /// <summary>
+    /// Gets or sets the text displayed on the button.
+    /// </summary>
+    [Parameter]
+    public string ButtonText { get; set; } = "Sign In";
+
+    /// <summary>
+    /// Gets or sets the URL to navigate to when the button is clicked.
+    /// </summary>
     [Parameter]
     public string NavigateTo { get; set; } = "/auth/google-login";
 
+    /// <summary>
+    /// Gets or sets the return URL after authentication.
+    /// </summary>
     [Parameter]
     public string ReturnUrl { get; set; } = "/";
 
+    /// <summary>
+    /// Gets or sets the value of the icon.
+    /// </summary>
+    [Parameter]
+    public Icon IconValue { get; set; } = new AuthMateIcons.GoogleLogo();
+
+    /// <summary>
+    /// Gets or sets the color of the icon.
+    /// </summary>
+    [Parameter]
+    public Color IconColor { get; set; } = Color.Accent;
+
+    /// <summary>
+    /// Gets or sets the slot of the icon.
+    /// </summary>
+    [Parameter]
+    public string IconSlot { get; set; } = "start";
+
     private DeviceInfo DeviceInfo { get; set; } = default(DeviceInfo);
+
 
     private void OnClickNavigate(MouseEventArgs e)
     {
         var info = string.Empty;
-        if (DeviceInfo != null) info = DeviceInfo.ToString();
+        if (DeviceInfo != null) info = DeviceInfo.ToBase64();
         info = HttpUtility.HtmlEncode(info);
         Navigation.NavigateTo(string.Format("{0}?deviceInfo={1}&returnUrl={2}", NavigateTo, info, HttpUtility.HtmlEncode(ReturnUrl)));
     }
@@ -69,6 +98,5 @@
         if (deviceInfo != null)
             deviceInfo.IpAddress = contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         DeviceInfo = deviceInfo;
-
     }
 }

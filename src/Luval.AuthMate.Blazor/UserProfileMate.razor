@@ -6,15 +6,15 @@
 @inject IHttpContextAccessor context
 
 <FluentProfileMenu Image="@_user?.ProfilePictureUrl"
-HeaderLabel="Account Information"
-Initials="@_user?.GetDisplayNameInitials()"
-FullName="@_user?.DisplayName"
-EMail="@_user?.Email"
-FooterLink="View Account"
-HeaderButton="Singout"
-OnHeaderButtonClick="DoSingout"
-OnFooterLinkClick="GoToAccount"
-PopoverStyle="min-width: 330px;" />
+                   HeaderLabel="@HeaderLabel"
+                   Initials="@_user?.GetDisplayNameInitials()"
+                   FullName="@_user?.DisplayName"
+                   EMail="@_user?.Email"
+                   FooterLink="@FooterLink"
+                   HeaderButton="@HeaderButton"
+                   OnHeaderButtonClick="DoSingout"
+                   OnFooterLinkClick="GoToAccount"
+                   PopoverStyle="@PopoverStyle" />
 
 @code {
 
@@ -28,6 +28,26 @@ PopoverStyle="min-width: 330px;" />
     /// </summary>
     [Parameter]
     public string AccountNavigateTo { get; set; } = "/profile";
+    /// <summary>
+    /// The label for the header section
+    /// </summary>
+    [Parameter]
+    public string HeaderLabel { get; set; } = "Account Information";
+    /// <summary>
+    /// The text for the footer link
+    /// </summary>
+    [Parameter]
+    public string FooterLink { get; set; } = "View Account";
+    /// <summary>
+    /// The text for the header button
+    /// </summary>
+    [Parameter]
+    public string HeaderButton { get; set; } = "Signout";
+    /// <summary>
+    /// The style for the popover
+    /// </summary>
+    [Parameter]
+    public string PopoverStyle { get; set; } = "min-width: 330px;";
 
     private AppUser _user;
 
@@ -45,7 +65,8 @@ PopoverStyle="min-width: 330px;" />
         }
     }
 
-    private void DoSingout(){
+    private void DoSingout()
+    {
         Navigation.NavigateTo(SignoutNavigateTo);
     }
 
@@ -54,5 +75,3 @@ PopoverStyle="min-width: 330px;" />
         Navigation.NavigateTo(AccountNavigateTo);
     }
 }
-
-
