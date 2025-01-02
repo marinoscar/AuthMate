@@ -3,6 +3,7 @@ using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Core.Services;
 using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Logging;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -15,29 +16,29 @@ namespace Luval.AuthMate.Tests
 {
     public class AppConnectionServiceTests
     {
-        /// <summary>
-        /// Creates an instance of <see cref="AppConnectionService"/> with an optional action to modify the context after creation.
-        /// </summary>
-        /// <param name="afterContextCreation">An action to modify the context after creation.</param>
-        /// <returns>An instance of <see cref="AppConnectionService"/>.</returns>
-        private AppConnectionService CreateService(Action<IAuthMateContext> afterContextCreation)
+        
+        private AppConnectionService CreateService(Action<IAuthMateContext>? contextSetup, Action<Mock<IAuthorizationCodeFlowService>>? authCodeServiceMockSetup = null)
         {
             var context = new MemoryDataContext();
             context.Initialize();
 
             var authCodeServiceMock = new Mock<IAuthorizationCodeFlowService>();
 
-            authCodeServiceMock.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
+            if(authCodeServiceMockSetup == null)
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(SampleHttpResponse())
-            });
-            
+                authCodeServiceMock.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(SampleHttpResponse())
+                });
+            }
+            else authCodeServiceMockSetup(authCodeServiceMock);
 
-            var appConnectionService = new AppConnectionService(context, authCodeServiceMock.Object, new NullUserResolver(), new NullLogger<AppConnectionService>());
 
-            if (afterContextCreation != null) afterContextCreation(context);
-            return appConnectionService;
+            var service = new AppConnectionService(context, authCodeServiceMock.Object, new NullUserResolver(), new NullLogger<AppConnectionService>());
+
+            contextSetup?.Invoke(context);
+            return service;
         }
 
         [Fact]
@@ -139,39 +140,173 @@ namespace Luval.AuthMate.Tests
         [Fact]
         public async Task DeleteAppConnectionAsync_DeletesConnection_WhenExists()
         {
-            //// Arrange
-            //var accountId = 1UL;
-            //var tokenId = "token123";
-            //var service = CreateService((c) =>
-            //{
-            //    c.Accounts.Add(new Account { Id = accountId });
-            //    c.AppConnections.Add(new AppConnection { AccountId = accountId, TokenId = tokenId });
-            //    c.SaveChanges();
-            //});
+            // Arrange
+            var id = 0ul;
+            var token = "token123";
+            var connection = default(AppConnection);
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                connection = new AppConnection { AccountId = acc.Id, AccessToken = token, ProviderName = "Provider", OwnerEmail = "o@email.com" };
+                id = connection.Id;
+                c.AppConnections.Add(connection);
+                c.SaveChanges();
+            });
 
-            //// Act
-            //await service.DeleteAppConnectionAsync(accountId, tokenId);
+            // Act
+            await service.DeleteConnectionAsync(connection.Id);
 
-            //// Assert
-            //var result = context.AppConnections.FirstOrDefault(ac => ac.TokenId == tokenId);
-            //Assert.Null(result);
+            // Assert
+            var result = await service.GetConnectionsAsync(c => c.Id == id);
+            Assert.Null(result.SingleOrDefault());
         }
 
         [Fact]
-        public async Task DeleteAppConnectionAsync_DoesNothing_WhenNotExists()
+        public async Task DeleteAppConnectionAsync_ThrowsInvalidOperationException_WhenIdIsInvalid()
         {
-            //// Arrange
-            //var accountId = 1UL;
-            //var tokenId = "token123";
-            //var service = CreateService(null);
+            // Arrange
+            var invalidId = 983UL;
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                c.AppConnections.Add(new AppConnection { AccountId = acc.Id, AccessToken = "token123", ProviderName = "Provider", OwnerEmail = "o@email.com" });
+                c.SaveChanges();
+            });
 
-            //// Act
-            //await service.DeleteAppConnectionAsync(accountId, tokenId);
-
-            //// Assert
-            //var result = context.AppConnections.FirstOrDefault(ac => ac.TokenId == tokenId);
-            //Assert.Null(result);
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.DeleteConnectionAsync(invalidId));
         }
+
+        [Fact]
+        public async Task DeleteAppConnectionAsync_ThrowsArgumentException_WhenIdIsZero()
+        {
+            // Arrange
+            var service = CreateService(null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(async () => await service.DeleteConnectionAsync(0));
+        }
+
+        [Fact]
+        public void CreateAuthorizationConsentUrl_ThrowsArgumentNullException_WhenConfigIsNull()
+        {
+            // Arrange
+            var service = CreateService(null);
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => service.CreateAuthorizationConsentUrl(null));
+        }
+
+        [Fact]
+        public void CreateAuthorizationConsentUrl_CreatesValidUrl()
+        {
+            // Arrange
+            var config = new OAuthConnectionConfig
+            {
+                AuthorizationEndpoint = "https://example.com/auth",
+                ClientId = "client-id",
+                RedirectUri = "https://example.com/callback",
+                Scopes = "scope1 scope2"
+            };
+            var service = CreateService(null);
+
+            // Act
+            var result = service.CreateAuthorizationConsentUrl(config);
+
+            // Assert
+            var expectedUrl = "https://example.com/auth?response_type=code&client_id=client-id&redirect_uri=https://example.com/callback&scope=scope1%20scope2access_type=offline&prompt=consent";
+            Assert.Equal(expectedUrl, result);
+        }
+
+        [Fact]
+        public void CreateAuthorizationConsentUrl_EscapesScopeProperly()
+        {
+            // Arrange
+            var config = new OAuthConnectionConfig
+            {
+                AuthorizationEndpoint = "https://example.com/auth",
+                ClientId = "client-id",
+                RedirectUri = "https://example.com/callback",
+                Scopes = "scope1 scope2"
+            };
+            var service = CreateService(null);
+
+            // Act
+            var result = service.CreateAuthorizationConsentUrl(config);
+
+            // Assert
+            Assert.Contains("scope=scope1%20scope2", result);
+        }
+
+        [Fact]
+        public async Task CreateAuthorizationCodeRequestAsync_ThrowsArgumentNullException_WhenConfigIsNull()
+        {
+            // Arrange
+            var service = CreateService(null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(null, "code", null));
+        }
+
+        [Fact]
+        public async Task CreateAuthorizationCodeRequestAsync_ThrowsArgumentNullException_WhenCodeIsNull()
+        {
+            // Arrange
+            var config = new OAuthConnectionConfig();
+            var service = CreateService(null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(config, null, null));
+        }
+
+
+
+        [Fact]
+        public async Task CreateAuthorizationCodeRequestAsync_ThrowsInvalidOperationException_WhenErrorIsNotNull()
+        {
+            // Arrange
+            var config = new OAuthConnectionConfig();
+            var service = CreateService(null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code", "error"));
+        }
+
+
+        [Fact]
+        public async Task CreateAuthorizationCodeRequestAsync_ReturnsOAuthTokenResponse_WhenSuccessful()
+        {
+            // Arrange
+            var config = new OAuthConnectionConfig();
+            var service = CreateService(null);
+
+            // Act
+            var result = await service.CreateAuthorizationCodeRequestAsync(config, "code", null);
+
+            // Assert
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task CreateAuthorizationCodeRequestAsync_ThrowsInvalidOperationException_WhenStatusCodeIsNotSuccess()
+        {
+            // Arrange
+            Action<Mock<IAuthorizationCodeFlowService>> mockSetup = (m) =>
+            {
+                m.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Content = new StringContent("Bad Request")
+                });
+            };
+            var config = new OAuthConnectionConfig();
+            var service = CreateService(null, mockSetup);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code", null));
+        }
+
+
 
         private static string SampleHttpResponse()
         {

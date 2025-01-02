@@ -100,6 +100,38 @@ namespace Luval.AuthMate.Core.Services
         }
 
         /// <summary>
+        /// Deletes an application connection based on the connection ID.
+        /// </summary>
+        /// <param name="connectionId">The ID of the connection to delete.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        /// <exception cref="ArgumentException">Thrown when the connectionId is invalid.</exception>
+        /// <exception cref="Exception">Thrown when an error occurs during the deletion process.</exception>
+        public async Task DeleteConnectionAsync(ulong connectionId, CancellationToken cancellationToken = default)
+        {
+            if (connectionId == 0) throw new ArgumentException("Invalid connection ID", nameof(connectionId));
+
+            try
+            {
+                var connection = await _context.AppConnections.FindAsync(new object[] { connectionId }, cancellationToken);
+                if (connection == null)
+                {
+                    _logger.LogWarning("AppConnection with ID {0} not found", connectionId);
+                    throw new InvalidOperationException(string.Format("AppConnection with ID {0} not found", connectionId));
+                }
+
+                _context.AppConnections.Remove(connection);
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("AppConnection with ID {0} deleted successfully", connectionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while deleting the AppConnection with ID {0}", connectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Retrieves an application connection based on the provider name and account ID.
         /// </summary>
         /// <param name="providerName">The name of the provider.</param>
@@ -163,15 +195,14 @@ namespace Luval.AuthMate.Core.Services
 
             try
             {
-                var tokenResponse = await _codeFlowService.PostAuthorizationCodeRequestAsync(config, code, cancellationToken);
-
-                if (!tokenResponse.IsSuccessStatusCode)
+                var res = await _codeFlowService.PostAuthorizationCodeRequestAsync(config, code, cancellationToken);
+                if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Failed to get token. Status code: {StatusCode}", tokenResponse.StatusCode);
+                    _logger.LogError("Failed to get token. Status code: {StatusCode}", res.StatusCode);
                     throw new InvalidOperationException("Failed to get token");
                 }
 
-                var tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync();
+                var tokenResponseContent = await res.Content.ReadAsStringAsync();
                 var tokenData = OAuthTokenResponse.Success(JsonDocument.Parse(tokenResponseContent));
 
                 if (tokenData == null)
