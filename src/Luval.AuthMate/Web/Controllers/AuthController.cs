@@ -116,7 +116,7 @@ namespace Luval.AuthMate.Web.Controllers
             OAuthTokenResponse tokenResponse;
             try
             {
-                tokenResponse = await _appConnection.CreateAuthorizationCodeRequestAsync(config, code, error);
+                tokenResponse = await _appConnection.CreateAuthorizationCodeRequestAsync(config, code);
             }
             catch (InvalidOperationException invEx)
             {
