@@ -24,7 +24,7 @@
 </script>
 
 <FluentButton @onclick="OnClickNavigate">
-    <FluentIcon Value="@(new AuthMateIcons.GoogleLogo())" Color="@IconColor" Slot="@IconSlot" />
+    <FluentIcon Value="@IconValue" Color="@IconColor" Slot="@IconSlot" />
     @ButtonText
 </FluentButton>
 
@@ -40,7 +40,13 @@
     /// Gets or sets the URL to navigate to when the button is clicked.
     /// </summary>
     [Parameter]
-    public string NavigateTo { get; set; } = "/auth/google-login";
+    public string NavigateTo { get; set; } = "/api/auth/login";
+
+    /// <summary>
+    /// Gets or sets the name of the authenticator provider i.e. Google, Facebook, Microsoft, etc.
+    /// </summary>
+    [Parameter]
+    public string ProviderName { get; set; } = "Google";
 
     /// <summary>
     /// Gets or sets the return URL after authentication.
@@ -74,7 +80,7 @@
         var info = string.Empty;
         if (DeviceInfo != null) info = DeviceInfo.ToBase64();
         info = HttpUtility.HtmlEncode(info);
-        Navigation.NavigateTo(string.Format("{0}?deviceInfo={1}&returnUrl={2}", NavigateTo, info, HttpUtility.HtmlEncode(ReturnUrl)));
+        Navigation.NavigateTo(string.Format("{0}?provider={1}&deviceInfo={2}&returnUrl={3}", NavigateTo, ProviderName, info, HttpUtility.HtmlEncode(ReturnUrl)));
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

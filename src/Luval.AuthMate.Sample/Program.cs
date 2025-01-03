@@ -14,31 +14,9 @@ namespace Luval.AuthMate.Sample
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            //TODO: Add config settings
+            //TODO: Add config settings, see: https://github.com/marinoscar/AuthMate?tab=readme-ov-file#appsettingsjson
 
-            /*
-             * 
-             * "OAuthProviders": {
-             *      "Google": {
-             *        "ClientID": "your-client-id",
-             *        "OwnerEmail": "your-email"
-             *        "AuthorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
-             *        "TokenEndpoint": "https://oauth2.googleapis.com/token",
-             *        "UserInfoEndpoint": "https://www.googleapis.com/oauth2/v3/userinfo",
-             *        "CodeFlowRedirectUri": "",
-             *        "Scopes": "https://www.googleapis.com/auth/gmail.readonly"
-             *      }
-             * 
-            */
-
-            //TODO: Add the configuration secret
-
-            /*
-             *
-             * "OAuthProviders:Google:ClientSecret": "your-secret"
-             * "AuthMate:BearingTokenKey": "your-key"
-             * 
-             */
+            //TODO: Add the configuration secret, see: https://github.com/marinoscar/AuthMate?tab=readme-ov-file#appsettingsjson
 
             var config = builder.Configuration;
 
@@ -88,12 +66,13 @@ namespace Luval.AuthMate.Sample
 
             app.UseHttpsRedirection();
 
-            //Map the controllers and the razor components
-            app.MapControllers();
             app.UseRouting();
             //Add the authentication and authorization
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+
+            //Map the controllers and the razor components
+            app.MapControllers();
 
             app.UseStaticFiles();
             app.UseAntiforgery();

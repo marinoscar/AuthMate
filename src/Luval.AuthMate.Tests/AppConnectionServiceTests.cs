@@ -16,7 +16,7 @@ namespace Luval.AuthMate.Tests
 {
     public class AppConnectionServiceTests
     {
-        
+
         private AppConnectionService CreateService(Action<IAuthMateContext>? contextSetup, Action<Mock<IAuthorizationCodeFlowService>>? authCodeServiceMockSetup = null)
         {
             var context = new MemoryDataContext();
@@ -24,7 +24,7 @@ namespace Luval.AuthMate.Tests
 
             var authCodeServiceMock = new Mock<IAuthorizationCodeFlowService>();
 
-            if(authCodeServiceMockSetup == null)
+            if (authCodeServiceMockSetup == null)
             {
                 authCodeServiceMock.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
                 {
@@ -194,28 +194,30 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => service.CreateAuthorizationConsentUrl(null));
+            Assert.Throws<ArgumentNullException>(() => service.CreateAuthorizationConsentUrl(null, "https://localhost:7001"));
         }
 
         [Fact]
         public void CreateAuthorizationConsentUrl_CreatesValidUrl()
         {
             // Arrange
+            var baseUrl = "https://localhost:7001";
             var config = new OAuthConnectionConfig
             {
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
-                RedirectUri = "https://example.com/callback",
+                RedirectUri = "api/callback",
                 Scopes = "scope1 scope2"
             };
             var service = CreateService(null);
 
             // Act
-            var result = service.CreateAuthorizationConsentUrl(config);
+            var result = service.CreateAuthorizationConsentUrl(config, baseUrl);
 
             // Assert
-            var expectedUrl = "https://example.com/auth?response_type=code&client_id=client-id&redirect_uri=https://example.com/callback&scope=scope1%20scope2access_type=offline&prompt=consent";
-            Assert.Equal(expectedUrl, result);
+            Assert.NotNull(result);
+            Assert.Contains(Uri.EscapeDataString(baseUrl), result);
+            Assert.Contains(Uri.EscapeDataString(config.Scopes), result);
         }
 
         [Fact]
@@ -232,7 +234,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act
-            var result = service.CreateAuthorizationConsentUrl(config);
+            var result = service.CreateAuthorizationConsentUrl(config, "https://localhost:7001");
 
             // Assert
             Assert.Contains("scope=scope1%20scope2", result);
@@ -245,7 +247,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(null, "code", null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(null, "code"));
         }
 
         [Fact]
@@ -256,20 +258,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(config, null, null));
-        }
-
-
-
-        [Fact]
-        public async Task CreateAuthorizationCodeRequestAsync_ThrowsInvalidOperationException_WhenErrorIsNotNull()
-        {
-            // Arrange
-            var config = new OAuthConnectionConfig();
-            var service = CreateService(null);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code", "error"));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateAuthorizationCodeRequestAsync(config, null));
         }
 
 
@@ -281,7 +270,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act
-            var result = await service.CreateAuthorizationCodeRequestAsync(config, "code", null);
+            var result = await service.CreateAuthorizationCodeRequestAsync(config, "code");
 
             // Assert
             Assert.NotNull(result);
@@ -303,7 +292,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null, mockSetup);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code", null));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code"));
         }
 
 

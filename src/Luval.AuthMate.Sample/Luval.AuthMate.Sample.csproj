@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Luval.AuthMate.Blazor\Luval.AuthMate.Blazor.csproj" />
     <ProjectReference Include="..\Luval.AuthMate.Sqlite\Luval.AuthMate.Sqlite.csproj" />
   </ItemGroup>
 </Project>

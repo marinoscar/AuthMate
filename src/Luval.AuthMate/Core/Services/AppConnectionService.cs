@@ -2,6 +2,7 @@
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
@@ -168,17 +169,22 @@ namespace Luval.AuthMate.Core.Services
         /// Creates the authorization consent URL for the OAuth provider.
         /// </summary>
         /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="baseUrl">The base URL of the application.</param>
         /// <returns>The authorization consent URL.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the config is null.</exception>
-        public string CreateAuthorizationConsentUrl(OAuthConnectionConfig config)
+        public string CreateAuthorizationConsentUrl(OAuthConnectionConfig config, string baseUrl)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
+            if(string.IsNullOrEmpty(baseUrl)) throw new ArgumentNullException(nameof(baseUrl));
+
+            var uri = new UriBuilder(baseUrl);
+            uri.Path = config.RedirectUri;
 
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                        $"&client_id={config.ClientId}" +
-                       $"&redirect_uri={config.RedirectUri}" +
+                       $"&redirect_uri={Uri.EscapeDataString(uri.Uri.ToString())}" +
                        $"&scope={Uri.EscapeDataString(config.Scopes)}" +
-                       "access_type=offline&prompt=consent";
+                       "&access_type=offline&prompt=consent";
         }
 
         /// <summary>
@@ -186,15 +192,13 @@ namespace Luval.AuthMate.Core.Services
         /// </summary>
         /// <param name="config">The OAuth connection configuration.</param>
         /// <param name="code">The authorization code received from the OAuth provider.</param>
-        /// <param name="error">The error message, if any, received from the OAuth provider.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>The OAuth token response.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the config or code is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown when an error is received or the token request fails.</exception>
-        public async Task<OAuthTokenResponse> CreateAuthorizationCodeRequestAsync(OAuthConnectionConfig config, string code, string? error, CancellationToken cancellationToken = default)
+        public async Task<OAuthTokenResponse> CreateAuthorizationCodeRequestAsync(OAuthConnectionConfig config, string code, CancellationToken cancellationToken = default)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
-            if (!string.IsNullOrEmpty(error)) throw new InvalidOperationException(error);
             if (string.IsNullOrEmpty(code)) throw new ArgumentNullException(nameof(code));
 
             try
@@ -202,7 +206,7 @@ namespace Luval.AuthMate.Core.Services
                 var res = await _codeFlowService.PostAuthorizationCodeRequestAsync(config, code, cancellationToken);
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Failed to get token. Status code: {StatusCode}", res.StatusCode);
+                    _logger.LogError("Failed to get token. Status code: {0} and Message {1}", res.StatusCode, await res.Content.ReadAsStringAsync());
                     throw new InvalidOperationException("Failed to get token");
                 }
 

@@ -1,0 +1,83 @@
+﻿
+<h3>Google Access Token</h3>
+
+<FluentButton OnClick="GetGoogleAccessToken">Get Google Access Token</FluentButton>
+@if (GoogleConnection == null)
+{
+    <h3>No Google Access Token. Click the button to get one</h3>
+}
+@if(GmailReader != null){
+    foreach (var message in GmailReader.GetTop5EmailsAsync().GetAwaiter().GetResult())
+    {
+        <hr>
+        <h2>@message.From</h2>
+        <h2>@message.Subject</h2>
+        <p>@message.Body</p>
+        <hr>
+    }   
+}
+
+@code {
+
+    /// <summary>
+    /// Gets the <see cref="AppConnectionService"/> instance."/>
+    /// </summary>
+    [Inject]
+    public required AppConnectionService ConnectionService { get; set; }
+    /// <summary>
+    /// Gets the <see cref="IConfiguration"/> instance."/>
+    /// </summary>
+    [Inject]
+    public required OAuthConnectionManager ConfigManager { get; set; }
+
+    /// <summary>
+    /// Gets the <see cref="IUserResolver"/> instance.
+    /// </summary>
+    [Inject]
+    public required IUserResolver UserResolver { get; set; }
+
+    /// <summary>
+    /// Gets the <see cref="NavigationManager"/> instance.
+    /// </summary>
+    [Inject]
+    public required NavigationManager Navigation { get; set; }
+
+    /// <summary>
+    /// Gets the <see cref="ILogger"/> instance.
+    /// </summary>
+    [Inject]
+    public required ILogger<AuthCode> Logger { get; set; }
+
+    /// <summary>
+    /// Gets <see cref="GmailReader"/> instance.
+    /// </summary>
+    public GmailReader? GmailReader { get; private set; }
+
+
+
+    private AppConnection? GoogleConnection { get; set; }
+
+    private async Task GetGoogleAccessToken()
+    {
+        var config = ConfigManager.GetConfiguration("Google");
+        var connection = await ConnectionService.GetConnectionAsync("Google", UserResolver.GetUserEmail());
+        if (connection == null)
+        {
+            Logger.LogInformation("No AppConnection object available, creating one");
+            //Need to navidate to get one
+            Navigation.NavigateTo("/api/auth/consent?provider=google");
+            return;
+        }
+        if(connection != null && connection.UtcExpiresOn < DateTime.UtcNow){
+            Logger.LogInformation("The token has expired, need to refresh it");
+            connection = await ConnectionService.RefreshTokenAsync(config, connection);
+            return;
+        }
+        GoogleConnection = connection;
+        if(GoogleConnection != null){
+            GmailReader = new GmailReader(GoogleConnection.AccessToken);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+}
