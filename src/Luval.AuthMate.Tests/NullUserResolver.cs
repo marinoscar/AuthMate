@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Core.Interfaces;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 
 namespace Luval.AuthMate.Tests
 {
@@ -24,6 +25,14 @@ namespace Luval.AuthMate.Tests
         public string GetUserName()
         {
             return DefaultResult;
+        }
+
+        public AppUser GetUser()
+        {
+            return new AppUser()
+            {
+                Email = DefaultResult
+            };
         }
     }
 }
