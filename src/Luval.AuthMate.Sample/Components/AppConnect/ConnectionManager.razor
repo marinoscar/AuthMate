@@ -75,6 +75,7 @@ OnClick="@(() => OpenDialogAsync(null, false))">
             var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
             config.Scopes = dtp.Scopes;
             var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
+            await InvokeAsync(() => Navigation.NavigateTo(url)); 
         }
     }
 
