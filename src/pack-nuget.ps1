@@ -93,11 +93,11 @@ foreach ($csprojFile in $csprojFiles) {
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "Build and pack completed successfully for $($csprojFile.Name)."
 					# Publishing the nuget package
-					$folderLocation = [System.IO.Path]::GetDirectoryName($csprojFile.FullName)
 					# Find the generated .nupkg file
-					$nupkgFile = Get-ChildItem -Path $folderLocation -Filter *.nupkg | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+					Write-Output "Looking for packages to publish at $($projectDirectory)"
+					$nupkgFile = Get-ChildItem -Path $projectDirectory -Filter *.nupkg -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 					if (-Not $nupkgFile) {
-						Write-Error "No .nupkg file found in $projectPath"
+						Write-Error "No .nupkg file found in $($projectDirectory)"
 						exit 1
 					}
 					# Push the package to NuGet
@@ -105,9 +105,9 @@ foreach ($csprojFile in $csprojFiles) {
 					Write-Output "NuGet package published successfully."
 					
 					# Find the generated .snupkg symbos file
-					$nupkgSymFile = Get-ChildItem -Path $folderLocation -Filter *.snupkg | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+					$nupkgSymFile = Get-ChildItem -Path $projectDirectory -Filter *.snupkg -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 					if (-Not $nupkgFile) {
-						Write-Warning "No .nupkg file found in $projectPath"
+						Write-Warning "No .nupkg file found in $($projectDirectory)"
 					}
 					else{
 						# Push the package to Symbos NuGet
