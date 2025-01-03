@@ -135,7 +135,7 @@ namespace Luval.AuthMate.Web.Controllers
             if(!string.IsNullOrEmpty(email))
                 connection.OwnerEmail = email;
 
-            if (stateCheck != null && string.IsNullOrEmpty(stateCheck.Scopes))
+            if (stateCheck != null && !string.IsNullOrEmpty(stateCheck.Scopes))
                 connection.Scope = stateCheck.Scopes;
 
             await _appConnection.PersistConnectionAsync(connection);
