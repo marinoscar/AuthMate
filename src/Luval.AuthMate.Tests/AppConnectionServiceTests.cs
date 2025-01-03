@@ -201,20 +201,23 @@ namespace Luval.AuthMate.Tests
         public void CreateAuthorizationConsentUrl_CreatesValidUrl()
         {
             // Arrange
+            var baseUrl = "https://localhost:7001";
             var config = new OAuthConnectionConfig
             {
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
-                RedirectUri = "https://example.com/callback",
+                RedirectUri = "api/callback",
                 Scopes = "scope1 scope2"
             };
             var service = CreateService(null);
 
             // Act
-            var result = service.CreateAuthorizationConsentUrl(config, "https://localhost:7001");
+            var result = service.CreateAuthorizationConsentUrl(config, baseUrl);
 
             // Assert
-            var expectedUrl = "https://example.com/auth?response_type=code&client_id=client-id&redirect_uri=https://example.com/callback&scope=scope1%20scope2access_type=offline&prompt=consent";
+            var expectedUrl = "https://example.com/auth?response_type=code&client_id=client-id&redirect_uri=https://localhost:7001/api/callback&scope=scope1%20scope2access_type=offline&prompt=consent";
+            Assert.NotNull(result);
+            Assert.Contains(baseUrl, result);
             Assert.Equal(expectedUrl, result);
         }
 
