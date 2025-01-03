@@ -1,4 +1,5 @@
 ﻿using Luval.AuthMate.Infrastructure.Configuration;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace Luval.AuthMate.Sample.Infrastructure.Data
 {
@@ -41,5 +42,20 @@ namespace Luval.AuthMate.Sample.Infrastructure.Data
         /// Gets or sets the date and time when the connection was last modified.
         /// </summary>
         public DateTime? ModifiedOn { get; set; }
+
+        /// <summary>
+        /// Gets or sets the additional data associated with the connection.
+        /// </summary>
+        public bool HasExpired => ExpiresOn.HasValue && ExpiresOn.Value < DateTime.UtcNow;
+
+        /// <summary>
+        /// Gets the status of the connection.
+        /// </summary>
+        public string Status => HasExpired ? "Expired" : "Active";
+
+        /// <summary>
+        /// Gets the appearance of the connection status.
+        /// </summary>
+        public Appearance StatusAppearance => HasExpired ? Appearance.Neutral : Appearance.Accent;
     }
 }
