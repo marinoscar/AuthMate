@@ -127,6 +127,11 @@ namespace Luval.AuthMate.Web.Controllers
             var user = this.ControllerContext.HttpContext.User.ToUser();
             var connection = AppConnection.Create(tokenResponse, config, user);
 
+            //gets the user information
+            var email = await _appConnection.GetConnectionUserInformation(config, tokenResponse.AccessToken ?? "");
+            if(!string.IsNullOrEmpty(email))
+                connection.OwnerEmail = email;
+
             await _appConnection.PersistConnectionAsync(connection);
 
             return Redirect("/");
