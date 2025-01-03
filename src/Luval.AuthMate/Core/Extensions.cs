@@ -76,6 +76,18 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>  
+        /// Retrieves the base URI from the current HTTP context.  
+        /// </summary>  
+        /// <param name="context">The HttpContext instance providing access to the current HTTP context.</param>  
+        /// <returns>The base URI if available; otherwise, <c>null</c>.</returns>  
+        public static Uri? GetBaseUri(this HttpContext context)
+        {
+            if (context == null) return null;
+            if (context.Request == null) return null;
+            return GetBaseUri(context.Request);
+        }
+
+        /// <summary>  
         /// Retrieves the base URI from the specified HTTP request.  
         /// </summary>  
         /// <param name="request">The HttpRequest instance containing the request data.</param>  
