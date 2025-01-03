@@ -2,10 +2,10 @@
 
 <FluentDataGrid Items="@Connections">
     <PropertyColumn Title="Name" Property="@(p => p.ProviderName)" Sortable="true" />
-    <PropertyColumn Title="Email" Property="@(p => p.OwnerEmail)" Sortable="true" />
-    <PropertyColumn Title="Scopes" Property="@(p => p.Scope)" Sortable="true" />
-    <PropertyColumn Title="IssuedOn" Property="@(p => p.UtcIssuedOn)" Format="yyyy-MM-dd" Sortable="true" />
-    <PropertyColumn Title="ExpireOn" Property="@(p => p.UtcExpiresOn)" Format="yyyy-MM-dd" Sortable="true" />
+    <PropertyColumn Title="Email" Property="@(p => p.UserAccount)" Sortable="true" />
+    <PropertyColumn Title="Scopes" Property="@(p => p.Scopes)" Sortable="true" />
+    <PropertyColumn Title="IssuedOn" Property="@(p => p.IssuedOn)" Format="yyyy-MM-dd" Sortable="true" />
+    <PropertyColumn Title="ExpireOn" Property="@(p => p.ExpiresOn)" Format="yyyy-MM-dd" Sortable="true" />
     <TemplateColumn Title="Actions" Align="@Align.End">
         <FluentButton aria-label="Edit item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => OpenDialogAsync(context))" />
         <FluentButton aria-label="Delete item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
@@ -13,14 +13,17 @@
 </FluentDataGrid>
 <div style="padding:10px;"></div>
 <FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
-Appearance="Appearance.Accent"
-OnClick="@(() => OpenDialogAsync(null, false))">
+              Appearance="Appearance.Accent"
+              OnClick="@(() => OpenDialogAsync(null, false))">
     Add Connection
 </FluentButton>
 
 
 
 @code {
+
+    [Inject]
+    public IUserResolver UserResolver { get; set; } = default!;
 
     [Inject]
     public required IDialogService DialogService { get; set; } = default!;
@@ -34,27 +37,33 @@ OnClick="@(() => OpenDialogAsync(null, false))">
     [Inject]
     public required NavigationManager Navigation { get; set; }
 
-    public IQueryable<AppConnection> Connections { get; set; }
+    public IQueryable<ConnectionDto> Connections { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            Connections = await ConnectionService.GetAllConnectionsAsync(); // get all connections for the account
+            var tz = UserResolver.GetUserTimezone();
+            Connections = (await ConnectionService.GetAllConnectionsAsync())
+                .Select(i => new ConnectionDto()
+                    {
+                        ExpiresOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcExpiresOn, tz),
+                        IssuedOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcIssuedOn, tz),
+                        ModifiedOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcUpdatedOn.Value, tz),
+                        ProviderName = i.ProviderName,
+                        Scopes = i.Scope,
+                        UserAccount = i.OwnerEmail,
+                        Id = i.Id
+                    });
+            // get all connections for the account
             await InvokeAsync(StateHasChanged);
         }
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task OpenDialogAsync(AppConnection? context, bool isEdit = true)
+    private async Task OpenDialogAsync(ConnectionDto? context, bool isEdit = true)
     {
-        if (context == null) context = new AppConnection();
-        ConnectionDto connection = new()
-            {
-                Id = context.Id,
-                ProviderName = context.ProviderName,
-                Scopes = context.Scope
-            };
+        if (context == null) return;
         DialogParameters parameters = new()
             {
                 Title = $"Connection Information",
@@ -67,15 +76,16 @@ OnClick="@(() => OpenDialogAsync(null, false))">
                 PreventScroll = true
             };
 
-        var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(connection, parameters);
+        var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(context, parameters);
         DialogResult? result = await dialog.Result;
 
-        if(!isEdit){
+        if (!isEdit)
+        {
             var dtp = result.Data as ConnectionDto;
             var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
             config.Scopes = dtp.Scopes;
             var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
-            await InvokeAsync(() => Navigation.NavigateTo(url)); 
+            await InvokeAsync(() => Navigation.NavigateTo(url));
         }
     }
 
