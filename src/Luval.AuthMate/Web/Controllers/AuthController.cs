@@ -94,6 +94,7 @@ namespace Luval.AuthMate.Web.Controllers
         public async Task<IActionResult> CodeCallback([FromQuery] string? state, [FromQuery] string code, [FromQuery] string? error)
         {
             var provider = "Google";
+            OAuthStateCheck stateCheck = null;
             if (!string.IsNullOrEmpty(error))
             {
                 return BadRequest($"Error from OAuth provider: {error}");
@@ -106,12 +107,14 @@ namespace Luval.AuthMate.Web.Controllers
 
             if (!string.IsNullOrEmpty(state))
             {
-                var check = OAuthStateCheck.FromString(state);
-                provider = check.ProviderName;
+                stateCheck = OAuthStateCheck.FromString(state);
+                provider = stateCheck.ProviderName;
             }
 
 
             var config = _connectionManager.GetConfiguration(provider);
+            var scopes = config?.Scopes ?? "";
+
             if (config == null) return BadRequest("Provider not supported.");
 
             OAuthTokenResponse tokenResponse;
@@ -131,6 +134,9 @@ namespace Luval.AuthMate.Web.Controllers
             var email = await _appConnection.GetConnectionUserInformation(config, tokenResponse.AccessToken ?? "");
             if(!string.IsNullOrEmpty(email))
                 connection.OwnerEmail = email;
+
+            if (stateCheck != null && string.IsNullOrEmpty(stateCheck.Scopes))
+                connection.Scope = stateCheck.Scopes;
 
             await _appConnection.PersistConnectionAsync(connection);
 
