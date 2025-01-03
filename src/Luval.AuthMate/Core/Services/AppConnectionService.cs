@@ -144,7 +144,7 @@ namespace Luval.AuthMate.Core.Services
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>The application connection that matches the specified provider name and account ID.</returns>
         /// <exception cref="ArgumentNullException">Thrown when providerName is null or empty.</exception>
-        public async Task<AppConnection> GetConnectionAsync(string providerName, ulong accountId, CancellationToken cancellationToken = default)
+        public async Task<AppConnection?> GetConnectionAsync(string providerName, ulong accountId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
 
