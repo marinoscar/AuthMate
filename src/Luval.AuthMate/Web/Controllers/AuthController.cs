@@ -85,14 +85,15 @@ namespace Luval.AuthMate.Web.Controllers
         /// <summary>
         /// Handles the callback from the OAuth provider after authorization code is received.
         /// </summary>
-        /// <param name="provider">The name of the OAuth provider.</param>
+        /// <param name="state">The state of the OAuth request.</param>
         /// <param name="code">The authorization code received from the OAuth provider.</param>
         /// <param name="error">Optional error message from the OAuth provider.</param>
         /// <returns>An <see cref="IActionResult"/> that processes the authorization code and returns user info.</returns>
         [AllowAnonymous]
         [HttpGet("codecallback")]
-        public async Task<IActionResult> CodeCallback([FromQuery] string? provider, [FromQuery] string code, [FromQuery] string? error)
+        public async Task<IActionResult> CodeCallback([FromQuery] string? state, [FromQuery] string code, [FromQuery] string? error)
         {
+            var provider = "Google";
             if (!string.IsNullOrEmpty(error))
             {
                 return BadRequest($"Error from OAuth provider: {error}");
@@ -103,10 +104,10 @@ namespace Luval.AuthMate.Web.Controllers
                 return BadRequest("Authorization code is missing.");
             }
 
-            if (string.IsNullOrEmpty(provider))
+            if (string.IsNullOrEmpty(state))
             {
-                provider = "Google";
-                //return BadRequest("Provider name missing.");
+                var check = OAuthStateCheck.FromString(state);
+                provider = check.ProviderName;
             }
 
 
