@@ -194,7 +194,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => service.CreateAuthorizationConsentUrl(null));
+            Assert.Throws<ArgumentNullException>(() => service.CreateAuthorizationConsentUrl(null, "https://localhost:7001"));
         }
 
         [Fact]
@@ -211,7 +211,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act
-            var result = service.CreateAuthorizationConsentUrl(config);
+            var result = service.CreateAuthorizationConsentUrl(config, "https://localhost:7001");
 
             // Assert
             var expectedUrl = "https://example.com/auth?response_type=code&client_id=client-id&redirect_uri=https://example.com/callback&scope=scope1%20scope2access_type=offline&prompt=consent";
@@ -232,7 +232,7 @@ namespace Luval.AuthMate.Tests
             var service = CreateService(null);
 
             // Act
-            var result = service.CreateAuthorizationConsentUrl(config);
+            var result = service.CreateAuthorizationConsentUrl(config, "https://localhost:7001");
 
             // Assert
             Assert.Contains("scope=scope1%20scope2", result);
