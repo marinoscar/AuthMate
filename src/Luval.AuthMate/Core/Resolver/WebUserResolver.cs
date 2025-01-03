@@ -66,5 +66,34 @@ namespace Luval.AuthMate.Core.Resolver
 
             return _context.HttpContext.User.ToUser();
         }
+
+        /// <summary>
+        /// Gets the timezone of the current web user.
+        /// </summary>
+        /// <returns>
+        /// The timezone of the current web user as a <see cref="TimeZoneInfo"/> object.
+        /// If the user is not authenticated or the timezone is not set, returns "Central Standard Time".
+        /// </returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public TimeZoneInfo GetUserTimezone()
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+            var user = GetUser();
+            if (user == null) return tz;
+            if (user.Timezone == null) return tz;
+            return TimeZoneInfo.FindSystemTimeZoneById(user.Timezone);
+        }
+
+        /// <summary>
+        /// Converts the specified UTC date and time to the current web user's local date and time.
+        /// </summary>
+        /// <param name="dateTime">The UTC date and time to convert.</param>
+        /// <returns>The converted date and time in the user's local timezone.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public DateTime ConvertToUserDateTime(DateTime dateTime)
+        {
+            var tz = GetUserTimezone();
+            return TimeZoneInfo.ConvertTimeFromUtc(dateTime, tz);
+        }
     }
 }
