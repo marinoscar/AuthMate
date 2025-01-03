@@ -70,8 +70,8 @@ namespace Luval.AuthMate.Web.Controllers
         /// </summary>
         /// <param name="provider">The name of the OAuth provider.</param>
         /// <returns>An <see cref="IActionResult"/> that redirects to the consent URL.</returns>
-        [Authorize]
-        [HttpGet("consent/{provider}")]
+        [AllowAnonymous]
+        [HttpGet("consent")]
         public IActionResult Consent(string provider)
         {
             var config = _connectionManager.GetConfiguration(provider);
