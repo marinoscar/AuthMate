@@ -32,7 +32,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// <summary>
         /// Private constructor to prevent direct instantiation.
         /// </summary>
-        private OAuthStateCheck()
+        public OAuthStateCheck()
         {
 
         }
@@ -57,7 +57,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// <returns>A base64 encoded string representation of the current instance.</returns>
         public override string ToString()
         {
-            return this.ToJson().ToBase64();
+            return this.ToBase64();
         }
 
         /// <summary>
@@ -68,9 +68,8 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// <exception cref="ArgumentException">Thrown when the value cannot be parsed.</exception>
         public static OAuthStateCheck FromString(string value)
         {
-            var bytes = Convert.FromBase64String(value);
-            var json = Encoding.UTF8.GetString(bytes);
-            return JsonSerializer.Deserialize<OAuthStateCheck>(json) ?? throw new ArgumentException("Unable to parse the value argument");
+            if(string.IsNullOrEmpty(value)) throw new ArgumentException("Value cannot be null or empty");
+            return value.FromBase64<OAuthStateCheck>();
         }
 
         /// <summary>
