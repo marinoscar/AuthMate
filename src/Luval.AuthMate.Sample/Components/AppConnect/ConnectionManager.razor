@@ -1,0 +1,48 @@
+﻿@using Luval.AuthMate.Sample.Infrastructure.Data
+
+<FluentDataGrid Items="@Connections">
+    <PropertyColumn Title="Name" Property="@(p => p.ProviderName)" Sortable="true" />
+    <PropertyColumn Title="Email" Property="@(p => p.OwnerEmail)" Sortable="true" />
+    <PropertyColumn Title="Scopes" Property="@(p => p.Scope)" Sortable="true" />
+    <PropertyColumn Title="IssuedOn" Property="@(p => p.UtcIssuedOn)" Format="yyyy-MM-dd" Sortable="true" />
+    <PropertyColumn Title="ExpireOn" Property="@(p => p.UtcExpiresOn)" Format="yyyy-MM-dd" Sortable="true" />
+    <TemplateColumn Title="Actions" Align="@Align.End">
+        <FluentButton aria-label="Edit item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => OpenDialogAsync(context))" />
+        <FluentButton aria-label="Delete item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
+    </TemplateColumn>
+</FluentDataGrid>
+
+
+@code {
+
+    public IQueryable<AppConnection> Connections { get; set; } = new List<AppConnection>().AsQueryable();
+    [Inject]
+    public IDialogService DialogService { get; set; } = default!;
+
+    private async Task OpenDialogAsync(AppConnection? context)
+    {
+        if (context == null) return;
+        ConnectionDto connection = new()
+            {
+                Id = context.Id,
+                ProviderName = context.ProviderName,
+                Scopes = context.Scope
+            };
+        DialogParameters parameters = new()
+            {
+                Title = $"Connection Information",
+                PrimaryAction = "Save",
+                PrimaryActionEnabled = false,
+                SecondaryAction = "Cancel",
+                Width = "500px",
+                TrapFocus = true,
+                Modal = true,
+                PreventScroll = true
+            };
+
+        var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(connection, parameters);
+
+        DialogResult? result = await dialog.Result;
+    }
+
+}
