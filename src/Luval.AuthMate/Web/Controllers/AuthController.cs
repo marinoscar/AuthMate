@@ -104,7 +104,7 @@ namespace Luval.AuthMate.Web.Controllers
                 return BadRequest("Authorization code is missing.");
             }
 
-            if (string.IsNullOrEmpty(state))
+            if (!string.IsNullOrEmpty(state))
             {
                 var check = OAuthStateCheck.FromString(state);
                 provider = check.ProviderName;
