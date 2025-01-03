@@ -161,13 +161,28 @@ namespace Luval.AuthMate.Core.Services
         public async Task<IQueryable<AppConnection>> GetConnectionsAsync(Expression<Func<AppConnection, bool>> filterExpression, CancellationToken cancellationToken = default)
         {
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
-
-            //always filter by account id
-            var query = _context.AppConnections.Where(i => i.AccountId == _userResolver.GetUser().AccountId);
-            query = query.Where(filterExpression);
-
-            return await Task.Run(() => query, cancellationToken);
+            var accountId = _userResolver.GetUser().AccountId;
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId).Where(filterExpression), cancellationToken);
         }
+
+        /// <summary>
+        /// Retrieves all application connections for the current user's account.
+        /// </summary>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A collection of application connections for the current user's account.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the user is not authenticated.</exception>
+        /// <remarks>
+        /// This method retrieves all application connections associated with the current user's account.
+        /// It uses the user resolver to get the current user's account ID and filters the connections
+        /// based on this account ID.
+        /// </remarks>
+        public async Task<IQueryable<AppConnection>> GetAllConnectionsAsync(CancellationToken cancellationToken = default)
+        {
+            var accountId = _userResolver.GetUser().AccountId;
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId), cancellationToken);
+        }
+
+
 
         /// <summary>
         /// Creates the authorization consent URL for the OAuth provider.
@@ -184,11 +199,34 @@ namespace Luval.AuthMate.Core.Services
             var uri = new UriBuilder(baseUrl);
             uri.Path = config.RedirectUri;
 
+            if(config.Name.ToLower().Equals("google")) return GetGoogleConsentUrl(config, uri.Uri.ToString());
+            if (config.Name.ToLower().Equals("microsoft")) return GetMicrosoftConsentUrl(config, uri.Uri.ToString());
+
+            throw new NotImplementedException($"The provider {config.Name} is not implemented");
+        }
+
+        private string GetGoogleConsentUrl(OAuthConnectionConfig config, string callback)
+        {
+            var stateCheck = OAuthStateCheck.Create(config.Name).ToString();
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                        $"&client_id={config.ClientId}" +
-                       $"&redirect_uri={Uri.EscapeDataString(uri.Uri.ToString())}" +
+                       $"&redirect_uri={Uri.EscapeDataString(callback)}" +
                        $"&scope={Uri.EscapeDataString(config.Scopes)}" +
+                       $"&state={stateCheck}" +
                        "&access_type=offline&prompt=consent";
+        }
+
+        private string GetMicrosoftConsentUrl(OAuthConnectionConfig config, string callback)
+        {
+            var stateCheck = OAuthStateCheck.Create(config.Name).ToString();
+            var newScopes = "offline_access " + config.Scopes;
+            return $"{config.AuthorizationEndpoint}?response_type=code" +
+                   $"&client_id={config.ClientId}" +
+                   $"&redirect_uri={Uri.EscapeDataString(callback)}" +
+                   $"&scope={Uri.EscapeDataString(newScopes)}" +
+                   $"&state={stateCheck}" +
+                   "&response_mode=query" +
+                   "&prompt=consent";
         }
 
         /// <summary>
