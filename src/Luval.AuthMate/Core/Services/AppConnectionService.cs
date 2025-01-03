@@ -184,7 +184,7 @@ namespace Luval.AuthMate.Core.Services
                        $"&client_id={config.ClientId}" +
                        $"&redirect_uri={uri.Uri.ToString()}" +
                        $"&scope={Uri.EscapeDataString(config.Scopes)}" +
-                       "access_type=offline&prompt=consent";
+                       "&access_type=offline&prompt=consent";
         }
 
         /// <summary>
