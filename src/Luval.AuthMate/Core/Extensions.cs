@@ -100,6 +100,8 @@ namespace Luval.AuthMate.Core
                 Scheme = request.Scheme,
                 Host = request.Host.Host,
             };
+            if (request.Host.Port != null && request.Host.Port != 80) uri.Port = request.Host.Port.Value;
+
             return uri.Uri;
         }
 
