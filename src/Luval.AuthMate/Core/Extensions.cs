@@ -5,6 +5,7 @@ using Luval.AuthMate.Core.Services;
 using Luval.AuthMate.Infrastructure.Configuration;
 using Luval.AuthMate.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -59,6 +60,51 @@ namespace Luval.AuthMate.Core
         public static string ToBase64(this object obj)
         {
             return Convert.ToBase64String(ToBytes(obj));
+        }
+
+        /// <summary>  
+        /// Retrieves the base URI from the current HTTP context.  
+        /// </summary>  
+        /// <param name="contextAccessor">The IHttpContextAccessor instance providing access to the current HTTP context.</param>  
+        /// <returns>The base URI if available; otherwise, <c>null</c>.</returns>  
+        public static Uri? GetBaseUri(this IHttpContextAccessor contextAccessor)
+        {
+            if (contextAccessor == null) return null;
+            if (contextAccessor.HttpContext == null) return null;
+            if (contextAccessor.HttpContext.Request == null) return null;
+            return GetBaseUri(contextAccessor.HttpContext.Request);
+        }
+
+        /// <summary>  
+        /// Retrieves the base URI from the specified HTTP request.  
+        /// </summary>  
+        /// <param name="request">The HttpRequest instance containing the request data.</param>  
+        /// <returns>The base URI if available; otherwise, <c>null</c>.</returns>  
+        public static Uri? GetBaseUri(this HttpRequest request)
+        {
+            if (request == null) return null;
+            var uri = new UriBuilder
+            {
+                Scheme = request.Scheme,
+                Host = request.Host.Host,
+            };
+            return uri.Uri;
+        }
+
+        /// <summary>  
+        /// Retrieves the base URI from the specified URI.  
+        /// </summary>  
+        /// <param name="uri">The URI instance containing the URI data.</param>  
+        /// <returns>The base URI if available; otherwise, <c>null</c>.</returns>  
+        public static Uri? GetBaseUri(this Uri uri)
+        {
+            if (uri == null) return null;
+            var uriB = new UriBuilder
+            {
+                Scheme = uri.Scheme,
+                Host = uri.Host,
+            };
+            return uri;
         }
 
         /// <summary>
