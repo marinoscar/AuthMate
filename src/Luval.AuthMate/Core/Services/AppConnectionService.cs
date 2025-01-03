@@ -2,6 +2,7 @@
 using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
@@ -168,15 +169,20 @@ namespace Luval.AuthMate.Core.Services
         /// Creates the authorization consent URL for the OAuth provider.
         /// </summary>
         /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="baseUrl">The base URL of the application.</param>
         /// <returns>The authorization consent URL.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the config is null.</exception>
-        public string CreateAuthorizationConsentUrl(OAuthConnectionConfig config)
+        public string CreateAuthorizationConsentUrl(OAuthConnectionConfig config, string baseUrl)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
+            if(string.IsNullOrEmpty(baseUrl)) throw new ArgumentNullException(nameof(baseUrl));
+
+            var uri = new UriBuilder(baseUrl);
+            uri.Path = config.RedirectUri;
 
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                        $"&client_id={config.ClientId}" +
-                       $"&redirect_uri={config.RedirectUri}" +
+                       $"&redirect_uri={uri.Uri.ToString()}" +
                        $"&scope={Uri.EscapeDataString(config.Scopes)}" +
                        "access_type=offline&prompt=consent";
         }
