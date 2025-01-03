@@ -42,7 +42,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// </summary>
         /// <param name="providerName">The name of the OAuth provider.</param>
         /// <returns>A new instance of <see cref="OAuthStateCheck"/>.</returns>
-        public OAuthStateCheck Create(string providerName)
+        public static OAuthStateCheck Create(string providerName)
         {
             return new OAuthStateCheck()
             {
