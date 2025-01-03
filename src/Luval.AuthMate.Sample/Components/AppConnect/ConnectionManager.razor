@@ -15,9 +15,22 @@
 
 @code {
 
-    public IQueryable<AppConnection> Connections { get; set; } = new List<AppConnection>().AsQueryable();
     [Inject]
     public IDialogService DialogService { get; set; } = default!;
+
+    [Inject]
+    public AppConnectionService ConnectionService { get; set; } = default!;
+
+    public IQueryable<AppConnection> Connections { get; set; } = new List<AppConnection>().AsQueryable();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Connections = ConnectionService.GetConnectionsAsync()
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
 
     private async Task OpenDialogAsync(AppConnection? context)
     {
