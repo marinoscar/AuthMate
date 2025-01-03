@@ -149,6 +149,12 @@ namespace Luval.AuthMate.Core.Entities
         public uint Version { get; set; }
 
         /// <summary>
+        /// Indicates if the connection access token has expired.
+        /// </summary>
+        [NotMapped]
+        public bool HasExpired => UtcExpiresOn < DateTime.UtcNow;
+
+        /// <summary>
         /// Converts the entity to a JSON string representation.
         /// </summary>
         /// <returns>The JSON string representation of the entity.</returns>
