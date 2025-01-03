@@ -77,7 +77,7 @@ namespace Luval.AuthMate.Web.Controllers
             var config = _connectionManager.GetConfiguration(provider);
             if (config == null) return BadRequest("Provider not supported.");
 
-            var consentUrl = _appConnection.CreateAuthorizationConsentUrl(config);
+            var consentUrl = _appConnection.CreateAuthorizationConsentUrl(config, this.HttpContext.GetBaseUri()?.ToString());
 
             return Redirect(consentUrl);
         }
