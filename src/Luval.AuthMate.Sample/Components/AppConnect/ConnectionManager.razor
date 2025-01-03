@@ -20,7 +20,7 @@
     </TemplateColumn>
 </FluentDataGrid>
 <div style="padding:10px;"></div>
-<FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
+<FluentButton  IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
               Appearance="Appearance.Accent"
               OnClick="@(() => OpenDialogAsync(null, false))">
     Add Connection
@@ -71,7 +71,7 @@
 
     private async Task OpenDialogAsync(ConnectionDto? context, bool isEdit = true)
     {
-        if (context == null) return;
+        if (context == null) context = new ConnectionDto();
         DialogParameters parameters = new()
             {
                 Title = $"Connection Information",
