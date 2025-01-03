@@ -162,7 +162,11 @@ namespace Luval.AuthMate.Core.Services
         {
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
 
-            return await Task.Run(() => _context.AppConnections.Where(filterExpression), cancellationToken);
+            //always filter by account id
+            var query = _context.AppConnections.Where(i => i.AccountId == _userResolver.GetUser().AccountId);
+            query = query.Where(filterExpression);
+
+            return await Task.Run(() => query, cancellationToken);
         }
 
         /// <summary>
