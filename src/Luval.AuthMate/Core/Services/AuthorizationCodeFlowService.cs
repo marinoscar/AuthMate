@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Interfaces;
 using Luval.AuthMate.Infrastructure.Configuration;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,15 +15,18 @@ namespace Luval.AuthMate.Core.Services
     public class AuthorizationCodeFlowService : IAuthorizationCodeFlowService
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpContextAccessor _contextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthorizationCodeFlowService"/> class.
         /// </summary>
         /// <param name="httpClientFactory">The HTTP client factory to create HTTP clients.</param>
+        /// <param name="contextAccessor">The <see cref="IHttpContextAccessor"/> to extract the context information for the requests</param>
         /// <exception cref="ArgumentException">Thrown when <paramref name="httpClientFactory"/> is null.</exception>
-        public AuthorizationCodeFlowService(IHttpClientFactory httpClientFactory)
+        public AuthorizationCodeFlowService(IHttpClientFactory httpClientFactory, IHttpContextAccessor contextAccessor)
         {
             _clientFactory = httpClientFactory ?? throw new ArgumentException(nameof(httpClientFactory));
+            _contextAccessor = contextAccessor ?? throw new ArgumentException(nameof(contextAccessor));
         }
 
         /// <summary>
@@ -35,14 +39,18 @@ namespace Luval.AuthMate.Core.Services
         public virtual async Task<HttpResponseMessage> PostAuthorizationCodeRequestAsync(OAuthConnectionConfig config, string code, CancellationToken cancellationToken = default)
         {
             var client = _clientFactory.CreateClient();
+            var baseUrl = _contextAccessor.GetBaseUri();
+            var redirectUri = new Uri(baseUrl, config.RedirectUri);
+
             var tokenRequestBody = new FormUrlEncodedContent(new[]
             {
                     new KeyValuePair<string, string>("code", code),
                     new KeyValuePair<string, string>("client_id", config.ClientId),
                     new KeyValuePair<string, string>("client_secret", config.ClientSecret),
-                    new KeyValuePair<string, string>("redirect_uri", config.RedirectUri),
+                    new KeyValuePair<string, string>("redirect_uri", redirectUri.ToString()),
                     new KeyValuePair<string, string>("grant_type", "authorization_code")
-                });
+            });
+
             return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
         }
 
