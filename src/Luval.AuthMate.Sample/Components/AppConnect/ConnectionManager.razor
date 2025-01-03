@@ -4,8 +4,16 @@
     <PropertyColumn Title="Name" Property="@(p => p.ProviderName)" Sortable="true" />
     <PropertyColumn Title="Email" Property="@(p => p.UserAccount)" Sortable="true" />
     <PropertyColumn Title="Scopes" Property="@(p => p.Scopes)" Sortable="true" />
-    <PropertyColumn Title="IssuedOn" Property="@(p => p.IssuedOn)" Format="yyyy-MM-dd" Sortable="true" />
-    <PropertyColumn Title="ExpireOn" Property="@(p => p.ExpiresOn)" Format="yyyy-MM-dd" Sortable="true" />
+    <PropertyColumn Title="Issued On" Property="@(p => p.IssuedOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
+    <PropertyColumn Title="Expire On" Property="@(p => p.ExpiresOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
+    <TemplateColumn Title="Status">
+        @if(context.HasExpired){
+            <FluentBadge Circular=true Fill="somevalue" BackgroundColor="red" Color="white">Expired</FluentBadge>
+        }
+        else{
+            <FluentBadge Circular=true Appearance="Appearance.Accent">Active</FluentBadge>
+        }
+    </TemplateColumn>
     <TemplateColumn Title="Actions" Align="@Align.End">
         <FluentButton aria-label="Edit item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => OpenDialogAsync(context))" />
         <FluentButton aria-label="Delete item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
