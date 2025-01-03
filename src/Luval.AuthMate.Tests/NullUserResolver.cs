@@ -31,7 +31,8 @@ namespace Luval.AuthMate.Tests
         {
             return new AppUser()
             {
-                Email = DefaultResult
+                Email = DefaultResult,
+                AccountId = 1
             };
         }
     }
