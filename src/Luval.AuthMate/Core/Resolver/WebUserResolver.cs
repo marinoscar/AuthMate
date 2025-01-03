@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Core.Interfaces;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
@@ -51,6 +52,19 @@ namespace Luval.AuthMate.Core.Resolver
             if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
                 return "Anonymous";
             return user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "Anonymous";
+        }
+
+        /// <summary>
+        /// Gets the current web user as an <see cref="AppUser"/> object.
+        /// </summary>
+        /// <returns>The current web user as an <see cref="AppUser"/> object.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public AppUser GetUser()
+        {
+            if (_context.HttpContext == null)
+                throw new InvalidOperationException("HttpContext is null");
+
+            return _context.HttpContext.User.ToUser();
         }
     }
 }
