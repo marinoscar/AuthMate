@@ -25,6 +25,11 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         public string? Date { get; set; }
 
         /// <summary>
+        /// Gets or sets the scopes associated with the OAuth state check.
+        /// </summary>
+        public string? Scopes { get; set; }
+
+        /// <summary>
         /// Gets or sets additional data for the OAuth state check.
         /// </summary>
         public Dictionary<string, string>? AdditionalData { get; set; }
@@ -47,6 +52,22 @@ namespace Luval.AuthMate.Infrastructure.Configuration
             return new OAuthStateCheck()
             {
                 ProviderName = providerName,
+                Date = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+        }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="OAuthStateCheck"/> with the specified provider name.
+        /// </summary>
+        /// <param name="providerName">The name of the OAuth provider.</param>
+        /// <param name="scope">The scopes associated with the OAuth state check.</param>
+        /// <returns>A new instance of <see cref="OAuthStateCheck"/>.</returns>
+        public static OAuthStateCheck Create(string providerName, string scope)
+        {
+            return new OAuthStateCheck()
+            {
+                ProviderName = providerName,
+                Scopes = scope,
                 Date = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
             };
         }
