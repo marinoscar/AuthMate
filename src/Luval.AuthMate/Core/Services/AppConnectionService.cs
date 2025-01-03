@@ -207,7 +207,7 @@ namespace Luval.AuthMate.Core.Services
 
         private string GetGoogleConsentUrl(OAuthConnectionConfig config, string callback)
         {
-            var stateCheck = OAuthStateCheck.Create(config.Name).ToString();
+            var stateCheck = OAuthStateCheck.Create(config.Name, config.Scopes).ToString();
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                        $"&client_id={config.ClientId}" +
                        $"&redirect_uri={Uri.EscapeDataString(callback)}" +
@@ -218,7 +218,7 @@ namespace Luval.AuthMate.Core.Services
 
         private string GetMicrosoftConsentUrl(OAuthConnectionConfig config, string callback)
         {
-            var stateCheck = OAuthStateCheck.Create(config.Name).ToString();
+            var stateCheck = OAuthStateCheck.Create(config.Name, config.Scopes).ToString();
             var newScopes = "offline_access " + config.Scopes;
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                    $"&client_id={config.ClientId}" +
@@ -269,6 +269,36 @@ namespace Luval.AuthMate.Core.Services
                 _logger.LogError(ex, "An error occurred while creating the authorization code request");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Retrieves the user information associated with the given OAuth access token.
+        /// </summary>
+        /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="accessToken">The access token received from the OAuth provider.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The email address of the user if found, otherwise null.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the config or accessToken is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when an error occurs while retrieving user information.</exception>
+        public async Task<string?> GetConnectionUserInformation(OAuthConnectionConfig config, string accessToken, CancellationToken cancellationToken = default)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (string.IsNullOrEmpty(accessToken)) throw new ArgumentNullException(nameof(accessToken));
+
+            var res = await _codeFlowService.GetUserInformation(config, accessToken, cancellationToken);
+            if (!res.IsSuccessStatusCode) return null;
+
+            var content = await res.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
+            var root = json.RootElement;
+            JsonElement el;
+
+            if (root.TryGetProperty("mail", out el))
+                return el.GetString();
+            if (root.TryGetProperty("email", out el))
+                return el.GetString();
+
+            return null;
         }
 
         /// <summary>
