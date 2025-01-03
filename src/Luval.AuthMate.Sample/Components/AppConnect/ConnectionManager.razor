@@ -11,30 +11,44 @@
         <FluentButton aria-label="Delete item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
     </TemplateColumn>
 </FluentDataGrid>
+<div style="padding:10px;"></div>
+<FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
+Appearance="Appearance.Accent"
+OnClick="@(() => OpenDialogAsync(null, false))">
+    Add Connection
+</FluentButton>
+
 
 
 @code {
 
     [Inject]
-    public IDialogService DialogService { get; set; } = default!;
+    public required IDialogService DialogService { get; set; } = default!;
 
     [Inject]
-    public AppConnectionService ConnectionService { get; set; } = default!;
+    public required OAuthConnectionManager ConnectionConfigManager { get; set; } = default!;
 
-    public IQueryable<AppConnection> Connections { get; set; } = new List<AppConnection>().AsQueryable();
+    [Inject]
+    public required AppConnectionService ConnectionService { get; set; } = default!;
+
+    [Inject]
+    public required NavigationManager Navigation { get; set; }
+
+    public IQueryable<AppConnection> Connections { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            //Connections = ConnectionService.GetConnectionsAsync();
+            Connections = await ConnectionService.GetAllConnectionsAsync(); // get all connections for the account
+            await InvokeAsync(StateHasChanged);
         }
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task OpenDialogAsync(AppConnection? context)
+    private async Task OpenDialogAsync(AppConnection? context, bool isEdit = true)
     {
-        if (context == null) return;
+        if (context == null) context = new AppConnection();
         ConnectionDto connection = new()
             {
                 Id = context.Id,
@@ -54,8 +68,14 @@
             };
 
         var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(connection, parameters);
-
         DialogResult? result = await dialog.Result;
+
+        if(!isEdit){
+            var dtp = result.Data as ConnectionDto;
+            var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
+            config.Scopes = dtp.Scopes;
+            var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
+        }
     }
 
 }
