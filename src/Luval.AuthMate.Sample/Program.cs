@@ -66,12 +66,13 @@ namespace Luval.AuthMate.Sample
 
             app.UseHttpsRedirection();
 
-            //Map the controllers and the razor components
-            app.MapControllers();
             app.UseRouting();
             //Add the authentication and authorization
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+
+            //Map the controllers and the razor components
+            app.MapControllers();
 
             app.UseStaticFiles();
             app.UseAntiforgery();
