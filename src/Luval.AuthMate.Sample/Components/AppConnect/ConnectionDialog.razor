@@ -1,0 +1,42 @@
+﻿@using Luval.AuthMate.Sample.Infrastructure.Data
+@implements IDialogContentComponent<ConnectionDto>
+
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            @Dialog.Instance.Parameters.Title
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+<FluentDialogBody>
+    <FluentCombobox Placeholder="Make a selection..." @bind-Value="@Content.ProviderName" Label="Provider" Autofocus="true" Items="@Providers" Height="200px" Immediate ImmediateDelay="100" />
+    <FluentTextArea Label="Scopes" @bind-Value="@Content.Scopes" style="width: 100%;"></FluentTextArea>
+</FluentDialogBody>
+
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@code {
+
+    [Parameter]
+    public ConnectionDto Content { get; set; } = new ConnectionDto();
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    private List<string> Providers { get; set; } = new List<string> { "Google", "Microsoft", "Facebook", "Twitter" };
+
+    private async Task SaveAsync()
+    {
+        await Dialog.CloseAsync(Content);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}
