@@ -128,7 +128,7 @@ namespace Luval.AuthMate.Web.Controllers
 
             await _appConnection.PersistConnectionAsync(connection);
 
-            return Ok();
+            return Redirect("/");
         }
 
         /// <summary>
