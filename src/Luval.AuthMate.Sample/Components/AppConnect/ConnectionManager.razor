@@ -7,7 +7,8 @@
     <PropertyColumn Title="Issued On" Property="@(p => p.IssuedOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
     <PropertyColumn Title="Expire On" Property="@(p => p.ExpiresOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
     <TemplateColumn Title="Status">
-        @if(context.HasExpired){
+        @if(context.HasExpired)
+        {
             <FluentBadge Circular=true Fill="somevalue" BackgroundColor="red" Color="white">Expired</FluentBadge>
         }
         else{
@@ -15,8 +16,12 @@
         }
     </TemplateColumn>
     <TemplateColumn Title="Actions" Align="@Align.End">
-        <FluentButton aria-label="Edit item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => OpenDialogAsync(context))" />
-        <FluentButton aria-label="Delete item" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
+        @if (context.HasExpired)
+        {
+            <FluentButton aria-label="Refresh" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudSync())" OnClick="@(() => RefreskTokenAsync(context))" />
+        }
+        <FluentButton aria-label="Edit" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())" OnClick="@(() => OpenDialogAsync(context))" />
+        <FluentButton aria-label="Delete" IconEnd="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())" OnClick="@(() => Console.WriteLine("Delete clicked"))" />
     </TemplateColumn>
 </FluentDataGrid>
 <div style="padding:10px;"></div>
@@ -95,6 +100,19 @@
             config.Scopes = dtp.Scopes;
             var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
             await InvokeAsync(() => Navigation.NavigateTo(url));
+        }
+    }
+
+    private async Task RefreskTokenAsync(ConnectionDto context)
+    {
+        var config = ConnectionConfigManager.GetConfiguration(context.ProviderName);
+        var connection = await ConnectionService.GetConnectionAsync(context.Id.Value);
+
+        var result = await ConnectionService.RefreshTokenAsync(config, connection);
+
+        if (result != null)
+        {
+            await InvokeAsync(StateHasChanged);
         }
     }
 
