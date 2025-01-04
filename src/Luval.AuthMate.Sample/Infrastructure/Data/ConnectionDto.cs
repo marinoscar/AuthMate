@@ -39,6 +39,11 @@ namespace Luval.AuthMate.Sample.Infrastructure.Data
         public DateTime? ExpiresOn { get; set; }
 
         /// <summary>
+        /// Gets or sets the date and time when the connection expires in UTC.
+        /// </summary>
+        public DateTime? UtcExpiresOn { get; set; }
+
+        /// <summary>
         /// Gets or sets the date and time when the connection was last modified.
         /// </summary>
         public DateTime? ModifiedOn { get; set; }
@@ -46,7 +51,7 @@ namespace Luval.AuthMate.Sample.Infrastructure.Data
         /// <summary>
         /// Gets or sets the additional data associated with the connection.
         /// </summary>
-        public bool HasExpired => ExpiresOn.HasValue && ExpiresOn.Value < DateTime.UtcNow;
+        public bool HasExpired => UtcExpiresOn < DateTime.UtcNow;
 
         /// <summary>
         /// Gets the status of the connection.
