@@ -105,6 +105,19 @@ namespace Luval.AuthMate.Core.Services
         }
 
         /// <summary>
+        /// Retrieves an application connection based on the connection ID.
+        /// </summary>
+        /// <param name="connectionId">The ID of the connection to retrieve.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The application connection that matches the specified connection ID, or null if no match is found.</returns>
+        /// <exception cref="ArgumentException">Thrown when the connectionId is invalid.</exception>
+        public async Task<AppConnection?> GetConnectionAsync(ulong connectionId, CancellationToken cancellationToken = default)
+        {
+            if (connectionId == 0) throw new ArgumentException("Invalid connection ID", nameof(connectionId));
+            return await _context.AppConnections.FindAsync(new object[] { connectionId }, cancellationToken);
+        }
+
+        /// <summary>
         /// Deletes an application connection based on the connection ID.
         /// </summary>
         /// <param name="connectionId">The ID of the connection to delete.</param>
@@ -351,7 +364,10 @@ namespace Luval.AuthMate.Core.Services
                 });
                 //updates the token information
                 connection.AccessToken = newConn.AccessToken;
-                connection.RefreshToken = newConn.RefreshToken;
+                
+                if(!string.IsNullOrEmpty(newConn.RefreshToken))
+                    connection.RefreshToken = newConn.RefreshToken;
+
                 connection.DurationInSeconds = newConn.DurationInSeconds;
                 connection.TokenType = newConn.TokenType;
                 connection.TokenId = newConn.TokenId;
