@@ -85,14 +85,16 @@ namespace Luval.AuthMate.Web.Controllers
         /// <summary>
         /// Handles the callback from the OAuth provider after authorization code is received.
         /// </summary>
-        /// <param name="provider">The name of the OAuth provider.</param>
+        /// <param name="state">The state of the OAuth request.</param>
         /// <param name="code">The authorization code received from the OAuth provider.</param>
         /// <param name="error">Optional error message from the OAuth provider.</param>
         /// <returns>An <see cref="IActionResult"/> that processes the authorization code and returns user info.</returns>
         [AllowAnonymous]
         [HttpGet("codecallback")]
-        public async Task<IActionResult> CodeCallback([FromQuery] string? provider, [FromQuery] string code, [FromQuery] string? error)
+        public async Task<IActionResult> CodeCallback([FromQuery] string? state, [FromQuery] string code, [FromQuery] string? error)
         {
+            var provider = "Google";
+            OAuthStateCheck stateCheck = null;
             if (!string.IsNullOrEmpty(error))
             {
                 return BadRequest($"Error from OAuth provider: {error}");
@@ -103,14 +105,16 @@ namespace Luval.AuthMate.Web.Controllers
                 return BadRequest("Authorization code is missing.");
             }
 
-            if (string.IsNullOrEmpty(provider))
+            if (!string.IsNullOrEmpty(state))
             {
-                provider = "Google";
-                //return BadRequest("Provider name missing.");
+                stateCheck = OAuthStateCheck.FromString(state);
+                provider = stateCheck.ProviderName;
             }
 
 
             var config = _connectionManager.GetConfiguration(provider);
+            var scopes = config?.Scopes ?? "";
+
             if (config == null) return BadRequest("Provider not supported.");
 
             OAuthTokenResponse tokenResponse;
@@ -125,6 +129,14 @@ namespace Luval.AuthMate.Web.Controllers
 
             var user = this.ControllerContext.HttpContext.User.ToUser();
             var connection = AppConnection.Create(tokenResponse, config, user);
+
+            //gets the user information
+            var email = await _appConnection.GetConnectionUserInformation(config, tokenResponse.AccessToken ?? "");
+            if(!string.IsNullOrEmpty(email))
+                connection.OwnerEmail = email;
+
+            if (stateCheck != null && !string.IsNullOrEmpty(stateCheck.Scopes))
+                connection.Scope = stateCheck.Scopes;
 
             await _appConnection.PersistConnectionAsync(connection);
 

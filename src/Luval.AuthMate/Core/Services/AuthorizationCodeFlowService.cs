@@ -73,5 +73,22 @@ namespace Luval.AuthMate.Core.Services
                 });
             return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
         }
+
+
+        /// <summary>
+        /// Sends a GET request to the user info endpoint to retrieve user information.
+        /// </summary>
+        /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="accessToken">The access token received from the authorization server.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the HTTP response message.</returns>
+        public virtual async Task<HttpResponseMessage> GetUserInformation(OAuthConnectionConfig config, string accessToken, CancellationToken cancellationToken = default)
+        {
+            var client = _clientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", string.Format("Bearer {0}", accessToken));
+            return await client.GetAsync(config.UserInfoEndpoint, cancellationToken);
+        }
+
+
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -105,6 +106,35 @@ namespace Luval.AuthMate.Tests
             Assert.Equal(accountId, result.AccountId);
             Assert.Equal(provName, result.ProviderName);
             Assert.Equal(email, result.OwnerEmail);
+        }
+
+        [Fact]
+        public async Task GetAppConnectionAsync_ReturnsConnection_WithExpression()
+        {
+            // Arrange
+            var accountId = 1UL;
+            var provName = "My Provider";
+            var email = "user@email.com";
+            var service = CreateService((c) =>
+            {
+                var account = c.Accounts.First();
+                accountId = account.Id;
+                var secondAccount = new Account() { AccountTypeId = 1, Name = "AnotherOne", Owner = "someone@mail.com" };
+                c.Accounts.Add(secondAccount);
+                c.SaveChanges();
+                c.AppConnections.Add(new AppConnection { AccountId = account.Id, OwnerEmail = email, ProviderName = provName, AccessToken = "new token" });
+                c.AppConnections.Add(new AppConnection { AccountId = secondAccount.Id, OwnerEmail = "someone@mail.com", ProviderName = provName, AccessToken = "new token" });
+                c.SaveChanges();
+            });
+
+            // Act
+            var result = await service.GetConnectionsAsync(i => i.ProviderName == provName);
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(1, result.Count());
+            Assert.Equal(accountId, result.First().AccountId);
+            Assert.Equal(provName, result.First().ProviderName);
+            Assert.Equal(email, result.First().OwnerEmail);
         }
 
         [Fact]
@@ -207,7 +237,8 @@ namespace Luval.AuthMate.Tests
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
                 RedirectUri = "api/callback",
-                Scopes = "scope1 scope2"
+                Scopes = "scope1 scope2",
+                Name = "Google"
             };
             var service = CreateService(null);
 
@@ -229,7 +260,8 @@ namespace Luval.AuthMate.Tests
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
                 RedirectUri = "https://example.com/callback",
-                Scopes = "scope1 scope2"
+                Scopes = "scope1 scope2",
+                Name = "Google"
             };
             var service = CreateService(null);
 

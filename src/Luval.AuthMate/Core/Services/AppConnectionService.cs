@@ -105,6 +105,19 @@ namespace Luval.AuthMate.Core.Services
         }
 
         /// <summary>
+        /// Retrieves an application connection based on the connection ID.
+        /// </summary>
+        /// <param name="connectionId">The ID of the connection to retrieve.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The application connection that matches the specified connection ID, or null if no match is found.</returns>
+        /// <exception cref="ArgumentException">Thrown when the connectionId is invalid.</exception>
+        public async Task<AppConnection?> GetConnectionAsync(ulong connectionId, CancellationToken cancellationToken = default)
+        {
+            if (connectionId == 0) throw new ArgumentException("Invalid connection ID", nameof(connectionId));
+            return await _context.AppConnections.FindAsync(new object[] { connectionId }, cancellationToken);
+        }
+
+        /// <summary>
         /// Deletes an application connection based on the connection ID.
         /// </summary>
         /// <param name="connectionId">The ID of the connection to delete.</param>
@@ -144,7 +157,7 @@ namespace Luval.AuthMate.Core.Services
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>The application connection that matches the specified provider name and account ID.</returns>
         /// <exception cref="ArgumentNullException">Thrown when providerName is null or empty.</exception>
-        public async Task<AppConnection> GetConnectionAsync(string providerName, ulong accountId, CancellationToken cancellationToken = default)
+        public async Task<AppConnection?> GetConnectionAsync(string providerName, ulong accountId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
 
@@ -161,9 +174,28 @@ namespace Luval.AuthMate.Core.Services
         public async Task<IQueryable<AppConnection>> GetConnectionsAsync(Expression<Func<AppConnection, bool>> filterExpression, CancellationToken cancellationToken = default)
         {
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
-
-            return await Task.Run(() => _context.AppConnections.Where(filterExpression), cancellationToken);
+            var accountId = _userResolver.GetUser().AccountId;
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId).Where(filterExpression), cancellationToken);
         }
+
+        /// <summary>
+        /// Retrieves all application connections for the current user's account.
+        /// </summary>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A collection of application connections for the current user's account.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the user is not authenticated.</exception>
+        /// <remarks>
+        /// This method retrieves all application connections associated with the current user's account.
+        /// It uses the user resolver to get the current user's account ID and filters the connections
+        /// based on this account ID.
+        /// </remarks>
+        public async Task<IQueryable<AppConnection>> GetAllConnectionsAsync(CancellationToken cancellationToken = default)
+        {
+            var accountId = _userResolver.GetUser().AccountId;
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId), cancellationToken);
+        }
+
+
 
         /// <summary>
         /// Creates the authorization consent URL for the OAuth provider.
@@ -180,11 +212,34 @@ namespace Luval.AuthMate.Core.Services
             var uri = new UriBuilder(baseUrl);
             uri.Path = config.RedirectUri;
 
+            if(config.Name.ToLower().Equals("google")) return GetGoogleConsentUrl(config, uri.Uri.ToString());
+            if (config.Name.ToLower().Equals("microsoft")) return GetMicrosoftConsentUrl(config, uri.Uri.ToString());
+
+            throw new NotImplementedException($"The provider {config.Name} is not implemented");
+        }
+
+        private string GetGoogleConsentUrl(OAuthConnectionConfig config, string callback)
+        {
+            var stateCheck = OAuthStateCheck.Create(config.Name, config.Scopes).ToString();
             return $"{config.AuthorizationEndpoint}?response_type=code" +
                        $"&client_id={config.ClientId}" +
-                       $"&redirect_uri={Uri.EscapeDataString(uri.Uri.ToString())}" +
+                       $"&redirect_uri={Uri.EscapeDataString(callback)}" +
                        $"&scope={Uri.EscapeDataString(config.Scopes)}" +
+                       $"&state={stateCheck}" +
                        "&access_type=offline&prompt=consent";
+        }
+
+        private string GetMicrosoftConsentUrl(OAuthConnectionConfig config, string callback)
+        {
+            var stateCheck = OAuthStateCheck.Create(config.Name, config.Scopes).ToString();
+            var newScopes = "offline_access " + config.Scopes;
+            return $"{config.AuthorizationEndpoint}?response_type=code" +
+                   $"&client_id={config.ClientId}" +
+                   $"&redirect_uri={Uri.EscapeDataString(callback)}" +
+                   $"&scope={Uri.EscapeDataString(newScopes)}" +
+                   $"&state={stateCheck}" +
+                   "&response_mode=query" +
+                   "&prompt=consent";
         }
 
         /// <summary>
@@ -227,6 +282,36 @@ namespace Luval.AuthMate.Core.Services
                 _logger.LogError(ex, "An error occurred while creating the authorization code request");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Retrieves the user information associated with the given OAuth access token.
+        /// </summary>
+        /// <param name="config">The OAuth connection configuration.</param>
+        /// <param name="accessToken">The access token received from the OAuth provider.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The email address of the user if found, otherwise null.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the config or accessToken is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when an error occurs while retrieving user information.</exception>
+        public async Task<string?> GetConnectionUserInformation(OAuthConnectionConfig config, string accessToken, CancellationToken cancellationToken = default)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (string.IsNullOrEmpty(accessToken)) throw new ArgumentNullException(nameof(accessToken));
+
+            var res = await _codeFlowService.GetUserInformation(config, accessToken, cancellationToken);
+            if (!res.IsSuccessStatusCode) return null;
+
+            var content = await res.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
+            var root = json.RootElement;
+            JsonElement el;
+
+            if (root.TryGetProperty("mail", out el))
+                return el.GetString();
+            if (root.TryGetProperty("email", out el))
+                return el.GetString();
+
+            return null;
         }
 
         /// <summary>
@@ -279,7 +364,10 @@ namespace Luval.AuthMate.Core.Services
                 });
                 //updates the token information
                 connection.AccessToken = newConn.AccessToken;
-                connection.RefreshToken = newConn.RefreshToken;
+                
+                if(!string.IsNullOrEmpty(newConn.RefreshToken))
+                    connection.RefreshToken = newConn.RefreshToken;
+
                 connection.DurationInSeconds = newConn.DurationInSeconds;
                 connection.TokenType = newConn.TokenType;
                 connection.TokenId = newConn.TokenId;

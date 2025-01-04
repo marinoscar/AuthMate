@@ -1,4 +1,5 @@
-﻿using Luval.AuthMate.Core.Interfaces;
+﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
@@ -51,6 +52,48 @@ namespace Luval.AuthMate.Core.Resolver
             if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
                 return "Anonymous";
             return user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "Anonymous";
+        }
+
+        /// <summary>
+        /// Gets the current web user as an <see cref="AppUser"/> object.
+        /// </summary>
+        /// <returns>The current web user as an <see cref="AppUser"/> object.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public AppUser GetUser()
+        {
+            if (_context.HttpContext == null)
+                throw new InvalidOperationException("HttpContext is null");
+
+            return _context.HttpContext.User.ToUser();
+        }
+
+        /// <summary>
+        /// Gets the timezone of the current web user.
+        /// </summary>
+        /// <returns>
+        /// The timezone of the current web user as a <see cref="TimeZoneInfo"/> object.
+        /// If the user is not authenticated or the timezone is not set, returns "Central Standard Time".
+        /// </returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public TimeZoneInfo GetUserTimezone()
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+            var user = GetUser();
+            if (user == null) return tz;
+            if (user.Timezone == null) return tz;
+            return TimeZoneInfo.FindSystemTimeZoneById(user.Timezone);
+        }
+
+        /// <summary>
+        /// Converts the specified UTC date and time to the current web user's local date and time.
+        /// </summary>
+        /// <param name="dateTime">The UTC date and time to convert.</param>
+        /// <returns>The converted date and time in the user's local timezone.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the HttpContext is null.</exception>
+        public DateTime ConvertToUserDateTime(DateTime dateTime)
+        {
+            var tz = GetUserTimezone();
+            return TimeZoneInfo.ConvertTimeFromUtc(dateTime, tz);
         }
     }
 }

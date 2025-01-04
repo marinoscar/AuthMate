@@ -14,7 +14,8 @@
                              IconValue="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size16.LockClosed())" />
         </NotAuthorized>
         <Authorized>
-            <AuthCode @rendermode=InteractiveServer></AuthCode>
+            <ConnectionManager ></ConnectionManager>
+            @* <AuthCode @rendermode=InteractiveServer></AuthCode> *@
         </Authorized>
     </AuthorizeView>
 

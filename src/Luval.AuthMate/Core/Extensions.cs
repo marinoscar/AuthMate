@@ -62,6 +62,25 @@ namespace Luval.AuthMate.Core
             return Convert.ToBase64String(ToBytes(obj));
         }
 
+        /// <summary>
+        /// Decodes a Base64 encoded string and deserializes it into an object of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+        /// <param name="base64">The Base64 encoded string representing the serialized object.</param>
+        /// <returns>An instance of type <typeparamref name="T"/> deserialized from the Base64 encoded string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the <paramref name="base64"/> parameter is null or empty.</exception>
+        /// <exception cref="FormatException">Thrown when the <paramref name="base64"/> parameter is not a valid Base64 string.</exception>
+        /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized into an instance of type <typeparamref name="T"/>.</exception>
+        public static T FromBase64<T>(this string base64)
+        {
+            if (string.IsNullOrEmpty(base64))
+                throw new ArgumentNullException(nameof(base64), "The Base64 string cannot be null or empty.");
+
+            var bytes = Convert.FromBase64String(base64);
+            var json = Encoding.UTF8.GetString(bytes);
+            return JsonSerializer.Deserialize<T>(json);
+        }
+
         /// <summary>  
         /// Retrieves the base URI from the current HTTP context.  
         /// </summary>  
