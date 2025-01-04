@@ -173,7 +173,10 @@ namespace Luval.AuthMate.Core.Services
                     connection.CreatedBy = inContext.CreatedBy;
                     connection.UtcUpdatedOn = DateTime.UtcNow;
                     connection.UpdatedBy = _userResolver.GetUserEmail();
-                    _context.AppConnections.Update(connection);
+
+                    _context.Entry(inContext).CurrentValues.SetValues(connection);
+                    _context.Entry(inContext).State = EntityState.Modified;
+
                     _logger.LogInformation("AppConnection updated by {UpdatedBy}", connection.UpdatedBy);
                 }
                 await _context.SaveChangesAsync(cancellationToken);
