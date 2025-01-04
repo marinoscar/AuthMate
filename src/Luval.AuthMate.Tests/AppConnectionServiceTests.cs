@@ -30,7 +30,7 @@ namespace Luval.AuthMate.Tests
                 authCodeServiceMock.Setup(i => i.PostAuthorizationCodeRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(SampleHttpResponse())
+                    Content = new StringContent(GetCodeResponse())
                 });
             }
             else authCodeServiceMockSetup(authCodeServiceMock);
@@ -347,9 +347,113 @@ namespace Luval.AuthMate.Tests
             await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAuthorizationCodeRequestAsync(config, "code"));
         }
 
+        [Fact]
+        public async Task ResolveAccessTokenAsync_ValidTokenReturned()
+        {
+            // Arrange
+            var providerName = "Google";
+            var ownerEmail = "user@example.com";
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                var conn = new AppConnection { AccountId = acc.Id, ProviderName = providerName, OwnerEmail = ownerEmail, AccessToken = "valid_token", UtcIssuedOn = DateTime.UtcNow.AddMinutes(30), DurationInSeconds = 9000 };
+                c.AppConnections.Add(conn);
+                c.SaveChanges();
+            });
+
+            // Act
+            var result = await service.ResolveAccessTokenAsync(providerName, ownerEmail);
+
+            // Assert
+            Assert.Equal("valid_token", result);
+        }
+
+        [Fact]
+        public async Task ResolveAccessTokenAsync_ConnectionDoesNotExist_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var providerName = "Google";
+            var ownerEmail = "user@example.com";
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                var conn = new AppConnection { AccountId = acc.Id, ProviderName = "AnotherProvider", OwnerEmail = ownerEmail, AccessToken = "valid_token", UtcIssuedOn = DateTime.UtcNow.AddMinutes(30), DurationInSeconds = 9000 };
+                c.AppConnections.Add(conn);
+                c.SaveChanges();
+            });
+
+            // Act
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.ResolveAccessTokenAsync(providerName, ownerEmail));
+        }
+
+        [Fact]
+        public async Task ResolveAccessTokenAsync_ConnectionExists_AccessTokenExpired()
+        {
+            // Arrange
+            var providerName = "Google";
+            var ownerEmail = "user@example.com";
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                var conn = new AppConnection
+                {
+                    AccountId = acc.Id,
+                    ProviderName = providerName,
+                    OwnerEmail = ownerEmail,
+                    AccessToken = "valid_token",
+                    RefreshToken = "refresh_token",
+                    UtcIssuedOn = DateTime.UtcNow.AddDays(-1),
+                    DurationInSeconds = 3600
+                };
+                c.AppConnections.Add(conn);
+                c.SaveChanges();
+            }, (s) =>
+            {
+                s.Setup(i => i.PostRefreshTokenRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(GetRefreshResponse()) });
+            });
+
+            // Act
+            var result = await service.ResolveAccessTokenAsync(providerName, ownerEmail);
+
+            // Assert
+            Assert.NotEmpty(result);
+        }
+
+        [Fact]
+        public async Task ResolveAccessTokenAsync_ConnectionExists_AccessTokenExpired_NoRefreshToken_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var providerName = "Google";
+            var ownerEmail = "user@example.com";
+            var service = CreateService((c) =>
+            {
+                var acc = c.Accounts.First();
+                var conn = new AppConnection
+                {
+                    AccountId = acc.Id,
+                    ProviderName = providerName,
+                    OwnerEmail = ownerEmail,
+                    AccessToken = "valid_token",
+                    RefreshToken = default,
+                    UtcIssuedOn = DateTime.UtcNow.AddDays(-1),
+                    DurationInSeconds = 3600
+                };
+                c.AppConnections.Add(conn);
+                c.SaveChanges();
+            }, (s) =>
+            {
+                s.Setup(i => i.PostRefreshTokenRequestAsync(It.IsAny<OAuthConnectionConfig>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(GetRefreshResponse()) });
+            });
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.ResolveAccessTokenAsync(providerName, ownerEmail));
+        }
 
 
-        private static string SampleHttpResponse()
+
+        private static string GetCodeResponse()
         {
             return @"
 {
@@ -359,6 +463,20 @@ namespace Luval.AuthMate.Tests
   ""scope"": ""https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email"",
   ""token_type"": ""Bearer"",
   ""id_token"": ""sample-id-token""
+}
+";
+        }
+
+        private static string GetRefreshResponse()
+        {
+            return @"
+{
+  ""token_type"": ""Bearer"",
+  ""scope"": ""scope1 scope2"",
+  ""expires_in"": 3600,
+  ""ext_expires_in"": 3600,
+  ""access_token"": ""access_token"",
+  ""refresh_token"": ""refresh_token""
 }
 ";
         }
