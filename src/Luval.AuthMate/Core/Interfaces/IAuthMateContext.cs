@@ -1,5 +1,6 @@
 ﻿using Luval.AuthMate.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Luval.AuthMate.Core.Interfaces
@@ -63,6 +64,14 @@ namespace Luval.AuthMate.Core.Interfaces
         /// Gets the DatabaseFacade used to manage the database.
         /// </summary>
         public DatabaseFacade Database { get; }
+
+        /// <summary>
+        /// Gets the EntityEntry for the given entity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity.</typeparam>
+        /// <param name="entity">The entity to get the entry for.</param>
+        /// <returns>The EntityEntry for the given entity.</returns>
+        EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
 
         /// <summary>
         /// Saves changes made in this context to the database.
