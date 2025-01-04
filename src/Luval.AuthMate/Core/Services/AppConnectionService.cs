@@ -19,6 +19,8 @@ namespace Luval.AuthMate.Core.Services
         private readonly IAuthorizationCodeFlowService _codeFlowService;
         private readonly ILogger<AppConnectionService> _logger;
         private readonly IUserResolver _userResolver;
+        private readonly OAuthConnectionManager _connectionConfigManager;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AppConnectionService"/> class.
@@ -26,14 +28,111 @@ namespace Luval.AuthMate.Core.Services
         /// <param name="context">The context to interact with the database.</param>
         /// <param name="codeFlowService">The service to make the authorization code flow request.</param>
         /// <param name="userResolver">The user resolver to get user information.</param>
+        /// <param name="connectionConfigManager">The <see cref="OAuthConnectionManager"/> to handle the Oauth configuration parameters</param>
         /// <param name="logger">The logger to log information.</param>
         /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
-        public AppConnectionService(IAuthMateContext context, IAuthorizationCodeFlowService codeFlowService, IUserResolver userResolver, ILogger<AppConnectionService> logger)
+        public AppConnectionService(IAuthMateContext context, IAuthorizationCodeFlowService codeFlowService, IUserResolver userResolver, OAuthConnectionManager connectionConfigManager, ILogger<AppConnectionService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _userResolver = userResolver ?? throw new ArgumentNullException(nameof(userResolver));
             _codeFlowService = codeFlowService ?? throw new ArgumentNullException(nameof(codeFlowService));
+            _connectionConfigManager = connectionConfigManager ?? throw new ArgumentNullException(nameof(connectionConfigManager));
+        }
+
+        /// <summary>
+        /// Resolves the access token for the given provider and owner email.
+        /// </summary>
+        /// <param name="connectionId">The name id of the connection.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The access token for the application connection.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when providerName or ownerEmail is null or empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the connection is not found.</exception>
+        /// <remarks>
+        /// This method performs the following steps:
+        /// 1. Validates the input parameters.
+        /// 2. Retrieves the application connection based on the provider name and owner email.
+        /// 3. If the connection is found, resolves the access token for the connection.
+        /// 4. Returns the access token.
+        /// </remarks>
+        public async Task<string> ResolveAccessTokenAsync(ulong connectionId, CancellationToken cancellationToken = default)
+        {
+            var conn = await GetConnectionAsync(connectionId, cancellationToken);
+            if (conn == null)
+            {
+                _logger.LogWarning("Connection not found");
+                throw new InvalidOperationException("Connection not found");
+            }
+            return await ResolveAccessTokenAsync(conn, cancellationToken);
+        }
+
+        /// <summary>
+        /// Resolves the access token for the given provider and owner email.
+        /// </summary>
+        /// <param name="providerName">The name of the OAuth provider.</param>
+        /// <param name="ownerEmail">The email of the owner of the connection.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The access token for the application connection.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when providerName or ownerEmail is null or empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the connection is not found.</exception>
+        /// <remarks>
+        /// This method performs the following steps:
+        /// 1. Validates the input parameters.
+        /// 2. Retrieves the application connection based on the provider name and owner email.
+        /// 3. If the connection is found, resolves the access token for the connection.
+        /// 4. Returns the access token.
+        /// </remarks>
+        public async Task<string> ResolveAccessTokenAsync(string providerName, string ownerEmail, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
+            if (string.IsNullOrEmpty(ownerEmail)) throw new ArgumentNullException(nameof(ownerEmail));
+
+            _logger.LogInformation("Resolving access token for provider {ProviderName} and owner {OwnerEmail}", providerName, ownerEmail);
+
+            var conn = await GetConnectionAsync(providerName, ownerEmail, cancellationToken);
+            if (conn == null)
+            {
+                _logger.LogWarning("Connection not found for provider {ProviderName} and owner {OwnerEmail}", providerName, ownerEmail);
+                throw new InvalidOperationException("Connection not found");
+            }
+
+            _logger.LogInformation("Connection found for provider {ProviderName} and owner {OwnerEmail}", providerName, ownerEmail);
+            return await ResolveAccessTokenAsync(conn, cancellationToken);
+        }
+
+        /// <summary>
+        /// Resolves the access token for the given application connection.
+        /// </summary>
+        /// <param name="connection">The application connection to resolve the access token for.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>The access token for the application connection.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the connection is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when the access token is empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the configuration for the provider is not found or the refresh token is not available and the access token has expired.</exception>
+        /// <remarks>
+        /// This method performs the following steps:
+        /// 1. Validates the input parameters.
+        /// 2. Retrieves the OAuth configuration for the provider.
+        /// 3. Checks if the access token has expired.
+        /// 4. If the access token has expired, attempts to refresh the token using the refresh token.
+        /// 5. Returns the access token.
+        /// </remarks>
+        public async Task<string> ResolveAccessTokenAsync(AppConnection connection, CancellationToken cancellationToken = default)
+        {
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            if (string.IsNullOrEmpty(connection.AccessToken)) throw new ArgumentException("Access token is empty", nameof(connection.AccessToken));
+            var config = _connectionConfigManager.GetConfiguration(connection.ProviderName);
+            if (config == null) throw new InvalidOperationException($"Configuration for provider {connection.ProviderName} not found");
+
+            if (connection.HasExpired)
+            {
+                if (string.IsNullOrEmpty(connection.RefreshToken))
+                    throw new InvalidOperationException("Refresh token is not available and the access token has expired");
+
+                connection = await RefreshTokenAsync(config, connection, cancellationToken);
+            }
+
+            return connection.AccessToken;
         }
 
         /// <summary>
@@ -74,7 +173,10 @@ namespace Luval.AuthMate.Core.Services
                     connection.CreatedBy = inContext.CreatedBy;
                     connection.UtcUpdatedOn = DateTime.UtcNow;
                     connection.UpdatedBy = _userResolver.GetUserEmail();
-                    _context.AppConnections.Update(connection);
+
+                    _context.Entry(inContext).CurrentValues.SetValues(connection);
+                    _context.Entry(inContext).State = EntityState.Modified;
+
                     _logger.LogInformation("AppConnection updated by {UpdatedBy}", connection.UpdatedBy);
                 }
                 await _context.SaveChangesAsync(cancellationToken);

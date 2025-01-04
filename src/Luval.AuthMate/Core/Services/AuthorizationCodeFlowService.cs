@@ -3,6 +3,7 @@ using Luval.AuthMate.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,8 +51,8 @@ namespace Luval.AuthMate.Core.Services
                     new KeyValuePair<string, string>("redirect_uri", redirectUri.ToString()),
                     new KeyValuePair<string, string>("grant_type", "authorization_code")
             });
-
-            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
+            
+            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken); 
         }
 
         /// <summary>
@@ -71,6 +72,7 @@ namespace Luval.AuthMate.Core.Services
                     new KeyValuePair<string, string>("refresh_token", refreshToken),
                     new KeyValuePair<string, string>("grant_type", "refresh_token")
                 });
+            
             return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
         }
 

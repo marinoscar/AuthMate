@@ -7,11 +7,12 @@
     <PropertyColumn Title="Issued On" Property="@(p => p.IssuedOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
     <PropertyColumn Title="Expire On" Property="@(p => p.ExpiresOn)" Format="yyyy-MM-dd hh:mm:ss" Sortable="true" />
     <TemplateColumn Title="Status">
-        @if(context.HasExpired)
+        @if (context.HasExpired)
         {
             <FluentBadge Circular=true Fill="somevalue" BackgroundColor="red" Color="white">Expired</FluentBadge>
         }
-        else{
+        else
+        {
             <FluentBadge Circular=true Appearance="Appearance.Accent">Active</FluentBadge>
         }
     </TemplateColumn>
@@ -25,7 +26,7 @@
     </TemplateColumn>
 </FluentDataGrid>
 <div style="padding:10px;"></div>
-<FluentButton  IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
+<FluentButton IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.CloudAdd())"
               Appearance="Appearance.Accent"
               OnClick="@(() => OpenDialogAsync(null, false))">
     Add Connection
@@ -93,14 +94,14 @@
         var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(context, parameters);
         DialogResult? result = await dialog.Result;
 
-        if (!isEdit && !dialog.Result.IsCanceled)
-        {
-            var dtp = result.Data as ConnectionDto;
-            var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
-            config.Scopes = dtp.Scopes;
-            var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
-            await InvokeAsync(() => Navigation.NavigateTo(url));
-        }
+        if (dialog.Result.IsCanceled) return;
+
+        //updates the connection
+        var dtp = result.Data as ConnectionDto;
+        var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
+        config.Scopes = dtp.Scopes;
+        var url = ConnectionService.CreateAuthorizationConsentUrl(config, Navigation.BaseUri);
+        await InvokeAsync(() => Navigation.NavigateTo(url));
     }
 
     private async Task RefreskTokenAsync(ConnectionDto context)
