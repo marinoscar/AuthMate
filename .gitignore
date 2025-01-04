@@ -404,3 +404,4 @@ src/Luval.AuthMate.Sample/app.db-wal
 src/Luval.AuthMate.Sample/app.db-wal
 src/Luval.AuthMate.Sample/app.db-wal
 *.db-wal
+src/Luval.AuthMate.Sample/auth-code.json
