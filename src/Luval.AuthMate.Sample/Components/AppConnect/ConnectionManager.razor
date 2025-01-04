@@ -87,7 +87,7 @@
         var dialog = await DialogService.ShowDialogAsync<ConnectionDialog>(context, parameters);
         DialogResult? result = await dialog.Result;
 
-        if (!isEdit)
+        if (!isEdit && !dialog.Result.IsCanceled)
         {
             var dtp = result.Data as ConnectionDto;
             var config = ConnectionConfigManager.GetConfiguration(dtp.ProviderName);
