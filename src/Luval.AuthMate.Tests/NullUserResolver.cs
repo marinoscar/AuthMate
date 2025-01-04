@@ -35,5 +35,15 @@ namespace Luval.AuthMate.Tests
                 AccountId = 1
             };
         }
+
+        public TimeZoneInfo GetUserTimezone()
+        {
+            return TimeZoneInfo.Local;
+        }
+
+        public DateTime ConvertToUserDateTime(DateTime dateTime)
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(dateTime, GetUserTimezone());
+        }
     }
 }
