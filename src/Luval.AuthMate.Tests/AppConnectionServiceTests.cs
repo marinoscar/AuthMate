@@ -237,7 +237,8 @@ namespace Luval.AuthMate.Tests
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
                 RedirectUri = "api/callback",
-                Scopes = "scope1 scope2"
+                Scopes = "scope1 scope2",
+                Name = "Google"
             };
             var service = CreateService(null);
 
@@ -259,7 +260,8 @@ namespace Luval.AuthMate.Tests
                 AuthorizationEndpoint = "https://example.com/auth",
                 ClientId = "client-id",
                 RedirectUri = "https://example.com/callback",
-                Scopes = "scope1 scope2"
+                Scopes = "scope1 scope2",
+                Name = "Google"
             };
             var service = CreateService(null);
 
