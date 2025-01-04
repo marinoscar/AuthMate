@@ -51,12 +51,8 @@ namespace Luval.AuthMate.Core.Services
                     new KeyValuePair<string, string>("redirect_uri", redirectUri.ToString()),
                     new KeyValuePair<string, string>("grant_type", "authorization_code")
             });
-            var res = await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
-
-            if (Debugger.IsAttached)
-                File.WriteAllText("auth-code.json", await res.Content.ReadAsStringAsync());
-
-            return res;
+            
+            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken); 
         }
 
         /// <summary>
@@ -76,12 +72,8 @@ namespace Luval.AuthMate.Core.Services
                     new KeyValuePair<string, string>("refresh_token", refreshToken),
                     new KeyValuePair<string, string>("grant_type", "refresh_token")
                 });
-            var res = await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
-
-            if (Debugger.IsAttached)
-                File.WriteAllText("auth-refresh.json", await res.Content.ReadAsStringAsync());
-
-            return res;
+            
+            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
         }
 
 
