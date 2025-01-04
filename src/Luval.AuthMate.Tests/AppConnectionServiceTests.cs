@@ -35,8 +35,28 @@ namespace Luval.AuthMate.Tests
             }
             else authCodeServiceMockSetup(authCodeServiceMock);
 
+            var configList = new List<OAuthConnectionConfig>() {
+                    new() {
+                        Name = "Google",
+                        ClientId = "client-id",
+                        ClientSecret = "client",
+                        RedirectUri = "api/callback",
+                        AuthorizationEndpoint = "https://example.com/auth",
+                        TokenEndpoint = "https://example.com/token",
+                        Scopes = "scope1 scope2"
+                    },
+                    new() {
+                        Name = "Microsoft",
+                        ClientId = "client-id",
+                        ClientSecret = "client",
+                        RedirectUri = "api/callback",
+                        AuthorizationEndpoint = "https://example.com/auth",
+                        TokenEndpoint = "https://example.com/token",
+                        Scopes = "scope1 scope2"
+                    }
+            };
 
-            var service = new AppConnectionService(context, authCodeServiceMock.Object, new NullUserResolver(), new NullLogger<AppConnectionService>());
+            var service = new AppConnectionService(context, authCodeServiceMock.Object, new NullUserResolver(), new OAuthConnectionManager(configList), new NullLogger<AppConnectionService>());
 
             contextSetup?.Invoke(context);
             return service;
