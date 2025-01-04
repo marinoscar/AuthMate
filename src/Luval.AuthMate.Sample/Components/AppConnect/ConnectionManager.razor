@@ -58,6 +58,7 @@
                         ExpiresOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcExpiresOn, tz),
                         IssuedOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcIssuedOn, tz),
                         ModifiedOn = TimeZoneInfo.ConvertTimeFromUtc(i.UtcUpdatedOn.Value, tz),
+                        UtcExpiresOn = i.UtcExpiresOn,
                         ProviderName = i.ProviderName,
                         Scopes = i.Scope,
                         UserAccount = i.OwnerEmail,
