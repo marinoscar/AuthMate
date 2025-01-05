@@ -62,16 +62,8 @@ namespace Luval.AuthMate.Infrastructure.Data
                 if (!await _context.Database.CanConnectAsync())
                 {
                     _logger.LogInformation("Database is not connected. Ensuring database is created.");
-                    await _context.Database.EnsureCreatedAsync(cancellationToken);
-                }
-                else
-                {
-                    var pendingMigrations = await _context.Database.GetPendingMigrationsAsync(cancellationToken);
-                    if (pendingMigrations.Any())
-                    {
-                        _logger.LogInformation("Applying pending migrations.");
-                        await _context.Database.MigrateAsync(cancellationToken);
-                    }
+                    var createScript = _context.Database.GenerateCreateScript();
+                    await _context.Database.ExecuteSqlRawAsync(createScript, cancellationToken);
                 }
                 if (!_context.Roles.Any() && !_context.AccountTypes.Any() && !_context.InvitesToAccount.Any())
                 {
