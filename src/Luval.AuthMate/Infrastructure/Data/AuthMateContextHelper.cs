@@ -1,4 +1,5 @@
 ﻿using Luval.AuthMate.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -29,8 +30,9 @@ namespace Luval.AuthMate.Infrastructure.Data
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// Initializes the database asynchronously with default records if it is empty.
+        
+        ///<summary>
+        /// Initializes the database by ensuring it is created, applying any pending migrations, and creating default records if the database is empty.
         /// </summary>
         /// <param name="ownerEmail">The email of the owner who is creating the records.</param>
         /// <param name="roles">An optional list of roles to be added. If not provided, default roles will be created.</param>
@@ -38,18 +40,14 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// <returns>A task that represents the asynchronous operation.</returns>
         /// <remarks>
         /// This method performs the following steps:
-        /// 1. Ensures the database is created.
-        /// 2. Checks if the database is empty by verifying the absence of any roles, account types, and invites to account.
-        /// 3. If the database is empty, it calls the CreateDefaultRecordsAsync method to populate it with default records.
-        ///    - The CreateDefaultRecordsAsync method performs the following:
-        ///      a. Creates a default account type with the name "Default" and associates it with the provided owner email.
-        ///      b. Saves the account type to the database.
-        ///      c. Checks if a list of roles is provided:
-        ///         - If roles are provided, it adds each role to the database.
-        ///         - If no roles are provided, it creates a set of default roles (Admin, Owner, Member, Visitor) and adds them to the database.
-        ///      d. Saves the roles to the database.
-        ///      e. Creates an application invite for the owner email, associating it with the created account type.
-        ///      f. Saves the application invite to the database.
+        /// 1. Validates the owner email parameter to ensure it is not null or empty.
+        /// 2. Attempts to connect to the database:
+        ///    - If the database cannot be connected, it ensures the database is created.
+        ///    - If the database can be connected, it checks for any pending migrations and applies them if they exist.
+        /// 3. Checks if the database is empty by verifying the absence of any roles, account types, and invites to account.
+        ///    - If the database is empty, it calls the CreateDefaultRecordsAsync method to populate it with default records.
+        ///    - If the database is not empty, it logs that the database is already initialized.
+        /// 4. Handles any exceptions that occur during the process by logging the error and rethrowing the exception.
         /// </remarks>
         public virtual async Task InitializeDbAsync(string ownerEmail, IEnumerable<Role>? roles = default, CancellationToken cancellationToken = default)
         {
@@ -61,7 +59,20 @@ namespace Luval.AuthMate.Infrastructure.Data
 
             try
             {
-                await _context.Database.EnsureCreatedAsync(cancellationToken);
+                if (!await _context.Database.CanConnectAsync())
+                {
+                    _logger.LogInformation("Database is not connected. Ensuring database is created.");
+                    await _context.Database.EnsureCreatedAsync(cancellationToken);
+                }
+                else
+                {
+                    var pendingMigrations = await _context.Database.GetPendingMigrationsAsync(cancellationToken);
+                    if (pendingMigrations.Any())
+                    {
+                        _logger.LogInformation("Applying pending migrations.");
+                        await _context.Database.MigrateAsync(cancellationToken);
+                    }
+                }
                 if (!_context.Roles.Any() && !_context.AccountTypes.Any() && !_context.InvitesToAccount.Any())
                 {
                     _logger.LogInformation("Database is empty. Creating default records.");
