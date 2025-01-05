@@ -56,7 +56,9 @@ namespace Luval.AuthMate.Sqlite
         {
             base.OnConfiguring(optionsBuilder);
             if (!string.IsNullOrEmpty(_connString))
-                optionsBuilder.UseSqlite(_connString);
+                optionsBuilder.UseSqlite(_connString, (o) => {
+                    o.MigrationsHistoryTable("__EFMigrationsHistory_AuthMate", "authmate");
+                });
         }
 
         /// <summary>
