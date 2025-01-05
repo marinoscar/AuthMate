@@ -62,16 +62,12 @@ namespace Luval.AuthMate.Infrastructure.Data
                 if (!await _context.Database.CanConnectAsync())
                 {
                     _logger.LogInformation("Database is not connected. Ensuring database is created.");
-                    await _context.Database.EnsureCreatedAsync(cancellationToken);
+                    await CreateDatabaseAsync(cancellationToken);
                 }
-                else
+                if (!CheckForTables())
                 {
-                    var pendingMigrations = await _context.Database.GetPendingMigrationsAsync(cancellationToken);
-                    if (pendingMigrations.Any())
-                    {
-                        _logger.LogInformation("Applying pending migrations.");
-                        await _context.Database.MigrateAsync(cancellationToken);
-                    }
+                    _logger.LogInformation("Tables not created");
+                    await CreateDatabaseAsync(cancellationToken);
                 }
                 if (!_context.Roles.Any() && !_context.AccountTypes.Any() && !_context.InvitesToAccount.Any())
                 {
@@ -235,6 +231,28 @@ namespace Luval.AuthMate.Infrastructure.Data
                 _logger.LogError(ex, "An error occurred while resetting the database.");
                 throw;
             }
+        }
+
+        private async Task CreateDatabaseAsync(CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Database does not exist. Running first migration...");
+            var createScript = _context.Database.GenerateCreateScript();
+            await _context.Database.ExecuteSqlRawAsync(createScript, cancellationToken);
+        }
+
+        private bool CheckForTables(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Check for the GenAIBots table
+                _context.Accounts.Select(c => c.Id).Take(1).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Schema not created.");
+                return false;
+            }
+            return true;
         }
 
     }
