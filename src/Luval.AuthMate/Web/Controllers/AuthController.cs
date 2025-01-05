@@ -133,7 +133,7 @@ namespace Luval.AuthMate.Web.Controllers
             //gets the user information
             var email = await _appConnection.GetConnectionUserInformation(config, tokenResponse.AccessToken ?? "");
             if(!string.IsNullOrEmpty(email))
-                connection.OwnerEmail = email;
+                connection.ConnectionEmail = email;
 
             if (stateCheck != null && !string.IsNullOrEmpty(stateCheck.Scopes))
                 connection.Scope = stateCheck.Scopes;
