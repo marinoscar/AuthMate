@@ -52,7 +52,9 @@ namespace Luval.AuthMate.Postgres
 
             //add conn string if provided
             if (!string.IsNullOrEmpty(_connString))
-                optionsBuilder.UseNpgsql(_connString);
+                optionsBuilder.UseNpgsql(_connString, (o) => { 
+                    o.MigrationsHistoryTable("__EFMigrationsHistory_AuthMate", "authmate");
+                });
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
