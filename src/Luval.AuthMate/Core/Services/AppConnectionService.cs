@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Luval.AuthMate.Core.Services
 {
@@ -368,6 +369,7 @@ namespace Luval.AuthMate.Core.Services
                 }
 
                 var tokenResponseContent = await res.Content.ReadAsStringAsync();
+
                 _logger.LogDebug("Token response content: {TokenResponseContent}\n", tokenResponseContent);
                 var tokenData = OAuthTokenResponse.Success(JsonDocument.Parse(tokenResponseContent));
 
