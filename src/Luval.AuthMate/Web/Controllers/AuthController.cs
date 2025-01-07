@@ -28,6 +28,7 @@ namespace Luval.AuthMate.Web.Controllers
     {
         private readonly AppConnectionService _appConnection;
         private readonly OAuthConnectionManager _connectionManager;
+        private readonly ILogger<AuthController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthController"/> class.
@@ -35,10 +36,11 @@ namespace Luval.AuthMate.Web.Controllers
         /// <param name="appConnectionService">The service to manage application connections.</param>
         /// <param name="connectionManager">The manager for OAuth provider configurations.</param>
         /// <exception cref="ArgumentNullException">Thrown when any of the parameters are null.</exception>
-        public AuthController(AppConnectionService appConnectionService, OAuthConnectionManager connectionManager)
+        public AuthController(AppConnectionService appConnectionService, OAuthConnectionManager connectionManager, ILogger<AuthController> logger)
         {
             _appConnection = appConnectionService ?? throw new ArgumentNullException(nameof(appConnectionService));
             _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -52,6 +54,8 @@ namespace Luval.AuthMate.Web.Controllers
         [HttpGet("login")]
         public IActionResult Login(string provider, string? deviceInfo, string? returnUrl)
         {
+            _logger.LogInformation("Initiating login process for provider: {Provider}", provider);
+
             var prop = new AuthenticationProperties()
             {
                 RedirectUri = returnUrl ?? "/"
@@ -61,6 +65,8 @@ namespace Luval.AuthMate.Web.Controllers
             prop.Items.Add("returnUrl", returnUrl);
 
             var challange = Challenge(prop, provider);
+
+            _logger.LogInformation("Login process initiated for provider: {Provider}", provider);
 
             return challange;
         }
@@ -74,10 +80,18 @@ namespace Luval.AuthMate.Web.Controllers
         [HttpGet("consent")]
         public IActionResult Consent(string provider)
         {
+            _logger.LogInformation("Initiating consent process for provider: {Provider}", provider);
+
             var config = _connectionManager.GetConfiguration(provider);
-            if (config == null) return BadRequest("Provider not supported.");
+            if (config == null)
+            {
+                _logger.LogWarning("Provider not supported: {Provider}", provider);
+                return BadRequest("Provider not supported.");
+            }
 
             var consentUrl = _appConnection.CreateAuthorizationConsentUrl(config, this.HttpContext.GetBaseUri()?.ToString());
+
+            _logger.LogInformation("Consent process initiated for provider: {Provider}", provider);
 
             return Redirect(consentUrl);
         }
@@ -93,15 +107,19 @@ namespace Luval.AuthMate.Web.Controllers
         [HttpGet("codecallback")]
         public async Task<IActionResult> CodeCallback([FromQuery] string? state, [FromQuery] string code, [FromQuery] string? error)
         {
+            _logger.LogInformation("Handling code callback for state: {State}", state);
+
             var provider = "Google";
             OAuthStateCheck stateCheck = null;
             if (!string.IsNullOrEmpty(error))
             {
+                _logger.LogError("Error from OAuth provider: {Error}", error);
                 return BadRequest($"Error from OAuth provider: {error}");
             }
 
             if (string.IsNullOrEmpty(code))
             {
+                _logger.LogWarning("Authorization code is missing.");
                 return BadRequest("Authorization code is missing.");
             }
 
@@ -111,11 +129,14 @@ namespace Luval.AuthMate.Web.Controllers
                 provider = stateCheck.ProviderName;
             }
 
-
             var config = _connectionManager.GetConfiguration(provider);
             var scopes = config?.Scopes ?? "";
 
-            if (config == null) return BadRequest("Provider not supported.");
+            if (config == null)
+            {
+                _logger.LogWarning("Provider not supported: {Provider}", provider);
+                return BadRequest("Provider not supported.");
+            }
 
             OAuthTokenResponse tokenResponse;
             try
@@ -124,6 +145,7 @@ namespace Luval.AuthMate.Web.Controllers
             }
             catch (InvalidOperationException invEx)
             {
+                _logger.LogError("Error creating authorization code request: {Message}", invEx.Message);
                 return BadRequest(invEx.Message);
             }
 
@@ -132,13 +154,15 @@ namespace Luval.AuthMate.Web.Controllers
 
             //gets the user information
             var email = await _appConnection.GetConnectionUserInformation(config, tokenResponse.AccessToken ?? "");
-            if(!string.IsNullOrEmpty(email))
+            if (!string.IsNullOrEmpty(email))
                 connection.ConnectionEmail = email;
 
             if (stateCheck != null && !string.IsNullOrEmpty(stateCheck.Scopes))
                 connection.Scope = stateCheck.Scopes;
 
             await _appConnection.PersistConnectionAsync(connection);
+
+            _logger.LogInformation("Code callback handled successfully for state: {State}", state);
 
             return Redirect("/");
         }
@@ -152,6 +176,8 @@ namespace Luval.AuthMate.Web.Controllers
         [HttpGet("logout")]
         public async Task<IActionResult> Logout(string? redirectUrl)
         {
+            _logger.LogInformation("Logging out user.");
+
             await HttpContext.SignOutAsync();
 
             Response.Cookies.Delete(".AspNetCore.Cookies");
@@ -159,6 +185,8 @@ namespace Luval.AuthMate.Web.Controllers
             Response.Headers["Cache-Control"] = "no-store";
             Response.Headers["Pragma"] = "no-cache";
             Response.Headers["Expires"] = "0";
+
+            _logger.LogInformation("User logged out successfully.");
 
             return Redirect(redirectUrl ?? "/");
         }

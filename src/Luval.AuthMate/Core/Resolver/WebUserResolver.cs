@@ -30,7 +30,7 @@ namespace Luval.AuthMate.Core.Resolver
         public string GetUserName()
         {
             if (_context.HttpContext == null)
-                throw new InvalidOperationException("HttpContext is null");
+                return "Anonymous";
 
             var user = _context.HttpContext.User;
             if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
@@ -46,7 +46,7 @@ namespace Luval.AuthMate.Core.Resolver
         public string GetUserEmail()
         {
             if (_context.HttpContext == null)
-                throw new InvalidOperationException("HttpContext is null");
+                return "Anonymous";
 
             var user = _context.HttpContext.User;
             if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
@@ -62,7 +62,16 @@ namespace Luval.AuthMate.Core.Resolver
         public AppUser GetUser()
         {
             if (_context.HttpContext == null)
-                throw new InvalidOperationException("HttpContext is null");
+                return new AppUser() { 
+                    Id = 0, AccountId = 0,
+                    DisplayName = "Anonymous",
+                    Email = "Anonymous",
+                    ProviderKey = "Anonymous",
+                    ProviderType = "Anonymous",
+                    ProfilePictureUrl = "Anonymous",
+                    Timezone = "Central Standard Time",
+                    Version = 0
+                };
 
             return _context.HttpContext.User.ToUser();
         }
