@@ -65,7 +65,7 @@ namespace Luval.AuthMate.Core.Services
                 throw new ArgumentException("User email cannot be null or empty.", nameof(userEmail));
             }
 
-            var user = await _userService.GetUserByEmailAsync(userEmail, cancellationToken);
+            var user = await _userService.GetUserByEmailAsync(userEmail, cancellationToken).ConfigureAwait(false);
             if (user == null)
             {
                 _logger.LogError($"User with email {userEmail} not found.");
@@ -73,7 +73,7 @@ namespace Luval.AuthMate.Core.Services
             }
 
             _logger.LogInformation($"Generating token for user with email {userEmail}.");
-            return await GenerateTokenForUserAsync(user, tokenDuration, cancellationToken);
+            return await GenerateTokenForUserAsync(user, tokenDuration, cancellationToken).ConfigureAwait(false);
         }
 
         ///<summary>
@@ -160,7 +160,7 @@ namespace Luval.AuthMate.Core.Services
 
             try
             {
-                var user = await _userService.TryGetUserByEmailAsync(userEmail, cancellationToken).ConfigureAwait(true);
+                var user = await _userService.TryGetUserByEmailAsync(userEmail, cancellationToken).ConfigureAwait(false);
                 if (user == null)
                 {
                     _logger.LogError($"User with email {userEmail} not found.");
@@ -171,7 +171,7 @@ namespace Luval.AuthMate.Core.Services
                 var activeTokens = await _context.RefreshTokens
                     .Where(t => t.AppUserId == user.Id && t.IsValid)
                     .CountAsync(cancellationToken)
-                    .ConfigureAwait(true);
+                    .ConfigureAwait(false);
 
                 if (activeTokens >= MaxActiveTokensPerUser)
                 {
@@ -192,7 +192,7 @@ namespace Luval.AuthMate.Core.Services
                 };
 
                 _context.RefreshTokens.Add(token);
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation($"Refresh token created for user {userEmail}.");
                 return token;
@@ -226,7 +226,7 @@ namespace Luval.AuthMate.Core.Services
                 var token = await _context.RefreshTokens
                     .Include(x => x.User)
                     .SingleOrDefaultAsync(t => t.Token == refreshToken, cancellationToken)
-                    .ConfigureAwait(true);
+                    .ConfigureAwait(false);
 
                 if (token == null)
                 {
@@ -245,10 +245,10 @@ namespace Luval.AuthMate.Core.Services
                 }
 
                 //Get user from the token, to include roles and other information
-                var user = await _userService.GetUserByEmailAsync(token.User.Email, cancellationToken).ConfigureAwait(true);
+                var user = await _userService.GetUserByEmailAsync(token.User.Email, cancellationToken).ConfigureAwait(false);
                 token.User = user;
 
-                var result = await GenerateTokenForUserAsync(token.User, TimeSpan.FromMinutes(15), cancellationToken).ConfigureAwait(true);
+                var result = await GenerateTokenForUserAsync(token.User, TimeSpan.FromMinutes(15), cancellationToken).ConfigureAwait(false);
 
                 //updates the token to be invalid
                 token.IsValid = false;
@@ -257,7 +257,7 @@ namespace Luval.AuthMate.Core.Services
                 token.Version++;
 
                 _context.RefreshTokens.Update(token);
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(true);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                 return result;
 
