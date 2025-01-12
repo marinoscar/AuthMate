@@ -1,4 +1,5 @@
 ﻿using Luval.AuthMate.Core.Entities;
+using Luval.AuthMate.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,7 +16,7 @@ namespace Luval.AuthMate.Infrastructure.Data
     /// </summary>
     public class AuthMateContextHelper
     {
-        private readonly AuthMateContext _context;
+        private readonly IAuthMateContext _context;
         private readonly ILogger<AuthMateContextHelper> _logger;
 
         /// <summary>
@@ -24,7 +25,7 @@ namespace Luval.AuthMate.Infrastructure.Data
         /// <param name="context">The database context to be used.</param>
         /// <param name="logger">The logger to be used for logging operations.</param>
         /// <exception cref="ArgumentNullException">Thrown when the context or logger is null.</exception>
-        public AuthMateContextHelper(AuthMateContext context, ILogger<AuthMateContextHelper> logger)
+        public AuthMateContextHelper(IAuthMateContext context, ILogger<AuthMateContextHelper> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
