@@ -455,8 +455,10 @@ namespace Luval.AuthMate.Core.Services
                 var res = await _codeFlowService.PostRefreshTokenRequestAsync(config, connection.RefreshToken, cancellationToken);
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Failed to get refreshed token. Status code: {StatusCode}", res.StatusCode);
-                    throw new InvalidOperationException("Failed to get token refreshed");
+                    var errorContent = await res.Content.ReadAsStringAsync();
+                    var errorMsg = $"Failed to get refreshed token. Status code: {res.StatusCode}\nError: {errorContent}";
+                    _logger.LogError(errorMsg);
+                    throw new InvalidOperationException(errorMsg);
                 }
 
                 var tokenResponseContent = await res.Content.ReadAsStringAsync();
