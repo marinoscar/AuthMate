@@ -204,7 +204,9 @@ namespace Luval.AuthMate.Core.Services
             if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
             if (string.IsNullOrEmpty(ownerEmail)) throw new ArgumentNullException(nameof(ownerEmail));
 
-            return await _context.AppConnections.SingleOrDefaultAsync(c => c.ProviderName == providerName && c.OwnerEmail == ownerEmail, cancellationToken);
+            return await _context.AppConnections
+                .SingleOrDefaultAsync(c => c.ProviderName == providerName && c.OwnerEmail == ownerEmail, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -217,7 +219,8 @@ namespace Luval.AuthMate.Core.Services
         public async Task<AppConnection?> GetConnectionAsync(ulong connectionId, CancellationToken cancellationToken = default)
         {
             if (connectionId == 0) throw new ArgumentException("Invalid connection ID", nameof(connectionId));
-            return await _context.AppConnections.FindAsync(new object[] { connectionId }, cancellationToken);
+            return await _context.AppConnections.FindAsync(new object[] { connectionId }, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -264,7 +267,9 @@ namespace Luval.AuthMate.Core.Services
         {
             if (string.IsNullOrEmpty(providerName)) throw new ArgumentNullException(nameof(providerName));
 
-            return await _context.AppConnections.SingleAsync(c => c.ProviderName == providerName && c.AccountId == accountId, cancellationToken);
+            return await _context.AppConnections
+                .SingleAsync(c => c.ProviderName == providerName && c.AccountId == accountId, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -278,7 +283,8 @@ namespace Luval.AuthMate.Core.Services
         {
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
             var accountId = _userResolver.GetUser().AccountId;
-            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId).Where(filterExpression), cancellationToken);
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId).Where(filterExpression), cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -295,7 +301,8 @@ namespace Luval.AuthMate.Core.Services
         public async Task<IQueryable<AppConnection>> GetAllConnectionsAsync(CancellationToken cancellationToken = default)
         {
             var accountId = _userResolver.GetUser().AccountId;
-            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId), cancellationToken);
+            return await Task.Run(() => _context.AppConnections.Where(i => i.AccountId == accountId), cancellationToken)
+                .ConfigureAwait(false);
         }
 
 
@@ -448,8 +455,10 @@ namespace Luval.AuthMate.Core.Services
                 var res = await _codeFlowService.PostRefreshTokenRequestAsync(config, connection.RefreshToken, cancellationToken);
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Failed to get refreshed token. Status code: {StatusCode}", res.StatusCode);
-                    throw new InvalidOperationException("Failed to get token refreshed");
+                    var errorContent = await res.Content.ReadAsStringAsync();
+                    var errorMsg = $"Failed to get refreshed token. Status code: {res.StatusCode}\nError: {errorContent}";
+                    _logger.LogError(errorMsg);
+                    throw new InvalidOperationException(errorMsg);
                 }
 
                 var tokenResponseContent = await res.Content.ReadAsStringAsync();

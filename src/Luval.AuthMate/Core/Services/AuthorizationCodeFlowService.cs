@@ -52,7 +52,8 @@ namespace Luval.AuthMate.Core.Services
                     new KeyValuePair<string, string>("grant_type", "authorization_code")
             });
             
-            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken); 
+            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken)
+                .ConfigureAwait(false); 
         }
 
         /// <summary>
@@ -67,13 +68,14 @@ namespace Luval.AuthMate.Core.Services
             var client = _clientFactory.CreateClient();
             var tokenRequestBody = new FormUrlEncodedContent(new[]
             {
-                    new KeyValuePair<string, string>("client_id", config.ClientId),
-                    new KeyValuePair<string, string>("client_secret", config.ClientSecret),
-                    new KeyValuePair<string, string>("refresh_token", refreshToken),
-                    new KeyValuePair<string, string>("grant_type", "refresh_token")
-                });
-            
-            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken);
+                new KeyValuePair<string, string>("client_id", config.ClientId),
+                new KeyValuePair<string, string>("client_secret", config.ClientSecret),
+                new KeyValuePair<string, string>("refresh_token", refreshToken),
+                new KeyValuePair<string, string>("grant_type", "refresh_token")
+            });
+
+            return await client.PostAsync(config.TokenEndpoint, tokenRequestBody, cancellationToken)
+                .ConfigureAwait(false);
         }
 
 
@@ -88,7 +90,8 @@ namespace Luval.AuthMate.Core.Services
         {
             var client = _clientFactory.CreateClient();
             client.DefaultRequestHeaders.Add("Authorization", string.Format("Bearer {0}", accessToken));
-            return await client.GetAsync(config.UserInfoEndpoint, cancellationToken);
+            return await client.GetAsync(config.UserInfoEndpoint, cancellationToken)
+                .ConfigureAwait(false);
         }
 
 
