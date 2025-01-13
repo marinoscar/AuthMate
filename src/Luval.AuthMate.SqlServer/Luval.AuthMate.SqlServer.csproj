@@ -3,10 +3,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationIcon>authmate_icon.ico</ApplicationIcon>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <Title>Auth Mate Sqlite </Title>
     <Version>1.1.13</Version>
+    <Title>AuthMate Sql Server</Title>
     <Authors>Oscar Marin</Authors>
     <Copyright>Oscar Marin</Copyright>
     <PackageProjectUrl>https://github.com/marinoscar/authmate/</PackageProjectUrl>
@@ -15,8 +13,8 @@
     <RepositoryUrl>https://github.com/marinoscar/authmate/</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <IncludeSymbols>True</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <ApplicationIcon>authmate_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="authmate_icon.ico" />
@@ -32,7 +30,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Luval.AuthMate\Luval.AuthMate.csproj" />
