@@ -225,6 +225,17 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>
+        /// Retrieves the configuration instance from the service collection.
+        /// </summary>
+        /// <param name="s">The service collection.</param>
+        /// <returns>The configuration instance from the service collection.</returns>
+        public static IConfiguration GetConfiguration(this IServiceCollection s)
+        {
+            var serviceProvider = s.BuildServiceProvider(false);
+            return serviceProvider.GetRequiredService<IConfiguration>();
+        }
+
+        /// <summary>
         /// Adds the AuthMate services to the specified <see cref="IServiceCollection"/>.
         /// This method registers the necessary services for the AuthMate authentication system,
         /// including user resolution, user management, role management, account management,
