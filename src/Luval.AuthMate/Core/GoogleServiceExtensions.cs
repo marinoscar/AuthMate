@@ -35,8 +35,8 @@ namespace Luval.AuthMate.Core
                     opt.ClientSecret = config.ClientSecret;
                     opt.SaveTokens = config.SaveTokens;
 
-                    if (config.Scope != null && config.Scope.Any())
-                        config.Scope.ForEach(s => opt.Scope.Add(s));
+                    if (config.Scopes != null && config.Scopes.Any())
+                        config.Scopes.ForEach(s => opt.Scope.Add(s));
 
                     opt.AccessType = config.AccessType;
 
