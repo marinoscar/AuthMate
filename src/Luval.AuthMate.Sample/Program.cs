@@ -44,7 +44,7 @@ namespace Luval.AuthMate.Sample
             });
 
             //Add the AuthMate Google OAuth provider
-            builder.Services.AddAuthMateGoogleAuth(new GoogleOAuthConfiguration()
+            builder.Services.AddAuthMateAuthentication(new GoogleOAuthConfiguration()
             {
                 // client id from your config file
                 ClientId = config["OAuthProviders:Google:ClientId"] ?? throw new ArgumentNullException("The Google client id is required"),
