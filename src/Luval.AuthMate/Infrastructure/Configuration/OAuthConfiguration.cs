@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.Configuration;
+using System.Xml.Linq;
 
 /// <summary>
 /// Represents the configuration settings for OAuth authentication.
@@ -111,5 +112,19 @@ public class OAuthConfiguration
     public static OAuthConfiguration GetMicrosoft(IConfiguration configuration)
     {
         return CreateFromConfingSection(configuration, "Microsoft");
+    }
+
+    /// <summary>
+    /// Gets the <see cref="OAuthConfiguration"/> for the default authentication provider.
+    /// The default authentication provider is specified in the configuration file under the "AuthenticationProvider" value.
+    /// </summary>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <returns>An instance of <see cref="OAuthConfiguration"/> for Microsoft.</returns>
+    public static OAuthConfiguration GetAuthentication(IConfiguration configuration)
+    {
+        var fullName = $"{_rootSection}:AuthenticationProvider";
+        var defaultProvider = configuration.GetValue<string>(fullName);
+        if(string.IsNullOrWhiteSpace(defaultProvider)) defaultProvider = "Google";
+        return CreateFromConfingSection(configuration, defaultProvider);
     }
 }
