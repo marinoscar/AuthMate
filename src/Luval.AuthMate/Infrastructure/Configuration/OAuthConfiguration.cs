@@ -7,7 +7,7 @@ using System.Xml.Linq;
 /// </summary>
 public class OAuthConfiguration
 {
-    private static readonly string _rootSection = "OAuthProviders";
+    private static readonly string _rootSection = "AuthMate:OAuthProviders";
 
     /// <summary>
     /// Gets or sets the name of the cookie used for authentication.
@@ -122,7 +122,7 @@ public class OAuthConfiguration
     /// <returns>An instance of <see cref="OAuthConfiguration"/> for Microsoft.</returns>
     public static OAuthConfiguration GetAuthentication(IConfiguration configuration)
     {
-        var fullName = $"{_rootSection}:AuthenticationProvider";
+        var fullName = $"AuthMate:AuthenticationProvider";
         var defaultProvider = configuration.GetValue<string>(fullName);
         if(string.IsNullOrWhiteSpace(defaultProvider)) defaultProvider = "Google";
         return CreateFromConfingSection(configuration, defaultProvider);
