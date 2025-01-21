@@ -14,6 +14,20 @@ namespace Luval.AuthMate.Core
     /// </summary>
     public static class AuthenticationServiceExtensions
     {
+
+
+
+        /// <summary>
+        /// Retrieves the configuration instance from the service collection.
+        /// </summary>
+        /// <param name="s">The service collection.</param>
+        /// <returns>The configuration instance from the service collection.</returns>
+        public static IConfiguration GetConfiguration(this IServiceCollection s)
+        {
+            var serviceProvider = s.BuildServiceProvider(false);
+            return serviceProvider.GetRequiredService<IConfiguration>();
+        }
+
         /// <summary>
         /// Creates an instance of <see cref="OAuthConfiguration"/> from the configuration.
         /// </summary>
@@ -21,9 +35,7 @@ namespace Luval.AuthMate.Core
         /// <returns>An instance of <see cref="OAuthConfiguration"/>.</returns>
         private static OAuthConfiguration CreatFromConfig(IServiceCollection s)
         {
-            var serviceProvider = s.BuildServiceProvider(false);
-            var config = serviceProvider.GetRequiredService<IConfiguration>();
-            return OAuthConfiguration.GetAuthentication(config);
+            return OAuthConfiguration.GetAuthentication(s.GetConfiguration());
         }
 
         /// <summary>
