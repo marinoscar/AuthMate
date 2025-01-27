@@ -286,6 +286,45 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>
+        /// Adds all AuthMate services to the specified <see cref="IServiceCollection"/>.
+        /// This method registers the necessary services for the AuthMate authentication system,
+        /// including user resolution, user management, role management, account management,
+        /// authentication, and token handling services.
+        /// It also retrieves the configuration and context from the service collection and adds
+        /// the AuthMate authentication services.
+        /// </summary>
+        /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
+        /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services added.</returns>
+        public static IServiceCollection AddAllAuthMateServices(this IServiceCollection s)
+        {
+            var config = s.GetConfiguration();
+            var context = s.GetContextFromConfiguration();
+            var bearingTokenKey = config.GetValue<string>("AuthMate:BearingTokenKey");
+
+            if (!string.IsNullOrEmpty(bearingTokenKey))
+                s.AddSingleton(new BearingTokenConfig() { Secret = bearingTokenKey });
+            else
+                s.AddSingleton(new BearingTokenConfig());
+
+            s.AddScoped<OAuthConnectionManager>((s) =>
+            {
+                return new OAuthConnectionManager(config);
+            });
+
+            s.AddScoped<IUserResolver, WebUserResolver>();
+            s.AddScoped<AccountService>();
+            s.AddScoped<AppConnectionService>();
+            s.AddScoped<IAppUserService, AppUserService>();
+            s.AddScoped<AuthenticationService>();
+            s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
+            s.AddScoped<BearingTokenService>();
+            s.AddScoped<RoleService>();
+            s.AddScoped<IAuthMateContext>((s) => context);
+            s.AddAuthMateAuthentication();
+            return s;
+        }
+
+        /// <summary>
         /// Retrieves the AuthMate context from the configuration.
         /// </summary>
         /// <param name="s">The service collection.</param>
