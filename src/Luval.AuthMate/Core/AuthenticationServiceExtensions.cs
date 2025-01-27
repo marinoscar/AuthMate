@@ -20,7 +20,7 @@ namespace Luval.AuthMate.Core
         /// </summary>
         /// <param name="s">The service collection.</param>
         /// <returns>An instance of <see cref="OAuthConfiguration"/>.</returns>
-        private static OAuthConfiguration CreatFromConfig(IServiceCollection s)
+        private static OAuthConfiguration CreateFromConfig(IServiceCollection s)
         {
             return OAuthConfiguration.GetAuthentication(s.GetConfiguration());
         }
@@ -32,7 +32,7 @@ namespace Luval.AuthMate.Core
         /// <returns>The service collection with AuthMate authentication services added.</returns>
         public static IServiceCollection AddAuthMateAuthentication(this IServiceCollection s)
         {
-            return AddAuthMateAuthentication(s, CreatFromConfig(s));
+            return AddAuthMateAuthentication(s, CreateFromConfig(s));
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Luval.AuthMate.Core
         /// <returns>The service collection with AuthMate authentication services added.</returns>
         public static IServiceCollection AddAuthMateAuthentication(this IServiceCollection s, Func<OAuthCreatingTicketContext, Task> onCreatingTicket)
         {
-            var oAuthConfig = CreatFromConfig(s);
+            var oAuthConfig = CreateFromConfig(s);
             oAuthConfig.OnCreatingTicket = onCreatingTicket;
             return AddAuthMateAuthentication(s, oAuthConfig);
         }
