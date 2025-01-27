@@ -86,7 +86,7 @@ namespace Luval.AuthMate.Sample
                 new ColorConsoleLogger<AuthMateContextHelper>());
             //Makes sure the db is created, then initializes the db with the owner email
             //and required initial records
-            contextHelper.InitializeDbAsync(config["OAuthProviders:Google:OwnerEmail"] ?? "")
+            contextHelper.InitializeDbAsync(config["AuthMate:AppOwnerEmail"] ?? "")
                 .GetAwaiter()
                 .GetResult();
 
