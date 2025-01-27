@@ -285,5 +285,25 @@ namespace Luval.AuthMate.Core
             return s;
         }
 
+        private static IAuthMateContext GetContextFromConfiguration(this IServiceCollection s)
+        {
+            var config = s.GetConfiguration();
+            var section =config.GetSection("AuthMate:DataContex");
+            if(section == null || section.GetChildren() == null || !section.GetChildren().Any())
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
+            var contextClassType = section.GetValue<string>("Provider");
+            if (string.IsNullOrWhiteSpace(contextClassType))
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
+            var connString = section.GetValue<string>("ConnectionString");
+            if (string.IsNullOrEmpty(connString))
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'ConnectionString' value");
+
+            var typeInfo = contextClassType.Split(',').Select(i => i.Trim()).ToArray();
+            if (typeInfo.Length < 2)
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' 'Provider' value is not a valid type name of Assembly, Type");
+            Activator.CreateInstance(contextClassType, connString);
+            return null;
+        }
+
     }
 }
