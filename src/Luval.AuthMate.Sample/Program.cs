@@ -34,25 +34,7 @@ namespace Luval.AuthMate.Sample
             builder.Services.AddHttpContextAccessor();
 
             //Add the AuthMate services
-            builder.Services.AddAuthMateServices(
-                //The key to use for the bearing token implementation
-                config["AuthMate:BearingTokenKey"],
-                (s) => {
-                    //returns a local instance of Sqlite
-                    //replace this with your own implementation of Postgres, MySql, SqlServer, etc
-                    return new SqliteAuthMateContext();
-            });
-
-            //Add the AuthMate Google OAuth provider
-            builder.Services.AddAuthMateAuthentication(new GoogleOAuthConfiguration()
-            {
-                // client id from your config file
-                ClientId = config["OAuthProviders:Google:ClientId"] ?? throw new ArgumentNullException("The Google client id is required"),
-                // the client secret from your config file
-                ClientSecret = config["OAuthProviders:Google:ClientSecret"] ?? throw new ArgumentNullException("The Google client secret is required"),
-                // set the login path in the controller and pass the provider name
-                LoginPath = "/api/auth",
-            });
+            builder.Services.AddAllAuthMateServices();
 
             var app = builder.Build();
 
@@ -84,6 +66,7 @@ namespace Luval.AuthMate.Sample
             var contextHelper = new AuthMateContextHelper(
                 new SqliteAuthMateContext(),
                 new ColorConsoleLogger<AuthMateContextHelper>());
+
             //Makes sure the db is created, then initializes the db with the owner email
             //and required initial records
             contextHelper.InitializeDbAsync(config["AuthMate:AppOwnerEmail"] ?? "")
