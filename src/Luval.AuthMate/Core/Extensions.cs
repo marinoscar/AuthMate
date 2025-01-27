@@ -285,11 +285,34 @@ namespace Luval.AuthMate.Core
             return s;
         }
 
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="s">The service collection.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <remarks>
+        /// This method retrieves the AuthMate context configuration from the service collection's configuration.
+        /// It expects the configuration section "AuthMate:DataContex" to contain the following keys:
+        /// - "Provider": The fully qualified name of the context class, including the assembly name.
+        /// - "ConnectionString": The connection string to be used by the context.
+        /// 
+        /// The method performs the following steps:
+        /// 1. Retrieves the configuration instance from the service collection.
+        /// 2. Gets the "AuthMate:DataContex" section from the configuration.
+        /// 3. Validates that the section and its children are not null or empty.
+        /// 4. Retrieves the "Provider" and "ConnectionString" values from the section.
+        /// 5. Validates that the "Provider" and "ConnectionString" values are not null or empty.
+        /// 6. Splits the "Provider" value into assembly and type names.
+        /// 7. Creates an instance of the context class using the connection string.
+        /// 8. Returns the created context instance.
+        /// 
+        /// If any validation fails, an InvalidDataException is thrown with an appropriate message.
+        /// </remarks>
         private static IAuthMateContext GetContextFromConfiguration(this IServiceCollection s)
         {
             var config = s.GetConfiguration();
-            var section =config.GetSection("AuthMate:DataContex");
-            if(section == null || section.GetChildren() == null || !section.GetChildren().Any())
+            var section = config.GetSection("AuthMate:DataContex");
+            if (section == null || section.GetChildren() == null || !section.GetChildren().Any())
                 throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
             var contextClassType = section.GetValue<string>("Provider");
             if (string.IsNullOrWhiteSpace(contextClassType))
@@ -301,8 +324,10 @@ namespace Luval.AuthMate.Core
             var typeInfo = contextClassType.Split(',').Select(i => i.Trim()).ToArray();
             if (typeInfo.Length < 2)
                 throw new InvalidDataException("The configuration section 'AuthMate:DataContex' 'Provider' value is not a valid type name of Assembly, Type");
-            Activator.CreateInstance(contextClassType, connString);
-            return null;
+
+            var inputs = new object[] { connString };
+            var obj = Activator.CreateInstance(typeInfo[0], typeInfo[1], inputs);
+            return (IAuthMateContext)obj;
         }
 
     }
