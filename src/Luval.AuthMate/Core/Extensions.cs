@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -364,9 +366,26 @@ namespace Luval.AuthMate.Core
             if (typeInfo.Length < 2)
                 throw new InvalidDataException("The configuration section 'AuthMate:DataContex' 'Provider' value is not a valid type name of Assembly, Type");
 
-            var inputs = new object[] { connString };
-            var obj = Activator.CreateInstance(typeInfo[0], typeInfo[1], inputs);
-            return (IAuthMateContext)obj;
+            // Load the assembly
+            var assembly = Assembly.Load(typeInfo[0]);
+            if (assembly == null)
+                throw new InvalidOperationException("Assembly not found.");
+
+            // Get the type of the class
+            var type = assembly.GetType(typeInfo[1]);
+            if (type == null)
+                throw new InvalidOperationException("Type not found.");
+
+            // Check if the type implements the IAuthMateContext interface
+            if (!typeof(IAuthMateContext).IsAssignableFrom(type))
+                throw new InvalidOperationException("The type does not implement the IAuthMateContext interface.");
+
+            // Create an instance of the class using the constructor that accepts a string
+            object instance = Activator.CreateInstance(type, connString);
+            if (instance == null)
+                throw new InvalidOperationException("Instance creation failed.");
+
+            return (IAuthMateContext)instance;
         }
 
     }
