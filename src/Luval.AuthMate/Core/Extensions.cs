@@ -20,6 +20,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Luval.AuthMate.Core
 {
@@ -300,7 +303,6 @@ namespace Luval.AuthMate.Core
         public static IServiceCollection AddAllAuthMateServices(this IServiceCollection s)
         {
             var config = s.GetConfiguration();
-            var context = s.GetContextFromConfiguration();
             var bearingTokenKey = config.GetValue<string>("AuthMate:BearingTokenKey");
 
             if (!string.IsNullOrEmpty(bearingTokenKey))
@@ -321,7 +323,12 @@ namespace Luval.AuthMate.Core
             s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
             s.AddScoped<BearingTokenService>();
             s.AddScoped<RoleService>();
-            s.AddScoped<IAuthMateContext>((s) => context);
+
+            s.AddScoped<IAuthMateContext>((s) => {
+                var c = s.GetRequiredService<IConfiguration>();
+                return GetContextFromConfiguration(c);
+            });
+
             s.AddAuthMateAuthentication();
             return s;
         }
@@ -351,7 +358,20 @@ namespace Luval.AuthMate.Core
         /// </remarks>
         private static IAuthMateContext GetContextFromConfiguration(this IServiceCollection s)
         {
-            var config = s.GetConfiguration();
+           return GetContextFromConfiguration(s.GetConfiguration());
+        }
+
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="config">The configuration instance.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <exception cref="InvalidDataException">
+        /// Thrown when the configuration section 'AuthMate:DataContex' is not found or empty,
+        /// or when the 'Provider' or 'ConnectionString' values are not provided.
+        /// </exception>
+        private static IAuthMateContext GetContextFromConfiguration(IConfiguration config)
+        {
             var section = config.GetSection("AuthMate:DataContex");
             if (section == null || section.GetChildren() == null || !section.GetChildren().Any())
                 throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
@@ -361,32 +381,70 @@ namespace Luval.AuthMate.Core
             var connString = section.GetValue<string>("ConnectionString");
             if (string.IsNullOrEmpty(connString))
                 throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'ConnectionString' value");
-
-            var typeInfo = contextClassType.Split(',').Select(i => i.Trim()).ToArray();
-            if (typeInfo.Length < 2)
-                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' 'Provider' value is not a valid type name of Assembly, Type");
-
-            // Load the assembly
-            var assembly = Assembly.Load(typeInfo[0]);
-            if (assembly == null)
-                throw new InvalidOperationException("Assembly not found.");
-
-            // Get the type of the class
-            var type = assembly.GetType(typeInfo[1]);
-            if (type == null)
-                throw new InvalidOperationException("Type not found.");
-
-            // Check if the type implements the IAuthMateContext interface
-            if (!typeof(IAuthMateContext).IsAssignableFrom(type))
-                throw new InvalidOperationException("The type does not implement the IAuthMateContext interface.");
-
-            // Create an instance of the class using the constructor that accepts a string
-            object instance = Activator.CreateInstance(type, connString);
-            if (instance == null)
-                throw new InvalidOperationException("Instance creation failed.");
-
-            return (IAuthMateContext)instance;
+            return GetContextFromConfiguration(contextClassType, connString);
         }
+
+        /// <summary>
+        /// Creates an instance of the AuthMate context using the specified type and connection string.
+        /// </summary>
+        /// <param name="typeQualifiedName">The fully qualified name of the context class, including the assembly name.</param>
+        /// <param name="connectionString">The connection string to be used by the context.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <exception cref="InvalidDataException">
+        /// Thrown when the 'Provider' value is not provided or is invalid.
+        /// </exception>
+        private static IAuthMateContext GetContextFromConfiguration(string typeQualifiedName, string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(typeQualifiedName))
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
+
+            var typeInfo = typeQualifiedName.Split(',').Select(i => i.Trim()).ToArray();
+            if (typeInfo.Length < 2)
+                throw new InvalidDataException("Invalid qualified name, value is not a valid type name of Assembly, Type");
+
+            return CreateInstance<IAuthMateContext>(typeInfo[1], typeInfo[0], connectionString);
+        }
+
+
+        /// <summary>
+        /// Creates an instance of a specified type using the provided assembly name, type name, and constructor arguments.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to create.</typeparam>
+        /// <param name="assemblyName">The name of the assembly containing the type.</param>
+        /// <param name="typeName">The name of the type to create.</param>
+        /// <param name="args">The arguments to pass to the constructor of the type.</param>
+        /// <returns>An instance of the specified type.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the <paramref name="assemblyName"/> or <paramref name="typeName"/> is null or empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the assembly or type is not found, or a suitable constructor is not found.</exception>
+        public static T CreateInstance<T>(string assemblyName, string typeName, params object[] args)
+        {
+            if (string.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException(nameof(assemblyName));
+            if (string.IsNullOrEmpty(typeName)) throw new ArgumentNullException(nameof(typeName));
+
+            var key = $"{assemblyName}.{typeName}";
+
+            if (!constructorCache.TryGetValue(key, out ConstructorInfo constructor))
+            {
+                // Load the assembly and type
+                var assembly = Assembly.Load(assemblyName);
+                var type = assembly.GetType(typeName);
+                if (type == null)
+                    throw new InvalidOperationException("Type not found.");
+
+                // Get the constructor matching the arguments
+                constructor = type.GetConstructor(args.Select(a => a.GetType()).ToArray());
+                if (constructor == null)
+                    throw new InvalidOperationException("Suitable constructor not found.");
+
+                // Add to cache
+                constructorCache.TryAdd(key, constructor);
+            }
+
+            // Use the cached constructor to create an instance
+            return (T)constructor.Invoke(args);
+        }
+
+        private static readonly ConcurrentDictionary<string, ConstructorInfo> constructorCache = new();
 
     }
 }
