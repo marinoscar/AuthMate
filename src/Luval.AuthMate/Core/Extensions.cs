@@ -372,16 +372,22 @@ namespace Luval.AuthMate.Core
         /// </exception>
         private static IAuthMateContext GetContextFromConfiguration(IConfiguration config)
         {
-            var section = config.GetSection("AuthMate:DataContex");
-            if (section == null || section.GetChildren() == null || !section.GetChildren().Any())
-                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
-            var contextClassType = section.GetValue<string>("Provider");
-            if (string.IsNullOrWhiteSpace(contextClassType))
-                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
-            var connString = section.GetValue<string>("ConnectionString");
-            if (string.IsNullOrEmpty(connString))
-                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'ConnectionString' value");
-            return GetContextFromConfiguration(contextClassType, connString);
+            if(_contextInfo == null)
+            {
+                var section = config.GetSection("AuthMate:DataContex");
+                if (section == null || section.GetChildren() == null || !section.GetChildren().Any())
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
+                var contextClassType = section.GetValue<string>("Provider");
+                if (string.IsNullOrWhiteSpace(contextClassType))
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
+                var connString = section.GetValue<string>("ConnectionString");
+                if (string.IsNullOrEmpty(connString))
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'ConnectionString' value");
+
+                //cache the context info
+                _contextInfo = new ContextInfo(contextClassType, connString);
+            }
+            return GetContextFromConfiguration(_contextInfo.QualifiedTypeName, _contextInfo.ConnectionString);
         }
 
         /// <summary>
@@ -444,7 +450,21 @@ namespace Luval.AuthMate.Core
             return (T)constructor.Invoke(args);
         }
 
+        /// <summary>
+        /// Caches the constructors for types to improve performance.
+        /// </summary>
         private static readonly ConcurrentDictionary<string, ConstructorInfo> constructorCache = new();
+        /// <summary>
+        /// Caches the context information to improve performance.
+        /// </summary>
+        private static ContextInfo _contextInfo = default!;
+
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="QualifiedTypeName"></param>
+        /// <param name="ConnectionString"></param>
+        private record ContextInfo(string QualifiedTypeName, string ConnectionString);
 
     }
 }
