@@ -13,11 +13,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Luval.AuthMate.Core
 {
@@ -225,6 +230,17 @@ namespace Luval.AuthMate.Core
         }
 
         /// <summary>
+        /// Retrieves the configuration instance from the service collection.
+        /// </summary>
+        /// <param name="s">The service collection.</param>
+        /// <returns>The configuration instance from the service collection.</returns>
+        public static IConfiguration GetConfiguration(this IServiceCollection s)
+        {
+            var serviceProvider = s.BuildServiceProvider(false);
+            return serviceProvider.GetRequiredService<IConfiguration>();
+        }
+
+        /// <summary>
         /// Adds the AuthMate services to the specified <see cref="IServiceCollection"/>.
         /// This method registers the necessary services for the AuthMate authentication system,
         /// including user resolution, user management, role management, account management,
@@ -273,6 +289,183 @@ namespace Luval.AuthMate.Core
             s.AddScoped<RoleService>();
             return s;
         }
+
+        /// <summary>
+        /// Adds all AuthMate services to the specified <see cref="IServiceCollection"/>.
+        /// This method registers the necessary services for the AuthMate authentication system,
+        /// including user resolution, user management, role management, account management,
+        /// authentication, and token handling services.
+        /// It also retrieves the configuration and context from the service collection and adds
+        /// the AuthMate authentication services.
+        /// </summary>
+        /// <param name="s">The <see cref="IServiceCollection"/> to which the services will be added.</param>
+        /// <returns>The <see cref="IServiceCollection"/> with the AuthMate services added.</returns>
+        public static IServiceCollection AddAllAuthMateServices(this IServiceCollection s)
+        {
+            var config = s.GetConfiguration();
+            var bearingTokenKey = config.GetValue<string>("AuthMate:BearingTokenKey");
+
+            if (!string.IsNullOrEmpty(bearingTokenKey))
+                s.AddSingleton(new BearingTokenConfig() { Secret = bearingTokenKey });
+            else
+                s.AddSingleton(new BearingTokenConfig());
+
+            s.AddScoped<OAuthConnectionManager>((s) =>
+            {
+                return new OAuthConnectionManager(config);
+            });
+
+            s.AddScoped<IUserResolver, WebUserResolver>();
+            s.AddScoped<AccountService>();
+            s.AddScoped<AppConnectionService>();
+            s.AddScoped<IAppUserService, AppUserService>();
+            s.AddScoped<AuthenticationService>();
+            s.AddScoped<IAuthorizationCodeFlowService, AuthorizationCodeFlowService>();
+            s.AddScoped<BearingTokenService>();
+            s.AddScoped<RoleService>();
+
+            s.AddScoped<IAuthMateContext>((s) => {
+                var c = s.GetRequiredService<IConfiguration>();
+                return GetContextFromConfiguration(c);
+            });
+
+            s.AddAuthMateAuthentication();
+            return s;
+        }
+
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="s">The service collection.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <remarks>
+        /// This method retrieves the AuthMate context configuration from the service collection's configuration.
+        /// It expects the configuration section "AuthMate:DataContex" to contain the following keys:
+        /// - "Provider": The fully qualified name of the context class, including the assembly name.
+        /// - "ConnectionString": The connection string to be used by the context.
+        /// 
+        /// The method performs the following steps:
+        /// 1. Retrieves the configuration instance from the service collection.
+        /// 2. Gets the "AuthMate:DataContex" section from the configuration.
+        /// 3. Validates that the section and its children are not null or empty.
+        /// 4. Retrieves the "Provider" and "ConnectionString" values from the section.
+        /// 5. Validates that the "Provider" and "ConnectionString" values are not null or empty.
+        /// 6. Splits the "Provider" value into assembly and type names.
+        /// 7. Creates an instance of the context class using the connection string.
+        /// 8. Returns the created context instance.
+        /// 
+        /// If any validation fails, an InvalidDataException is thrown with an appropriate message.
+        /// </remarks>
+        private static IAuthMateContext GetContextFromConfiguration(this IServiceCollection s)
+        {
+           return GetContextFromConfiguration(s.GetConfiguration());
+        }
+
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="config">The configuration instance.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <exception cref="InvalidDataException">
+        /// Thrown when the configuration section 'AuthMate:DataContex' is not found or empty,
+        /// or when the 'Provider' or 'ConnectionString' values are not provided.
+        /// </exception>
+        private static IAuthMateContext GetContextFromConfiguration(IConfiguration config)
+        {
+            if(_contextInfo == null)
+            {
+                var section = config.GetSection("AuthMate:DataContex");
+                if (section == null || section.GetChildren() == null || !section.GetChildren().Any())
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' is not found or empty");
+                var contextClassType = section.GetValue<string>("Provider");
+                if (string.IsNullOrWhiteSpace(contextClassType))
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
+                var connString = section.GetValue<string>("ConnectionString");
+                if (string.IsNullOrEmpty(connString))
+                    throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'ConnectionString' value");
+
+                //cache the context info
+                _contextInfo = new ContextInfo(contextClassType, connString);
+            }
+
+            return GetContextFromConfiguration(_contextInfo.QualifiedTypeName, _contextInfo.ConnectionString);
+        }
+
+        /// <summary>
+        /// Creates an instance of the AuthMate context using the specified type and connection string.
+        /// </summary>
+        /// <param name="typeQualifiedName">The fully qualified name of the context class, including the assembly name.</param>
+        /// <param name="connectionString">The connection string to be used by the context.</param>
+        /// <returns>The AuthMate context instance.</returns>
+        /// <exception cref="InvalidDataException">
+        /// Thrown when the 'Provider' value is not provided or is invalid.
+        /// </exception>
+        private static IAuthMateContext GetContextFromConfiguration(string typeQualifiedName, string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(typeQualifiedName))
+                throw new InvalidDataException("The configuration section 'AuthMate:DataContex' does not have a 'Provider' value");
+
+            var typeInfo = typeQualifiedName.Split(',').Select(i => i.Trim()).ToArray();
+            if (typeInfo.Length < 2)
+                throw new InvalidDataException("Invalid qualified name, value is not a valid type name of Assembly, Type");
+
+            return CreateInstance<IAuthMateContext>(typeInfo[0], typeInfo[1], connectionString);
+        }
+
+
+        /// <summary>
+        /// Creates an instance of a specified type using the provided assembly name, type name, and constructor arguments.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to create.</typeparam>
+        /// <param name="assemblyName">The name of the assembly containing the type.</param>
+        /// <param name="typeName">The name of the type to create.</param>
+        /// <param name="args">The arguments to pass to the constructor of the type.</param>
+        /// <returns>An instance of the specified type.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the <paramref name="assemblyName"/> or <paramref name="typeName"/> is null or empty.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the assembly or type is not found, or a suitable constructor is not found.</exception>
+        public static T CreateInstance<T>(string assemblyName, string typeName, params object[] args)
+        {
+            if (string.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException(nameof(assemblyName));
+            if (string.IsNullOrEmpty(typeName)) throw new ArgumentNullException(nameof(typeName));
+
+            var key = $"{assemblyName}.{typeName}";
+
+            if (!constructorCache.TryGetValue(key, out ConstructorInfo constructor))
+            {
+                // Load the assembly and type
+                var assembly = Assembly.Load(assemblyName);
+                var type = assembly.GetType(typeName);
+                if (type == null)
+                    throw new InvalidOperationException("Type not found.");
+
+                // Get the constructor matching the arguments
+                constructor = type.GetConstructor(args.Select(a => a.GetType()).ToArray());
+                if (constructor == null)
+                    throw new InvalidOperationException("Suitable constructor not found.");
+
+                // Add to cache
+                constructorCache.TryAdd(key, constructor);
+            }
+
+            // Use the cached constructor to create an instance
+            return (T)constructor.Invoke(args);
+        }
+
+        /// <summary>
+        /// Caches the constructors for types to improve performance.
+        /// </summary>
+        private static readonly ConcurrentDictionary<string, ConstructorInfo> constructorCache = new();
+        /// <summary>
+        /// Caches the context information to improve performance.
+        /// </summary>
+        private static ContextInfo _contextInfo = default!;
+
+        /// <summary>
+        /// Retrieves the AuthMate context from the configuration.
+        /// </summary>
+        /// <param name="QualifiedTypeName"></param>
+        /// <param name="ConnectionString"></param>
+        private record ContextInfo(string QualifiedTypeName, string ConnectionString);
 
     }
 }

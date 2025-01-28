@@ -75,7 +75,7 @@ namespace Luval.AuthMate.Infrastructure.Configuration
         /// </remarks>
         protected virtual void LoadConfigurations()
         {
-            var section = _configuration.GetSection("OAuthProviders");
+            var section = _configuration.GetSection("AuthMate:OAuthProviders");
             if (section == null) throw new InvalidOperationException("OAuthProviders section not found in configuration.");
             var children = section.GetChildren();
             if (children == null || !children.Any()) throw new InvalidCastException("No OAuthProviders found in configuration.");
