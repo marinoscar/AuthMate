@@ -387,6 +387,7 @@ namespace Luval.AuthMate.Core
                 //cache the context info
                 _contextInfo = new ContextInfo(contextClassType, connString);
             }
+
             return GetContextFromConfiguration(_contextInfo.QualifiedTypeName, _contextInfo.ConnectionString);
         }
 
@@ -408,7 +409,7 @@ namespace Luval.AuthMate.Core
             if (typeInfo.Length < 2)
                 throw new InvalidDataException("Invalid qualified name, value is not a valid type name of Assembly, Type");
 
-            return CreateInstance<IAuthMateContext>(typeInfo[1], typeInfo[0], connectionString);
+            return CreateInstance<IAuthMateContext>(typeInfo[0], typeInfo[1], connectionString);
         }
 
 
