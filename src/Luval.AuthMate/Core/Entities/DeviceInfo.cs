@@ -74,12 +74,16 @@ namespace Luval.AuthMate.Core.Entities
         /// </summary>
         /// <param name="base64String">The string representation of the device information.</param>
         /// <returns>A new <see cref="DeviceInfo"/> instance.</returns>
-        /// <exception cref="ArgumentException">Thrown if the input string format is invalid.</exception>
         public static DeviceInfo Create(string base64String)
         {
             if (string.IsNullOrWhiteSpace(base64String))
             {
-                throw new ArgumentException("Input data cannot be null or empty.", nameof(base64String));
+                return new DeviceInfo()
+                {
+                    Browser = "Unknown",
+                    IpAddress = "Unknown",
+                    OS = "Unknown"
+                };
             }
 
             var bytes = Convert.FromBase64String(base64String);
