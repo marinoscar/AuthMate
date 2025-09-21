@@ -61,12 +61,14 @@ namespace Luval.AuthMate.Core
                 {
                     opt.Cookie.Name = config.CookieName;
                     opt.LoginPath = config.LoginPath;
+                    opt.ReturnUrlParameter = config.ReturnUrlParameter;
                 })
                 .AddGoogle(opt =>
                 {
                     opt.ClientId = config.ClientId;
                     opt.ClientSecret = config.ClientSecret;
                     opt.SaveTokens = config.SaveTokens;
+                    opt.ReturnUrlParameter = config.ReturnUrlParameter;
 
                     if (config.Scopes != null && config.Scopes.Any())
                         config.Scopes.ForEach(scope => opt.Scope.Add(scope));

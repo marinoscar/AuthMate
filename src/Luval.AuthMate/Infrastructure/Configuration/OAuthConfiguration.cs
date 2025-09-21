@@ -20,6 +20,13 @@ public class OAuthConfiguration
     public string LoginPath { get; set; } = string.Empty;
 
     /// <summary>
+    /// The ReturnUrlParameter determines the name of the query string parameter which is appended by the handler
+    /// during a Challenge. This is also the query string parameter looked for when a request arrives on the login
+    /// path or logout path, in order to return to the original url after the action is performed.
+    /// </summary>
+    public string ReturnUrlParameter { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the client ID for the OAuth application.
     /// </summary>
     public string ClientId { get; set; } = string.Empty;
